@@ -1,0 +1,308 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1 &1097309742252516179
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 6605754603087586154}
+  - component: {fileID: 5972607115706598515}
+  - component: {fileID: 3740843312516424840}
+  - component: {fileID: 539434271990936092}
+  - component: {fileID: 2526919903616112397}
+  - component: {fileID: 1469991161071355858}
+  - component: {fileID: 1342878460353464981}
+  - component: {fileID: 7101217907663041092}
+  - component: {fileID: 7277807923974652977}
+  - component: {fileID: 7505745759819834217}
+  - component: {fileID: 192853507471832876}
+  m_Layer: 7
+  m_Name: Tank
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &6605754603087586154
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1097309742252516179}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 5}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 2031990200159897285}
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!195 &5972607115706598515
+NavMeshAgent:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1097309742252516179}
+  m_Enabled: 1
+  m_AgentTypeID: 0
+  m_Radius: 1.5
+  m_Speed: 3
+  m_Acceleration: 8
+  avoidancePriority: 50
+  m_AngularSpeed: 120
+  m_StoppingDistance: 0.5
+  m_AutoTraverseOffMeshLink: 1
+  m_AutoBraking: 1
+  m_AutoRepath: 1
+  m_Height: 3.5
+  m_BaseOffset: 0
+  m_WalkableMask: 4294967295
+  m_ObstacleAvoidanceType: 4
+--- !u!65 &3740843312516424840
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1097309742252516179}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 5, y: 4, z: 9}
+  m_Center: {x: 0, y: 2, z: 0}
+--- !u!114 &539434271990936092
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1097309742252516179}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e044bb91e0e484c31aed54b46548d19b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::DefCity.Game.Entity
+  team: {fileID: 0}
+--- !u!114 &2526919903616112397
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1097309742252516179}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 69cfad652a44a4104808394b4a64b244, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::DefCity.Game.Movable
+  terrainCellManager: {fileID: 0}
+  entity: {fileID: 539434271990936092}
+  navMeshAgent: {fileID: 5972607115706598515}
+  navSampleRadius: 2
+  hasTargetCellCoordinates: 0
+  targetCellCoordinates: {x: 0, y: 0}
+  OnMovingStateChanged:
+    m_PersistentCalls:
+      m_Calls: []
+--- !u!114 &1469991161071355858
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1097309742252516179}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: de9df883e90cb4a87b5399b386fde104, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::DefCity.Game.Damageable
+  maxHealth: 500
+  health: 500
+  damageCollider: {fileID: 3740843312516424840}
+  destroyOnDeath: 1
+  deathDestroyDelay: 0
+  OnDamaged:
+    m_PersistentCalls:
+      m_Calls: []
+  OnDeath:
+    m_PersistentCalls:
+      m_Calls: []
+--- !u!114 &1342878460353464981
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1097309742252516179}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3d72652d34d0d4da2819c1ce956af1c7, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::DefCity.Game.BaseCombatController
+  entity: {fileID: 539434271990936092}
+  scanInterval: 0.5
+  movable: {fileID: 2526919903616112397}
+  attacker: {fileID: 7505745759819834217}
+  damageable: {fileID: 1469991161071355858}
+  terrainCellManager: {fileID: 0}
+  targetLayerMask:
+    serializedVersion: 2
+    m_Bits: 0
+  currentTarget: {fileID: 0}
+  currentState: 0
+--- !u!114 &7101217907663041092
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1097309742252516179}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7d4c8813d9bd43fca9806b5cc5c7e4e0, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::DefCity.Game.FacingController
+  combatController: {fileID: 1342878460353464981}
+  movable: {fileID: 2526919903616112397}
+  facingTarget: {fileID: 6605754603087586154}
+  rotationSpeed: 720
+--- !u!114 &7277807923974652977
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1097309742252516179}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f4a4f3d96c1d4e0e8a9bb857e58ea401, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::DefCity.Game.ConstructionCreditCost
+  creditManager: {fileID: 0}
+  constructionCost: 1200
+  demolitionRefund: 1080
+--- !u!114 &7505745759819834217
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1097309742252516179}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a54ac607d98de4ec5a63cf3e96dc1620, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::DefCity.Game.AttackCapable
+  equippedWeapon: {fileID: 192853507471832876}
+  entity: {fileID: 539434271990936092}
+  OnAttackStarted:
+    m_PersistentCalls:
+      m_Calls: []
+  OnAttackRejected:
+    m_PersistentCalls:
+      m_Calls: []
+  OnAttackResolved:
+    m_PersistentCalls:
+      m_Calls: []
+  OnAttackFinished:
+    m_PersistentCalls:
+      m_Calls: []
+  OnAttackCooldownEnd:
+    m_PersistentCalls:
+      m_Calls: []
+--- !u!114 &192853507471832876
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1097309742252516179}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 96030fb410a764153b3105b2c1dcd462, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::HomingProjectileWeapon
+  projectilePrefab: {fileID: 2084327639832086012, guid: 2840d02ddf49e4b469d85a6bf808ebf9, type: 3}
+  muzzleTransform: {fileID: 6605754603087586154}
+  splashRadius: 2.5
+  attackPower: 50
+  attackRange: 30
+  attackCooldown: 1
+  damageType: 2
+--- !u!1001 &2031990200160044647
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 6605754603087586154}
+    m_Modifications:
+    - target: {fileID: 140034, guid: e2917f32a8c3cd64f892d055e80cee12, type: 3}
+      propertyPath: m_Name
+      value: SK_Veh_Tank_01
+      objectReference: {fileID: 0}
+    - target: {fileID: 409762, guid: e2917f32a8c3cd64f892d055e80cee12, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 409762, guid: e2917f32a8c3cd64f892d055e80cee12, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 409762, guid: e2917f32a8c3cd64f892d055e80cee12, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 409762, guid: e2917f32a8c3cd64f892d055e80cee12, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 409762, guid: e2917f32a8c3cd64f892d055e80cee12, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 409762, guid: e2917f32a8c3cd64f892d055e80cee12, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 409762, guid: e2917f32a8c3cd64f892d055e80cee12, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 409762, guid: e2917f32a8c3cd64f892d055e80cee12, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 409762, guid: e2917f32a8c3cd64f892d055e80cee12, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 409762, guid: e2917f32a8c3cd64f892d055e80cee12, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: e2917f32a8c3cd64f892d055e80cee12, type: 3}
+--- !u!4 &2031990200159897285 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 409762, guid: e2917f32a8c3cd64f892d055e80cee12, type: 3}
+  m_PrefabInstance: {fileID: 2031990200160044647}
+  m_PrefabAsset: {fileID: 0}

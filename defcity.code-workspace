@@ -1,0 +1,13 @@
+{
+	"folders": [
+		{
+			"name": "Root Folder (DefCity)",
+			"path": "."
+		},
+		{
+			"name": "DefCity Unity Scripts",
+			"path": "defcity/Assets/Scripts/DefCity"
+		}
+	],
+	"settings": {}
+}
