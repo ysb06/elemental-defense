@@ -1,4 +1,5 @@
 # defcity-private
+
 Base Unity game for defense game
 
 ## 폴더 구조
@@ -26,3 +27,7 @@ Docs/
 - 한국어 변경 사항
 - 필요한 경우 변경 이유나 주의사항
 ```
+
+## 주의 사항
+
+- 현재 Git 저장소는 Git LFS를 사용하고 있습니다. Git LFS를 설치하지 않은 상태에서 커밋을 시도하면 오류가 발생할 수 있습니다. Git LFS를 설치한 후 커밋을 진행하시기 바랍니다.

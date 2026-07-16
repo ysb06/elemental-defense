@@ -7,6 +7,10 @@
 		{
 			"name": "DefCity Unity Scripts",
 			"path": "defcity/Assets/Scripts/DefCity"
+		},
+		{
+			"name": "ElementalDefense Unity Scripts",
+			"path": "defcity/Assets/Scripts/ElementalDef"
 		}
 	],
 	"settings": {}
