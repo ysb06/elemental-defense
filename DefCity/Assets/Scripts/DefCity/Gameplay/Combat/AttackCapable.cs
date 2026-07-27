@@ -5,6 +5,7 @@ using UnityEngine;
 using UnityEngine.Events;
 using DefCity.Gameplay.Combat.Weapons;
 using DefCity.Gameplay.Entities;
+using DefCore.Gameplay.Combat;
 
 namespace DefCity.Gameplay.Combat
 {
@@ -38,7 +39,7 @@ namespace DefCity.Gameplay.Combat
             entity = GetComponent<Entity>();
         }
 
-        public bool IsReferenceValid(Damageable target)
+        public bool IsReferenceValid(Health target)
         {
             if (equippedWeapon == null)
             {
@@ -57,7 +58,7 @@ namespace DefCity.Gameplay.Combat
 
         public static AttackRejectReason GetTargetRejectReason(
             Team attackerTeam,
-            Damageable target,
+            Health target,
             bool requireActiveTarget,
             out Entity targetEntity,
             out Team targetTeam)
@@ -101,7 +102,7 @@ namespace DefCity.Gameplay.Combat
             return AttackRejectReason.None;
         }
 
-        public bool IsAttackAvailable(Damageable target)
+        public bool IsAttackAvailable(Health target)
         {
             if (equippedWeapon == null)
             {
@@ -116,7 +117,7 @@ namespace DefCity.Gameplay.Combat
             return target.GetDistanceTo(transform.position) <= equippedWeapon.AttackRange;
         }
 
-        public AttackRejectReason GetAttackStartRejectReason(Damageable target)
+        public AttackRejectReason GetAttackStartRejectReason(Health target)
         {
             if (equippedWeapon == null)
             {
@@ -139,7 +140,7 @@ namespace DefCity.Gameplay.Combat
                 : AttackRejectReason.None;
         }
 
-        public bool CanStartAttack(Damageable target)
+        public bool CanStartAttack(Health target)
         {
             return GetAttackStartRejectReason(target) == AttackRejectReason.None;
         }
@@ -147,7 +148,7 @@ namespace DefCity.Gameplay.Combat
         /// <summary>
         /// 공격을 시도한다. 조건이 충족되지 않으면 공격이 실패할 수 있음.
         /// </summary>
-        public void TryAttack(Damageable target)
+        public void TryAttack(Health target)
         {
             int attackId = nextAttackId++;
             AttackInfoArgs initialAttackInfoArgs = new(attackId, this);
@@ -221,7 +222,7 @@ namespace DefCity.Gameplay.Combat
 
         private bool TryBuildValidatedAttackInfo(
             int attackId,
-            Damageable target,
+            Health target,
             AttackInfoArgs initialAttackInfoArgs,
             out AttackInfoArgs attackInfoArgs,
             out AttackRejectedEventArgs rejectArgs)
@@ -320,7 +321,7 @@ namespace DefCity.Gameplay.Combat
         public AttackCapable Attacker { get; }
         public WeaponBase Weapon { get; }
         public IWeapon WeaponSnapshot { get; }
-        public Damageable Target { get; }
+        public Health Target { get; }
         public Team AttackerTeam { get; }
         public Team TargetTeam { get; }
 
@@ -328,7 +329,7 @@ namespace DefCity.Gameplay.Combat
             int? attackId,
             AttackCapable attacker,
             WeaponBase weapon,
-            Damageable target,
+            Health target,
             Team attackerTeam,
             Team targetTeam
         )

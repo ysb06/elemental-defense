@@ -1,5 +1,5 @@
 using System;
-using DefCity.Gameplay.Combat;
+using DefCore.Gameplay.Combat;
 using DefCity.Gameplay.Entities;
 using UnityEngine;
 using UnityEngine.Events;
@@ -11,7 +11,7 @@ namespace DefCity.Gameplay.Interaction
     public struct UnitSelectEventArgs
     {
         public Entity Entity;
-        public Damageable Damageable;
+        public Health Damageable;
         public Vector3 HitPoint;
     }
 
@@ -99,7 +99,7 @@ namespace DefCity.Gameplay.Interaction
 
             Entity entity = hit.collider.GetComponentInParent<Entity>();
             if (entity == null ||
-                !entity.TryGetComponent(out Damageable damageable) ||
+                !entity.TryGetComponent(out Health damageable) ||
                 !damageable.IsAlive)
             {
                 return false;

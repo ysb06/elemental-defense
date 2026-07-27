@@ -3,6 +3,7 @@ using UnityEngine;
 using UnityEngine.SceneManagement;
 using DefCity.Gameplay.City.Buildings;
 using DefCity.Gameplay.Entities;
+using DefCore.Gameplay.Flow;
 
 namespace DefCity.Gameplay.Flow
 {

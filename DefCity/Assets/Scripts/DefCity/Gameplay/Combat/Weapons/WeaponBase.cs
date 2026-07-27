@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Events;
-using DefCity.Gameplay.Combat;
+using DefCore.Gameplay.Combat;
 
 namespace DefCity.Gameplay.Combat.Weapons
 {
@@ -49,11 +49,11 @@ namespace DefCity.Gameplay.Combat.Weapons
     [Serializable]
     public readonly struct AttackHitEntry
     {
-        public Damageable Target { get; }
+        public Health Target { get; }
         public float Damage { get; }
         public Vector3 ImpactPoint { get; }
 
-        public AttackHitEntry(Damageable target, float damage, Vector3 impactPoint)
+        public AttackHitEntry(Health target, float damage, Vector3 impactPoint)
         {
             if (target == null)
             {
@@ -72,7 +72,7 @@ namespace DefCity.Gameplay.Combat.Weapons
         public AttackInfoArgs Info { get; }
         public AttackResolveStatus ResolveStatus { get; }
         public float TotalDamage { get; }
-        public IReadOnlyList<Damageable> Targets { get; }
+        public IReadOnlyList<Health> Targets { get; }
         public IReadOnlyList<AttackHitEntry> Hits { get; }
         public Vector3 ImpactPoint { get; }
 
@@ -89,13 +89,13 @@ namespace DefCity.Gameplay.Combat.Weapons
             if (hits == null || hits.Count == 0)
             {
                 TotalDamage = 0f;
-                Targets = Array.Empty<Damageable>();
+                Targets = Array.Empty<Health>();
                 Hits = Array.Empty<AttackHitEntry>();
                 return;
             }
 
             AttackHitEntry[] hitArray = new AttackHitEntry[hits.Count];
-            Damageable[] targetArray = new Damageable[hits.Count];
+            Health[] targetArray = new Health[hits.Count];
             float totalDamage = 0f;
 
             for (int i = 0; i < hits.Count; i++)

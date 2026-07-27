@@ -4,6 +4,7 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.Serialization;
 using DefCity.Gameplay.Flow;
+using DefCore.Gameplay.Flow;
 
 namespace DefCity.Presentation.UI
 {

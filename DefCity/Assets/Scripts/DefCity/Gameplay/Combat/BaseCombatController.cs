@@ -5,6 +5,7 @@ using UnityEngine.Events;
 using DefCity.Gameplay.Entities;
 using DefCity.Gameplay.Navigation;
 using DefCity.Gameplay.World;
+using DefCore.Gameplay.Combat;
 
 namespace DefCity.Gameplay.Combat
 {
@@ -34,7 +35,7 @@ namespace DefCity.Gameplay.Combat
         }
         [SerializeField] private Movable movable;
         [SerializeField] private AttackCapable attacker;
-        [SerializeField] private Damageable damageable;
+        [SerializeField] private Health damageable;
         [SerializeField] private TerrainCellManager terrainCellManager;
         public TerrainCellManager TerrainCellManager
         {
@@ -62,8 +63,8 @@ namespace DefCity.Gameplay.Combat
         }
         [SerializeField] private LayerMask targetLayerMask;
         public float ScanRadius => attacker.EquippedWeapon.AttackRange + 0.1f;
-        [SerializeField] private Damageable currentTarget;
-        public Damageable CurrentTarget => currentTarget;
+        [SerializeField] private Health currentTarget;
+        public Health CurrentTarget => currentTarget;
         [SerializeField] private CombatState currentState = CombatState.Searching;
         public CombatState CurrentState
         {
@@ -170,7 +171,7 @@ namespace DefCity.Gameplay.Combat
                 switch (CurrentState)
                 {
                     case CombatState.Searching:
-                        Damageable target = FindClosestHostileTarget();
+                        Health target = FindClosestHostileTarget();
                         if (target != null)
                         {
                             EnterAttacking(target);
@@ -226,7 +227,7 @@ namespace DefCity.Gameplay.Combat
             wasMovingBeforeAttack = false;
         }
 
-        private void EnterAttacking(Damageable target)
+        private void EnterAttacking(Health target)
         {
             ClearTargetSubscription();
             wasMovingBeforeAttack = movable.IsMoving;
@@ -303,7 +304,7 @@ namespace DefCity.Gameplay.Combat
             return !entity.Team.IsAlliedWith(instigatorEntity.Team);
         }
 
-        private Damageable FindClosestHostileTarget()
+        private Health FindClosestHostileTarget()
         {
             Vector3 origin = transform.position;
             float scanRadiusSqr = ScanRadius * ScanRadius;
@@ -314,7 +315,7 @@ namespace DefCity.Gameplay.Combat
                 scanBuffer,
                 targetLayerMask);
 
-            Damageable closestTarget = null;
+            Health closestTarget = null;
             float closestDistanceSqr = float.PositiveInfinity;
 
             for (int i = 0; i < hitCount; i++)
@@ -325,7 +326,7 @@ namespace DefCity.Gameplay.Combat
                     continue;
                 }
 
-                Damageable damageable = collider.GetComponentInParent<Damageable>();
+                Health damageable = collider.GetComponentInParent<Health>();
                 if (AttackCapable.GetTargetRejectReason(this.entity.Team, damageable, true, out _, out _) != AttackRejectReason.None)
                 {
                     continue;

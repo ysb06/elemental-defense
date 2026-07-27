@@ -1,0 +1,25 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8f135b33e5b14f2a95454bc53372499b, type: 3}
+  m_Name: ElementalDef Base Wave Bundle
+  m_EditorClassIdentifier: Assembly-CSharp::ElementalDef.Gameplay.Flow.WaveBundle
+  waves:
+  - {fileID: 11400000, guid: cf4b01eb7aafa40a69fefb414422e1b8, type: 2}
+  - {fileID: 11400000, guid: 46f28dd2a68e41c88025d60e323f08fe, type: 2}
+  - {fileID: 11400000, guid: 82d066296ffb48efae115ee35d2a3a6a, type: 2}
+  - {fileID: 11400000, guid: 6d04d8705d124ec7bce9b5d238704be0, type: 2}
+  - {fileID: 11400000, guid: 3ec2f81def8c424a809f232185d95374, type: 2}
+  - {fileID: 11400000, guid: 1a100f3bdf5284c428055a2a62aad454, type: 2}
+  - {fileID: 11400000, guid: 16553862d9f2b4b0d8a0cb1c16eba285, type: 2}
+  - {fileID: 11400000, guid: 7b7a0699e489497eaf2db442217ab063, type: 2}
+  - {fileID: 11400000, guid: 4be38bf28c034dc695127b815c58fda2, type: 2}
+  - {fileID: 11400000, guid: 4866fabbd9ca4ad1ad4731a8ca6ed248, type: 2}

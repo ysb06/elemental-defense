@@ -1,5 +1,5 @@
 using System;
-using DefCity.Gameplay.Combat;
+using DefCore.Gameplay.Combat;
 using UnityEngine;
 
 namespace DefCity.Presentation.UI
@@ -10,10 +10,10 @@ namespace DefCity.Presentation.UI
         [SerializeField] private ProgressBarViewController progressBarViewController;
         [SerializeField] private Vector2 screenOffset = new(0f, 20f);
 
-        public Damageable TargetDamageable => targetDamageable;
+        public Health TargetDamageable => targetDamageable;
         public bool IsBound => isBound;
 
-        private Damageable targetDamageable;
+        private Health targetDamageable;
         private Camera targetCamera;
         private bool isBound;
 
@@ -49,7 +49,7 @@ namespace DefCity.Presentation.UI
             UpdateScreenPosition();
         }
 
-        public void Bind(Damageable damageable, Camera targetCamera)
+        public void Bind(Health damageable, Camera targetCamera)
         {
             if (damageable == null)
             {

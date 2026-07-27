@@ -6,6 +6,18 @@ EditorBuildSettings:
   serializedVersion: 2
   m_Scenes:
   - enabled: 1
+    path: Assets/Scenes/ElementalDefMainMenu.unity
+    guid: 14f5074a1e9f4597986f388494c25ee1
+  - enabled: 1
+    path: Assets/Scenes/ElementalDefMain.unity
+    guid: 773cbaf53253d4d4db9efc18a4c1f182
+  - enabled: 1
+    path: Assets/Scenes/ElementalDefVictory.unity
+    guid: b4aa83ed568344d29b16f90747aa04f4
+  - enabled: 1
+    path: Assets/Scenes/ElementalDefDefeat.unity
+    guid: 45d90bd6448c433e8961b9366ea124dd
+  - enabled: 1
     path: Assets/Scenes/SampleScene.unity
     guid: 99c9720ab356a0642a771bea13969a05
   - enabled: 1
