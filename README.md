@@ -163,6 +163,46 @@ Play를 누르면 준비 버튼 없이 첫 웨이브가 바로 시작됩니다. 
 
 재배치 버튼은 선택 상태에 따라 자동으로 비활성화되지 않습니다. 아무 대상도 선택하지 않았거나 적·본영을 선택한 상태에서 누르면 화면 반응 없이 Console에만 경고가 나올 수 있습니다.
 
+### 타워 스펙
+
+현재 테스트 버전에는 **불·물·흙 속성 타워가 각각 한 종류씩** 있습니다. 세 타워는 같은 스펙 구조를 사용하며, 속성별 설정값과 외형만 개별 자산에서 지정됩니다.
+
+| 스펙 그룹     | Inspector 필드 | 설명                                 |
+| --------- | ------------ | ---------------------------------- |
+| `Attack`  | `Element`    | 공격에 적용되는 속성                        |
+| `Attack`  | `Power`      | 지형 및 속성 상성 보정 전의 기본 공격력            |
+| `Attack`  | `Range`      | 이미 탐색한 적을 실제로 공격할 수 있는 최대 거리       |
+| `Attack`  | `Cooldown`   | 공격이 성공적으로 시작된 후 다음 공격까지 기다리는 시간(초) |
+| `Defense` | `Element`    | 적의 공격과 속성 상성을 계산할 때 사용하는 방어 속성     |
+| `Defense` | `Max Health` | 최대 체력                              |
+| `Defense` | `Defense`    | 최종 피해에서 차감되는 기본 방어력                |
+| `Scanner` | `Radius`     | 공격 대상을 탐색하는 반경                     |
+| `Scanner` | `Interval`   | 주변 대상을 다시 탐색하는 주기(초)               |
+
+`Scanner` 부분은 수정하지 않는 것을 권장합니다.
+
+### 적 스펙
+
+현재 테스트 버전에는 최종 기획의 일반·중간·보스 9종 대신, **불·물·흙 속성의 Small 적 세 종류**만 구현되어 있습니다. 세 적은 공통 전투 스펙에 이동 스펙이 추가된 동일한 구조를 사용합니다.
+
+| 스펙 그룹      | Inspector 필드        | 설명                                 |
+| ---------- | ------------------- | ---------------------------------- |
+| `Attack`   | `Element`           | 공격에 적용되는 속성                        |
+| `Attack`   | `Power`             | 지형 및 속성 상성 보정 전의 기본 공격력            |
+| `Attack`   | `Range`             | 타워 또는 본영을 공격할 수 있는 최대 거리           |
+| `Attack`   | `Cooldown`          | 공격이 성공적으로 시작된 후 다음 공격까지 기다리는 시간(초) |
+| `Defense`  | `Element`           | 타워 공격과 속성 상성을 계산할 때 사용하는 방어 속성     |
+| `Defense`  | `Max Health`        | 최대 체력                              |
+| `Defense`  | `Defense`           | 최종 피해에서 차감되는 기본 방어력                |
+| `Scanner`  | `Radius`            | 공격할 대상을 탐색하는 반경                    |
+| `Scanner`  | `Interval`          | 주변 대상을 다시 탐색하는 주기(초)               |
+| `Movement` | `Speed`             | 경로를 따라 이동할 때의 최대 이동 속도             |
+| `Movement` | `Acceleration`      | 이동 속도가 증가하는 정도                     |
+| `Movement` | `Angular Speed`     | 이동 방향을 향해 회전하는 속도                  |
+| `Movement` | `Stopping Distance` | 목표 지점에 도착한 것으로 판단하고 정지하는 거리        |
+
+`Scanner` 부분은 수정하지 않는 것을 권장합니다. `Movement`도 가능하면 수정하지 않는 것을 권장합니다. `Speed` 또는 `Acceleration`를 제어할 경우 가능하면 모든 적의 값을 동일하게 설정해 주세요.
+
 ### 현재 보이는 버튼과 미구현 기능
 
 - `타워 철거` 버튼은 보이지만 아직 작동하지 않습니다.
@@ -179,22 +219,7 @@ Console은 `Window > General > Console`에서 열 수 있습니다. 테스트 �
 
 ### 공통 수정 절차
 
-ElementalDef 전투에서 직접 사용하는 설정은 Project 창의 두 위치에 있습니다.
-
-- `Assets/Settings/ElementalDef/Combat`
-- `Assets/Settings/Wave Schedule`
-
-수정 순서:
-
-1. **Play Mode를 먼저 종료**합니다. ScriptableObject는 Play Mode 중 바꾼 값도 자산에 남을 수 있습니다.
-2. Project 창에서 아래 설명에 적힌 `.asset` 파일을 선택합니다.
-3. Inspector에서 값을 수정합니다. Project 창에 보이는 파일 이름으로 검색해도 됩니다.
-4. 배열은 왼쪽 삼각형으로 펼치고 `+`, `-` 또는 `Size`로 항목을 관리합니다.
-5. `Entity` 같은 자산 참조는 오른쪽의 작은 원형 선택 버튼을 누르거나 Project 창의 프리팹을 해당 칸에 드래그합니다.
-6. `File > Save Project`로 저장한 뒤 Play Mode에서 확인합니다.
-7. 한 번에 한 종류의 값만 바꾸고, 변경 전·후 값과 결과를 기록합니다.
-
-`.asset`과 `.meta` 파일을 Finder/Explorer나 텍스트 편집기에서 직접 수정·이동·삭제하지 않습니다. 설정 자산을 Duplicate하거나 새로 만들어도 현재 씬이 기존 원본을 계속 참조하므로 자동으로 적용되지 않습니다.
+ElementalDef 전투에서 직접 사용하는 설정은 `Assets/Settings/ElementalDef/`에 있습니다.
 
 ### 4-1. 속성 상성 배율
 
@@ -241,27 +266,17 @@ ElementalDef 전투에서 직접 사용하는 설정은 Project 창의 두 위�
 
 자산: `Assets/Settings/Wave Schedule/ElementalDef Base Wave Bundle.asset`
 
-`Waves` 배열의 **위에서 아래 순서**가 실제 플레이 순서입니다. 각 칸은 아래의 `ElementalDef Wave 01`~`05` 자산을 참조합니다. 순서를 바꾸면 게임의 웨이브 순서도 바뀝니다.
+`Waves` 배열의 **위에서 아래 순서**가 실제 플레이 순서입니다. 각 칸은 아래의 `ElementalDef Wave **` 자산을 참조합니다. 순서를 바꾸면 게임의 웨이브 순서도 바뀝니다.
 
 ### 4-4. 웨이브별 적 소환
 
-자산 위치: `Assets/Settings/Wave Schedule/ElementalDef Wave 01.asset` ~ `ElementalDef Wave 05.asset`
+자산 위치: `Assets/Settings/Wave Schedule/`
 
 | Inspector 필드 | 설명 |
 | --- | --- |
 | `Entries` | 해당 웨이브에서 소환할 항목 목록 |
 | `Turn` | 웨이브 시작 후 몇 번째 Turn에 소환할지 지정. 현재 1 Turn은 1초 |
 | `Entity` | 해당 Turn에 한 개 소환할 적 프리팹 |
-
-현재 기본 구성:
-
-| 웨이브 | 소환 Turn | 적 |
-| --- | --- | --- |
-| Wave 01 | 5 | Earth Small |
-| Wave 02 | 5 | Fire Small |
-| Wave 03 | 5 | Water Small |
-| Wave 04 | 3 / 6 / 9 | Earth / Fire / Water |
-| Wave 05 | 3 / 5 / 7 | Water / Fire / Earth |
 
 웨이브 설정에는 현재 구현상 중요한 제약이 있습니다.
 
@@ -273,18 +288,6 @@ ElementalDef 전투에서 직접 사용하는 설정은 Project 창의 두 위�
 - 한 웨이브는 예약된 적을 모두 소환하고 살아 있는 적을 모두 처치해야 종료됩니다.
 
 게임이 다음 웨이브로 넘어가지 않으면 먼저 위 조건과 Console 오류를 확인합니다.
-
-### ScriptableObject 밖에 있는 전투 값
-
-아래 값은 아직 ScriptableObject로 분리되지 않았습니다. 일반 밸런스 테스트에서는 위치만 확인하고, 수정이 필요하면 개발 담당자와 범위를 맞춘 뒤 프리팹을 편집합니다.
-
-| 대상 | 위치 | 현재 주요 값 |
-| --- | --- | --- |
-| 불·물·흙 타워 | `Assets/Prefabs/ElementalDef/Towers` | HP 100, 공격력 10, 사거리 5, 공격 간격 1초, 탐색 반경 3, 방어력 1 |
-| 불·물·흙 Small 적 | `Assets/Prefabs/ElementalDef/Enemies` | HP 100, 공격력 5, 사거리 5, 공격 간격 1초, 탐색 반경 2, 방어력 0, 이동 속도 1 |
-| 본영 | `ElementalDefMain` 씬의 `Headquarters` | HP 100 |
-
-`MapGenerator` Inspector의 `Generate`, `Generate Demo`, `Clear` 버튼은 일반 전투 테스트에서 누르지 않습니다. 타일맵을 즉시 덮어쓰지만 적 경로와 NavMesh를 함께 갱신하지 않아 현재 씬을 실행할 수 없는 상태로 만들 수 있습니다.
 
 ## 5. 권장 테스트 항목
 
@@ -298,51 +301,13 @@ ElementalDef 전투에서 직접 사용하는 설정은 Project 창의 두 위�
 6. **설정 반영**: 상성·지형 배율 또는 Wave 자산을 한 항목만 바꾼 뒤 재실행하여 차이 확인
 7. **오류 확인**: Console의 Warning/Error, 멈춘 웨이브, 공격하지 않는 유닛, 잘못된 배치 상태
 
-### 피드백에 함께 적을 정보
 
-```text
-[테스트 환경]
-- 받은 경로: Git / UVCS
-- Git 브랜치와 커밋 또는 UVCS 브랜치와 변경집합:
-- Unity 버전:
-- 테스트한 날짜:
-
-[변경한 설정]
-- 자산 이름:
-- 변경 전 값 → 변경 후 값:
-
-[결과]
-- 재현 순서:
-- 기대 결과:
-- 실제 결과:
-- 재현 빈도:
-- 스크린샷 또는 영상:
-- Console Warning/Error 전체 문구:
-```
-
-카메라 각도와 타워 위치가 중요하므로, 문제 상황은 가능하면 Game 뷰 전체가 보이는 스크린샷이나 짧은 영상으로 남깁니다.
-
-## 6. 문제 해결
-
-| 증상 | 확인할 내용 |
-| --- | --- |
-| Unity Hub에서 프로젝트로 인식하지 못함 | 저장소 루트가 아니라 내부 `DefCity` 폴더를 선택했는지 확인 |
-| 다른 장면이 실행됨 | `Assets/Scenes/ElementalDefMain.unity`를 직접 열고 Editor Play 했는지 확인 |
-| 키보드·마우스가 작동하지 않음 | Play 중 Game 탭을 한 번 클릭하고 포커스 확인 |
-| 재질이 분홍색이거나 모델·텍스처가 비어 있음 | 임포트 완료 여부와 Git LFS 다운로드 여부 확인 후 화면 공유 |
-| 타워가 공격하지 않음 | 적 탐색 반경 약 3셀 안에 경로가 있는지, 게임이 이미 종료됐는지 확인 |
-| 건설·재배치가 되지 않음 | 파란 셀인지, 아군 타워가 선택됐는지 확인. 자세한 이유는 Console 확인 |
-| 웨이브가 끝나지 않음 | Turn 0·중복 Turn·`Entity=None`·빈 배열 여부와 살아 있는 적 확인 |
-| 승패 화면이 나오지 않음 | 현재는 정식 결과 화면이 없으며 Debug Text의 메시지만 확인 |
-| Safe Mode 또는 빨간 컴파일 Error | 임의 수정하지 말고 브랜치/변경집합과 첫 Error를 개발 담당자에게 전달 |
-
-## 7. 폴더 구조
+## 6. 폴더 구조
 
 ```text
 저장소 루트/
 ├── README.md                 # 현재 안내 문서
 ├── Documents/                # 기획·설계 문서
-│   └── Elemental Defense Design_20260721_v2.docx
 └── DefCity/                  # Unity 프로젝트 본체
     ├── Assets/
     │   ├── Scenes/           # 테스트 씬
@@ -353,16 +318,7 @@ ElementalDef 전투에서 직접 사용하는 설정은 Project 창의 두 위�
     └── ProjectSettings/
 ```
 
-## 8. 개발·공유 담당자 확인 사항
-
-기획자에게 링크를 보내기 전에 다음을 확인합니다.
-
-- 테스트에 필요한 씬, 코드, 프리팹, 설정과 `README.md`를 같은 원격 버전에 반영했는가
-- 기준 문서 `Documents/Elemental Defense Design_20260721_v2.docx`가 실제로 버전 관리에 포함되었는가
-- Git을 쓴다면 기획자에게 **브랜치명과 커밋 ID**, UVCS를 쓴다면 **브랜치와 변경집합 번호**를 전달했는가
-- Git LFS 에셋이 원격에 모두 올라갔는가
-- 깨끗한 새 폴더에 직접 받아 `6000.3.9f1`로 `ElementalDefMain`을 실행해 보았는가
-- Git과 UVCS 중 어느 쪽을 이번 테스트의 기준으로 사용할지 하나만 지정했는가
+## 7. 커밋 메시지 관련
 
 Git 커밋 메시지는 다음 형식을 권장합니다.
 
