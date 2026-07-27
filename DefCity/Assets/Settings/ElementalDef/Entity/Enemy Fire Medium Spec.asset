@@ -19,7 +19,7 @@ MonoBehaviour:
     Cooldown: 1.6
   defense:
     Element: 2
-    MaxHealth: 450
+    MaxHealth: 500
     Defense: 20
   scanner:
     AcquisitionPadding: 0.5

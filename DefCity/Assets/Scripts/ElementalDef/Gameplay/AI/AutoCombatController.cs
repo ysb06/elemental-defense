@@ -25,6 +25,9 @@ namespace ElementalDef.Gameplay.AI
         [SerializeField] private HostileTargetScanner scanner;
         [SerializeField] private Attacker attacker;
         [SerializeField] private UnitMovement movement;
+        [SerializeField] private bool attackWhileMoving;
+
+        public bool AttackWhileMoving => attackWhileMoving;
 
         private AutoCombatState currentState = AutoCombatState.Inactive;
         private PreCombatAction preCombatAction = PreCombatAction.Waiting;
@@ -184,7 +187,7 @@ namespace ElementalDef.Gameplay.AI
             PreCombatAction previousAction = PreCombatAction.Waiting;
             bool acquiredMovementPause = false;
 
-            if (movement != null && movement.HasActiveMovement)
+            if (!attackWhileMoving && movement != null && movement.HasActiveMovement)
             {
                 previousAction = PreCombatAction.Moving;
                 if (!movement.TryPause())

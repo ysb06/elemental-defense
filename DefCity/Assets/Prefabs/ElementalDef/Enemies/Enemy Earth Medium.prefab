@@ -259,6 +259,7 @@ MonoBehaviour:
   scanner: {fileID: 417007681776086162}
   attacker: {fileID: -7039873311529722702}
   movement: {fileID: 1526619126069208240}
+  attackWhileMoving: 1
 --- !u!114 &1357924680135792468
 MonoBehaviour:
   m_ObjectHideFlags: 0
