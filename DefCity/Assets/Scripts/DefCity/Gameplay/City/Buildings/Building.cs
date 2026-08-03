@@ -4,6 +4,7 @@ using UnityEngine;
 using DefCity.Gameplay.Combat;
 using DefCity.Gameplay.Entities;
 using DefCity.Gameplay.Navigation;
+using DefCore.Gameplay.Combat;
 
 namespace DefCity.Gameplay.City.Buildings
 {
@@ -14,7 +15,7 @@ namespace DefCity.Gameplay.City.Buildings
         [SerializeField] private GameObject buildingModel;
         [SerializeField] private Entity entity;
         [SerializeField] private BuildingNavigationModifier navigationModifier;
-        [SerializeField] private Damageable damageable;
+        [SerializeField] private Health damageable;
         [SerializeField] private Collider buildingCollider;
 
         [SerializeField] private float demolishDuration = 3f;
@@ -157,7 +158,7 @@ namespace DefCity.Gameplay.City.Buildings
 
             if (damageable == null)
             {
-                damageable = GetComponent<Damageable>();
+                damageable = GetComponent<Health>();
             }
 
             if (buildingCollider == null)

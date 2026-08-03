@@ -2,6 +2,7 @@ using UnityEngine;
 using UnityEngine.AI;
 using DefCity.Gameplay.Combat;
 using DefCity.Gameplay.Navigation;
+using DefCore.Gameplay.Combat;
 
 namespace DefCity.Presentation.Animation
 {
@@ -13,7 +14,7 @@ namespace DefCity.Presentation.Animation
         private const string DeathTypeParameter = "DeathType_int";
         private const string DeathParameter = "Death_b";
 
-        [SerializeField] private Damageable damageable;
+        [SerializeField] private Health damageable;
         [SerializeField] private Collider unitCollider;
         [SerializeField] private Animator animator;
         [SerializeField] private BaseCombatController combatController;

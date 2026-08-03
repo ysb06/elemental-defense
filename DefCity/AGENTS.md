@@ -1,7 +1,7 @@
 # Agent Guide
 
 ## Scope
-- Primary gameplay work currently lives under `Assets/Scripts/ElementalDefense`.
+- Primary gameplay work currently lives under `Assets/Scripts/ElementalDef`.
 - Shared core defense systems are reused from DefCity, but ElementalDefense is the active development focus.
 
 ## Project Priorities

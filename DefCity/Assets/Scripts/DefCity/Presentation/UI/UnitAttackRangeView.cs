@@ -1,5 +1,6 @@
 using System;
 using DefCity.Gameplay.Combat;
+using DefCore.Gameplay.Combat;
 using UnityEngine;
 
 namespace DefCity.Presentation.UI
@@ -14,11 +15,11 @@ namespace DefCity.Presentation.UI
         [SerializeField, Min(0f)] private float surfaceOffset = 0.05f;
 
         public AttackCapable TargetAttackCapable => targetAttackCapable;
-        public Damageable TargetDamageable => targetDamageable;
+        public Health TargetDamageable => targetDamageable;
         public bool IsBound => isBound;
 
         private AttackCapable targetAttackCapable;
-        private Damageable targetDamageable;
+        private Health targetDamageable;
         private Collider targetCollider;
         private bool isBound;
 
@@ -85,7 +86,7 @@ namespace DefCity.Presentation.UI
             UpdateRangePose();
         }
 
-        public void Bind(AttackCapable attackCapable, Damageable damageable)
+        public void Bind(AttackCapable attackCapable, Health damageable)
         {
             if (attackCapable == null)
             {

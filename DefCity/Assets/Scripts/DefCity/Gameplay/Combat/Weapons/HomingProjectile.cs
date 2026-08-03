@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
-using DefCity.Gameplay.Combat;
+using DefCore.Gameplay.Combat;
 
 namespace DefCity.Gameplay.Combat.Weapons
 {
@@ -80,7 +80,7 @@ namespace DefCity.Gameplay.Combat.Weapons
                 return;
             }
 
-            Damageable liveTarget = GetLiveTarget();
+            Health liveTarget = GetLiveTarget();
             Vector3 targetPoint = lastKnownImpactPoint;
 
             if (liveTarget != null)
@@ -105,9 +105,9 @@ namespace DefCity.Gameplay.Combat.Weapons
             ResolveTargetLost();
         }
 
-        private Damageable GetLiveTarget()
+        private Health GetLiveTarget()
         {
-            Damageable target = attackInfo.Target;
+            Health target = attackInfo.Target;
             if (target == null)
             {
                 return null;
@@ -133,7 +133,7 @@ namespace DefCity.Gameplay.Combat.Weapons
             transform.position = Vector3.MoveTowards(transform.position, destination, moveSpeed * UnityEngine.Time.deltaTime);
         }
 
-        private void ResolveSucceeded(Damageable liveTarget, Vector3 impactPoint)
+        private void ResolveSucceeded(Health liveTarget, Vector3 impactPoint)
         {
             if (hasResolved)
             {
@@ -182,7 +182,7 @@ namespace DefCity.Gameplay.Combat.Weapons
             }
         }
 
-        private List<AttackHitEntry> ApplyDamageAtImpact(Vector3 impactPoint, Damageable primaryTarget)
+        private List<AttackHitEntry> ApplyDamageAtImpact(Vector3 impactPoint, Health primaryTarget)
         {
             List<AttackHitEntry> hits = new(primaryTarget != null ? 4 : 3);
 
@@ -196,7 +196,7 @@ namespace DefCity.Gameplay.Combat.Weapons
                 return hits;
             }
 
-            foreach (Damageable splashTarget in CollectSplashTargets(impactPoint, primaryTarget))
+            foreach (Health splashTarget in CollectSplashTargets(impactPoint, primaryTarget))
             {
                 TryApplyHit(splashTarget, impactPoint, isPrimaryTarget: false, hits);
             }
@@ -204,16 +204,16 @@ namespace DefCity.Gameplay.Combat.Weapons
             return hits;
         }
 
-        private List<Damageable> CollectSplashTargets(Vector3 impactPoint, Damageable primaryTarget)
+        private List<Health> CollectSplashTargets(Vector3 impactPoint, Health primaryTarget)
         {
             int overlapCount = Physics.OverlapSphereNonAlloc(impactPoint, splashRadius, splashOverlapResults);
-            HashSet<Damageable> seenTargets = new();
+            HashSet<Health> seenTargets = new();
             if (primaryTarget != null)
             {
                 seenTargets.Add(primaryTarget);
             }
 
-            List<Damageable> splashTargets = new(overlapCount);
+            List<Health> splashTargets = new(overlapCount);
 
             for (int i = 0; i < overlapCount; i++)
             {
@@ -225,7 +225,7 @@ namespace DefCity.Gameplay.Combat.Weapons
                     continue;
                 }
 
-                Damageable splashTarget = overlapCollider.GetComponentInParent<Damageable>();
+                Health splashTarget = overlapCollider.GetComponentInParent<Health>();
                 if (splashTarget == null || !seenTargets.Add(splashTarget))
                 {
                     continue;
@@ -255,14 +255,14 @@ namespace DefCity.Gameplay.Combat.Weapons
             return splashTargets;
         }
 
-        private bool IsValidSplashTarget(Damageable splashTarget)
+        private bool IsValidSplashTarget(Health splashTarget)
         {
             return splashTarget != null &&
                 splashTarget.gameObject != attackInfo.Attacker.gameObject &&
                 AttackCapable.GetTargetRejectReason(attackInfo.AttackerTeam, splashTarget, true, out _, out _) == AttackRejectReason.None;
         }
 
-        private void TryApplyHit(Damageable target, Vector3 impactPoint, bool isPrimaryTarget, List<AttackHitEntry> hits)
+        private void TryApplyHit(Health target, Vector3 impactPoint, bool isPrimaryTarget, List<AttackHitEntry> hits)
         {
             if (target == null || target.gameObject == attackInfo.Attacker.gameObject)
             {
@@ -285,7 +285,7 @@ namespace DefCity.Gameplay.Combat.Weapons
             hits.Add(new AttackHitEntry(target, damage, impactPoint));
         }
 
-        private float GetDamageAmount(Damageable target, Vector3 impactPoint, bool isPrimaryTarget)
+        private float GetDamageAmount(Health target, Vector3 impactPoint, bool isPrimaryTarget)
         {
             switch (damageType)
             {
@@ -305,7 +305,7 @@ namespace DefCity.Gameplay.Combat.Weapons
             return isPrimaryTarget ? attackInfo.WeaponSnapshot.AttackPower : 0f;
         }
 
-        private float GetSplashEqualDamage(Damageable target, Vector3 impactPoint, bool isPrimaryTarget)
+        private float GetSplashEqualDamage(Health target, Vector3 impactPoint, bool isPrimaryTarget)
         {
             if (isPrimaryTarget)
             {
@@ -322,7 +322,7 @@ namespace DefCity.Gameplay.Combat.Weapons
                 : 0f;
         }
 
-        private float GetSplashFalloffDamage(Damageable target, Vector3 impactPoint, bool isPrimaryTarget)
+        private float GetSplashFalloffDamage(Health target, Vector3 impactPoint, bool isPrimaryTarget)
         {
             if (isPrimaryTarget)
             {

@@ -5,6 +5,10 @@
 			"path": "."
 		},
 		{
+			"name": "Core Unity Scripts",
+			"path": "defcity/Assets/Scripts/DefCore"
+		},
+		{
 			"name": "DefCity Unity Scripts",
 			"path": "defcity/Assets/Scripts/DefCity"
 		},

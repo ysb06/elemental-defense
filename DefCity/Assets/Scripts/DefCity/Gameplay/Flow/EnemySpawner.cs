@@ -8,6 +8,7 @@ using DefCity.Gameplay.Combat;
 using DefCity.Gameplay.Entities;
 using DefCity.Gameplay.Navigation;
 using DefCity.Gameplay.World;
+using DefCore.Gameplay.Flow;
 
 namespace DefCity.Gameplay.Flow
 {

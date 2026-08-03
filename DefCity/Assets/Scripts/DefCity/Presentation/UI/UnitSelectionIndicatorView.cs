@@ -1,5 +1,5 @@
 using System;
-using DefCity.Gameplay.Combat;
+using DefCore.Gameplay.Combat;
 using UnityEngine;
 
 namespace DefCity.Presentation.UI
@@ -12,10 +12,10 @@ namespace DefCity.Presentation.UI
         [SerializeField, Min(0f)] private float padding = 0.25f;
         [SerializeField, Min(0f)] private float surfaceOffset = 0.05f;
 
-        public Damageable TargetDamageable => targetDamageable;
+        public Health TargetDamageable => targetDamageable;
         public bool IsBound => isBound;
 
-        private Damageable targetDamageable;
+        private Health targetDamageable;
         private Collider targetCollider;
         private Vector3 targetLocalBottomCenter;
         private bool isBound;
@@ -67,7 +67,7 @@ namespace DefCity.Presentation.UI
             UpdateIndicatorPose();
         }
 
-        public void Bind(Damageable damageable)
+        public void Bind(Health damageable)
         {
             if (damageable == null)
             {

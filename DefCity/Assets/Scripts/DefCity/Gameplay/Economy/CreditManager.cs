@@ -2,8 +2,7 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Events;
-using DefCity.Gameplay.City.Buildings;
-using DefCity.Gameplay.Flow;
+using DefCore.Gameplay.Flow;
 
 namespace DefCity.Gameplay.Economy
 {

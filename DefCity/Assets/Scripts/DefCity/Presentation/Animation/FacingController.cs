@@ -1,6 +1,7 @@
 using UnityEngine;
 using DefCity.Gameplay.Combat;
 using DefCity.Gameplay.Navigation;
+using DefCore.Gameplay.Combat;
 
 namespace DefCity.Presentation.Animation
 {
@@ -13,7 +14,7 @@ namespace DefCity.Presentation.Animation
 
         private void Update()
         {
-            UpdateFacing(UnityEngine.Time.deltaTime);
+            UpdateFacing(Time.deltaTime);
         }
 
         private void UpdateFacing(float deltaTime)
@@ -40,7 +41,7 @@ namespace DefCity.Presentation.Animation
                 return;
             }
 
-            Damageable currentTarget = combatController.CurrentTarget;
+            Health currentTarget = combatController.CurrentTarget;
             if (currentTarget == null || !currentTarget.IsAlive)
             {
                 return;

@@ -1,0 +1,320 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1 &7199630016847266495
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1967076910966005957}
+  - component: {fileID: 9084500380084530097}
+  - component: {fileID: 4382637278487054453}
+  - component: {fileID: 1757815494118602814}
+  - component: {fileID: 5037959525103639830}
+  - component: {fileID: 6796909468258608858}
+  - component: {fileID: 5520341636506969168}
+  - component: {fileID: 3428429428993746104}
+  - component: {fileID: 2468135790246813579}
+  - component: {fileID: 76587187693198002}
+  - component: {fileID: 1763865585819934060}
+  - component: {fileID: 332207246186636127}
+  m_Layer: 7
+  m_Name: Player Water Tower
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1967076910966005957
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7199630016847266495}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 1818253175562121196}
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!65 &9084500380084530097
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7199630016847266495}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 0.5, y: 1, z: 0.5}
+  m_Center: {x: 0, y: 0.5, z: 0}
+--- !u!114 &4382637278487054453
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7199630016847266495}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 36b2f6deb6f19468eb844a89493a5953, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ElementalDef.Gameplay.Entities.Entity
+  team: {fileID: 0}
+  OnStateChanged:
+    m_PersistentCalls:
+      m_Calls: []
+--- !u!114 &1757815494118602814
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7199630016847266495}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1b5d378652af242768d6005407af908a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::DefCore.Gameplay.Combat.Attacker
+  equippedWeapon: {fileID: 5037959525103639830}
+  entity: {fileID: 4382637278487054453}
+  OnAttackStarted:
+    m_PersistentCalls:
+      m_Calls: []
+  OnAttackRejected:
+    m_PersistentCalls:
+      m_Calls: []
+  OnAttackResolved:
+    m_PersistentCalls:
+      m_Calls: []
+  OnAttackFinished:
+    m_PersistentCalls:
+      m_Calls: []
+  OnAttackCooldownEnd:
+    m_PersistentCalls:
+      m_Calls: []
+--- !u!114 &5037959525103639830
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7199630016847266495}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e2b7b5532d3be403cbd936e72e731d1d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ElementalDef.Gameplay.Combat.Weapons.InstantHitWeapon
+  weaponElement: 1
+  attackPower: 10
+  attackRange: 5
+  attackCooldown: 1
+--- !u!114 &6796909468258608858
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7199630016847266495}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: de9df883e90cb4a87b5399b386fde104, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::DefCore.Gameplay.Combat.Health
+  maxHealth: 100
+  health: 100
+  damageCollider: {fileID: 9084500380084530097}
+  destroyOnDeath: 0
+  deathDestroyDelay: 3
+  OnDamaged:
+    m_PersistentCalls:
+      m_Calls: []
+  OnDeath:
+    m_PersistentCalls:
+      m_Calls: []
+--- !u!114 &5520341636506969168
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7199630016847266495}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9159574c46ca4dbf89f0701cc8423bf2, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::DefCore.Gameplay.Combat.HostileTargetScanner
+  scanRadius: 3
+  scanInterval: 0.5
+  targetLayerMask:
+    serializedVersion: 2
+    m_Bits: 128
+  OnScanCompleted:
+    m_PersistentCalls:
+      m_Calls: []
+--- !u!114 &3428429428993746104
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7199630016847266495}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b48d0f3dd9684d87a43be591771258b3, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ElementalDef.Gameplay.AI.AutoCombatController
+  scanner: {fileID: 5520341636506969168}
+  attacker: {fileID: 1757815494118602814}
+  movement: {fileID: 0}
+  attackWhileMoving: 0
+--- !u!114 &2468135790246813579
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7199630016847266495}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1da82294ad7043a2ac15ea8e1cdd9240, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ElementalDef.Gameplay.Combat.ElementalCombatant
+  defenseElement: 1
+  defense: 1
+--- !u!114 &76587187693198002
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7199630016847266495}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2ffd0e00fdbc4058814a6f4fd59a93e4, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ElementalDef.Gameplay.Entities.TowerUnit
+  spec: {fileID: 11400000, guid: 2d83eab2e490942c08dce7d754afe6ac, type: 2}
+  entity: {fileID: 4382637278487054453}
+  health: {fileID: 6796909468258608858}
+  autoCombatController: {fileID: 3428429428993746104}
+  scanner: {fileID: 5520341636506969168}
+  attacker: {fileID: 1757815494118602814}
+  isShutdown: 0
+  weapon: {fileID: 5037959525103639830}
+  elementalCombatant: {fileID: 2468135790246813579}
+  towerCost: {fileID: 0}
+  OnDestroyed:
+    m_PersistentCalls:
+      m_Calls: []
+--- !u!114 &1763865585819934060
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7199630016847266495}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f9aa15f6b0f4c4016ab920b15ce00e23, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ElementalDef.Gameplay.Economy.TowerCost
+  cost: 1
+  targetTower: {fileID: 76587187693198002}
+--- !u!114 &332207246186636127
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7199630016847266495}
+  m_Enabled: 0
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c9d51cc574b3d4855baf051ef9babc27, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ElementalDef.Presentation.Effect.SimpleAttackEffect
+  attacker: {fileID: 1757815494118602814}
+  impactEffectPrefab: {fileID: 168890, guid: 2c936a8ea5b0042458c44a79a667c645, type: 3}
+  impactAudioClip: {fileID: 8300000, guid: 2c68a4b9d0c8e344e9b16ba030f68ea4, type: 3}
+  impactEffectLifetime: 6
+  effectScale: 0.1
+  yOffset: 0.5
+  impactAudioVolume: 1
+--- !u!1001 &2170890740190168183
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 1967076910966005957}
+    m_Modifications:
+    - target: {fileID: 512062362273147803, guid: e2bf8bfe9e308dd4189b47a2f0b1015e, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 512062362273147803, guid: e2bf8bfe9e308dd4189b47a2f0b1015e, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 512062362273147803, guid: e2bf8bfe9e308dd4189b47a2f0b1015e, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 512062362273147803, guid: e2bf8bfe9e308dd4189b47a2f0b1015e, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 512062362273147803, guid: e2bf8bfe9e308dd4189b47a2f0b1015e, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 512062362273147803, guid: e2bf8bfe9e308dd4189b47a2f0b1015e, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 512062362273147803, guid: e2bf8bfe9e308dd4189b47a2f0b1015e, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 512062362273147803, guid: e2bf8bfe9e308dd4189b47a2f0b1015e, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 512062362273147803, guid: e2bf8bfe9e308dd4189b47a2f0b1015e, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 512062362273147803, guid: e2bf8bfe9e308dd4189b47a2f0b1015e, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 887462761533223201, guid: e2bf8bfe9e308dd4189b47a2f0b1015e, type: 3}
+      propertyPath: m_Name
+      value: Player_Water
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: e2bf8bfe9e308dd4189b47a2f0b1015e, type: 3}
+--- !u!4 &1818253175562121196 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 512062362273147803, guid: e2bf8bfe9e308dd4189b47a2f0b1015e, type: 3}
+  m_PrefabInstance: {fileID: 2170890740190168183}
+  m_PrefabAsset: {fileID: 0}
