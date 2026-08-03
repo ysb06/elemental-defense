@@ -1629,6 +1629,8 @@ Tilemap:
     m_Data: {fileID: 11400000, guid: 0386ed550e7a2467d9911f93526f567d, type: 2}
   - m_RefCount: 4
     m_Data: {fileID: 11400000, guid: 0bca8b770eb484150b3194756d48cce7, type: 2}
+  - m_RefCount: 0
+    m_Data: {fileID: 0}
   m_TileSpriteArray: []
   m_TileMatrixArray:
   - m_RefCount: 120
@@ -1681,8 +1683,8 @@ Tilemap:
     m_Data: {fileID: 8200054191946509998, guid: a5b16af68b821454d80da7ee187097d4, type: 3}
   m_AnimationFrameRate: 1
   m_Color: {r: 1, g: 1, b: 1, a: 1}
-  m_Origin: {x: 0, y: 0, z: 0}
-  m_Size: {x: 13, y: 10, z: 1}
+  m_Origin: {x: -1, y: 0, z: 0}
+  m_Size: {x: 14, y: 26, z: 1}
   m_TileAnchor: {x: 0.5, y: 0.5, z: 0}
   m_TileOrientation: 1
   m_TileOrientationMatrix:
@@ -3453,7 +3455,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ElementalDef.Presentation.Cameras.OrthographicCameraController
   targetCamera: {fileID: 1888046173}
-  mapGenerator: {fileID: 1563008910}
   moveSpeed: 8
   panBoundsPadding: 1
   zoomSpeed: 1
@@ -3564,60 +3565,35 @@ MonoBehaviour:
   m_GameObject: {fileID: 1563008908}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: e0f9927b3a0a7412085ee76ee2605b7a, type: 3}
+  m_Script: {fileID: 11500000, guid: 8be233e440d842fe9ff1010e44dcea7c, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::ElementalDef.Gameplay.World.MapGenerator
+  m_EditorClassIdentifier: Assembly-CSharp::ElementalDef.Gameplay.StageMaps.Testing.StageMapGeneratorTester
   groundTilemap: {fileID: 215170291}
-  groundTile: {fileID: 11400000, guid: 5bfefae30a6af4d009efb4e5102b350b, type: 2}
-  pathTile: {fileID: 11400000, guid: 0a40efbeb4bab407a97ffcc516badf04, type: 2}
-  presetPatternTile: {fileID: 11400000, guid: a52fa268f87f41afa84e308b381cc8de, type: 2}
   mapOrigin: {x: 0, y: 0}
   width: 12
   height: 10
-  demoPatternScatter: 2
-  randomizeDemoSeed: 1
-  demoSeed: 12345
-  maxDemoPlacementAttempts: 2
-  lastDemoPath:
-  - {x: 0, y: 1}
-  - {x: 1, y: 1}
-  - {x: 2, y: 1}
-  - {x: 3, y: 1}
-  - {x: 4, y: 1}
-  - {x: 5, y: 1}
-  - {x: 6, y: 1}
-  - {x: 6, y: 0}
-  - {x: 7, y: 0}
-  - {x: 7, y: 1}
-  - {x: 7, y: 2}
-  - {x: 8, y: 2}
-  - {x: 9, y: 2}
-  - {x: 10, y: 2}
-  - {x: 10, y: 3}
-  - {x: 10, y: 4}
-  - {x: 10, y: 5}
-  - {x: 10, y: 6}
-  - {x: 9, y: 6}
-  - {x: 8, y: 6}
-  - {x: 8, y: 7}
-  - {x: 8, y: 8}
-  - {x: 7, y: 8}
-  - {x: 6, y: 8}
-  - {x: 5, y: 8}
-  - {x: 4, y: 8}
-  - {x: 4, y: 7}
-  - {x: 4, y: 6}
-  - {x: 3, y: 6}
-  - {x: 2, y: 6}
-  - {x: 1, y: 6}
-  - {x: 0, y: 6}
-  lastDemoMessage: Generated 32 path cells through four patterns (seed 2073253927,
-    attempt 1).
-  lastDemoSeed: 2073253927
-  lastDemoAttemptCount: 1
-  lastDemoStart: {x: 0, y: 1}
-  lastDemoEnd: {x: 0, y: 6}
-  lastDemoFailureReason: 0
+  seed: 2147483647
+  patternCount: 4
+  centerBandRadius: 1
+  allowedPatternKinds: 7
+  maxPhysicalLayoutDraws: 1024
+  maxPhysicalLayoutCount: 32
+  orderVariantsPerPhysicalLayout: 8
+  maxRouteCandidateCount: 256
+  maxSearchWorkPerCandidate: 25000
+  maxTotalSearchWork: 500000
+  maxConnectorAlternatives: 8
+  connectorDetourAllowance: 8
+  spawnCell: {x: 0, y: 1}
+  routeGoalCell: {x: 2, y: 8}
+  headquartersCell: {x: 2, y: 9}
+  blockedCellRatio: 0.15
+  minimumDeployableCellCount: 12
+  minimumDeployableCellCountPerElement: 3
+  minimumDeployableNeighborsPerRoadCell: 1
+  endpointProtectionRadius: 1
+  maximumBlockedClusterSize: 3
+  maxBlockedCellPlacementAttempts: 16
 --- !u!1 &1612011219
 GameObject:
   m_ObjectHideFlags: 0

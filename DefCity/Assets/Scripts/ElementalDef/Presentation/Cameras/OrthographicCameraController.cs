@@ -16,7 +16,6 @@ namespace ElementalDef.Presentation.Cameras
 
         [Header("References")]
         [SerializeField] private Camera targetCamera;
-        [SerializeField] private MapGenerator mapGenerator;
 
         [Header("Movement")]
         [SerializeField, Min(0f)] private float moveSpeed = 8f;
@@ -52,10 +51,6 @@ namespace ElementalDef.Presentation.Cameras
         {
             EnsureConfigured();
 
-            Tilemap groundTilemap = mapGenerator.GroundTilemap;
-            movementPlane = groundTilemap.layoutGrid.transform;
-
-            CalculateMapBounds(groundTilemap, mapGenerator.MapBounds);
             CenterOnMap();
             ClampViewFocusToMapBounds();
 
@@ -402,26 +397,6 @@ namespace ElementalDef.Presentation.Cameras
             {
                 throw new InvalidOperationException(
                     "The target Camera must belong to this camera rig.");
-            }
-
-            if (mapGenerator == null)
-            {
-                throw new MissingReferenceException(
-                    $"{nameof(OrthographicCameraController)} requires a {nameof(MapGenerator)} reference.");
-            }
-
-            if (mapGenerator.GroundTilemap == null ||
-                mapGenerator.GroundTilemap.layoutGrid == null)
-            {
-                throw new InvalidOperationException(
-                    $"{nameof(MapGenerator)} must have a Ground Tilemap with a layout Grid.");
-            }
-
-            RectInt mapBounds = mapGenerator.MapBounds;
-            if (mapBounds.width <= 0 || mapBounds.height <= 0)
-            {
-                throw new InvalidOperationException(
-                    "Map bounds must have positive width and height.");
             }
 
             if (!IsFiniteAndPositive(moveSpeed))

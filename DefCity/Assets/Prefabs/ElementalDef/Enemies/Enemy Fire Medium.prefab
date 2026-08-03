@@ -286,7 +286,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9d89fe305a11480cb7e10212ef00a76a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ElementalDef.Gameplay.Entities.EnemyUnit
-  spec: {fileID: 11400000, guid: fade267897e81490ca9166ca356eded3, type: 2}
+  spec: {fileID: 11400000, guid: 8467b205e7c7248bd96a4d673eecfdfd, type: 2}
   entity: {fileID: 7655338829751029028}
   health: {fileID: 3575459017199783597}
   autoCombatController: {fileID: -6898572562443393002}
