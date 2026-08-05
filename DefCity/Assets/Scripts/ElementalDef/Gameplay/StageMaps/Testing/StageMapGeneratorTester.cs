@@ -1,7 +1,9 @@
 using System;
 using System.Diagnostics;
 using ElementalDef.Gameplay.StageMaps.Generation;
+using ElementalDef.Gameplay.StageMaps.Rendering;
 using UnityEngine;
+using UnityEngine.Serialization;
 using UnityEngine.Tilemaps;
 
 namespace ElementalDef.Gameplay.StageMaps.Testing
@@ -24,6 +26,10 @@ namespace ElementalDef.Gameplay.StageMaps.Testing
 
         [SerializeField, Min(1)]
         private int height = 10;
+
+        [Header("Tilemap Rendering")]
+        [SerializeField]
+        private StageMapTileCatalog tileCatalog;
 
         [Header("Route Generation")]
         [SerializeField]
@@ -79,8 +85,12 @@ namespace ElementalDef.Gameplay.StageMaps.Testing
         [SerializeField]
         private Vector2Int routeGoalCell = new(1, 6);
 
+        [FormerlySerializedAs("headquartersCell")]
         [SerializeField]
-        private Vector2Int headquartersCell = new(0, 6);
+        private Vector2Int headquartersOrigin = new(0, 6);
+
+        [SerializeField]
+        private Vector2Int headquartersSize = Vector2Int.one;
 
         [Header("Elemental Ground And Blocking")]
         [SerializeField, Range(0f, 1f)]
@@ -128,10 +138,20 @@ namespace ElementalDef.Gameplay.StageMaps.Testing
         [NonSerialized]
         private double lastGenerationElapsedMilliseconds;
 
+        [NonSerialized]
+        private string lastTilemapMessage = string.Empty;
+
+        [NonSerialized]
+        private bool lastTilemapOperationSucceeded;
+
         public Tilemap GroundTilemap => groundTilemap;
+        public StageMapTileCatalog TileCatalog => tileCatalog;
         public RectInt Bounds => new(
             mapOrigin,
             new Vector2Int(width, height));
+        public RectInt HeadquartersFootprint => new(
+            headquartersOrigin,
+            headquartersSize);
         public bool HasPreview => previewMap != null;
         public GeneratedStageMap PreviewMap => previewMap;
         public GeneratedStageRoute PreviewRoute =>
@@ -141,6 +161,9 @@ namespace ElementalDef.Gameplay.StageMaps.Testing
         public bool HasGenerationTiming => hasGenerationTiming;
         public double LastGenerationElapsedMilliseconds =>
             lastGenerationElapsedMilliseconds;
+        public string LastTilemapMessage => lastTilemapMessage;
+        public bool LastTilemapOperationSucceeded =>
+            lastTilemapOperationSucceeded;
 
         public bool GeneratePreview()
         {
@@ -162,7 +185,7 @@ namespace ElementalDef.Gameplay.StageMaps.Testing
                     PreviewSpawnId,
                     spawnCell,
                     routeGoalCell,
-                    headquartersCell,
+                    HeadquartersFootprint,
                     patternCount,
                     centerBandRadius,
                     allowedPatternKinds,
@@ -217,6 +240,92 @@ namespace ElementalDef.Gameplay.StageMaps.Testing
             return true;
         }
 
+        public bool ApplyPreviewToTilemap()
+        {
+            ClearTilemapOperationStatus();
+
+            if (previewMap == null)
+            {
+                lastTilemapMessage =
+                    "A successful stage map preview is required before applying it to the Tilemap.";
+                return false;
+            }
+
+            if (groundTilemap == null)
+            {
+                lastTilemapMessage =
+                    "Ground Tilemap must be assigned before applying a stage map preview.";
+                return false;
+            }
+
+            if (tileCatalog == null)
+            {
+                lastTilemapMessage =
+                    "Stage Map Tile Catalog must be assigned before applying a stage map preview.";
+                return false;
+            }
+
+            try
+            {
+                StageMapTilemapRenderer renderer =
+                    new(groundTilemap, tileCatalog);
+                renderer.Render(previewMap);
+            }
+            catch (Exception exception) when (
+                exception is ArgumentException ||
+                exception is InvalidOperationException)
+            {
+                lastTilemapMessage =
+                    $"Tilemap rendering failed: {exception.Message}";
+                return false;
+            }
+
+            lastTilemapOperationSucceeded = true;
+            lastTilemapMessage =
+                $"Rendered {previewMap.CellCount} stage map cells to " +
+                $"'{groundTilemap.name}' with seed {previewMap.Seed}.";
+            return true;
+        }
+
+        public bool ClearRenderedTilemap()
+        {
+            ClearTilemapOperationStatus();
+
+            if (groundTilemap == null)
+            {
+                lastTilemapMessage =
+                    "Ground Tilemap must be assigned before clearing the rendered stage map.";
+                return false;
+            }
+
+            if (tileCatalog == null)
+            {
+                lastTilemapMessage =
+                    "Stage Map Tile Catalog must be assigned before clearing the rendered stage map.";
+                return false;
+            }
+
+            try
+            {
+                StageMapTilemapRenderer renderer =
+                    new(groundTilemap, tileCatalog);
+                renderer.Clear();
+            }
+            catch (Exception exception) when (
+                exception is ArgumentException ||
+                exception is InvalidOperationException)
+            {
+                lastTilemapMessage =
+                    $"Clearing the rendered Tilemap failed: {exception.Message}";
+                return false;
+            }
+
+            lastTilemapOperationSucceeded = true;
+            lastTilemapMessage =
+                $"Cleared all stage map tiles from '{groundTilemap.name}'.";
+            return true;
+        }
+
         public void ClearPreview()
         {
             previewMap = null;
@@ -224,11 +333,18 @@ namespace ElementalDef.Gameplay.StageMaps.Testing
             lastMessage = string.Empty;
             hasGenerationTiming = false;
             lastGenerationElapsedMilliseconds = 0d;
+            ClearTilemapOperationStatus();
         }
 
         private void OnValidate()
         {
             ClearPreview();
+        }
+
+        private void ClearTilemapOperationStatus()
+        {
+            lastTilemapMessage = string.Empty;
+            lastTilemapOperationSucceeded = false;
         }
     }
 }

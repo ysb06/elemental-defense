@@ -1,0 +1,25 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 287f0ed7898f4b9eba7c0bfc0d9fb4b9, type: 3}
+  m_Name: ElementalDef Stage Catalog
+  m_EditorClassIdentifier: Assembly-CSharp::ElementalDef.Gameplay.Flow.Settings.StageCatalog
+  stages:
+  - {fileID: 11400000, guid: 19011ee0473c440098a9e5db3451788b, type: 2}
+  - {fileID: 11400000, guid: cd942eaaae4c346a69008cb320d29b90, type: 2}
+  - {fileID: 11400000, guid: 2ce710b94c8fb45a7a41ccc83939a3e9, type: 2}
+  - {fileID: 11400000, guid: 4a860c4d7e7a64898b32ed74d576eca3, type: 2}
+  - {fileID: 11400000, guid: 337b9a448ab4348eb9a22a8098364b6e, type: 2}
+  - {fileID: 11400000, guid: b994e592c1baa4c71a0561a7c0bbe803, type: 2}
+  - {fileID: 11400000, guid: 6d7848aa9eb7143d19ed8c650d95cfd3, type: 2}
+  - {fileID: 11400000, guid: 4f47c92802bf4488e96ac11ba8fbcc59, type: 2}
+  - {fileID: 11400000, guid: 208461fdf7d5b467c91aec26a9a989d8, type: 2}
+  - {fileID: 11400000, guid: ec8896caabe4244f0b2eab0a1602c487, type: 2}

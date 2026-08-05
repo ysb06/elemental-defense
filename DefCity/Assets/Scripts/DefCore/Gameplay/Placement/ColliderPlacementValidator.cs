@@ -118,8 +118,7 @@ namespace DefCore.Gameplay.Placement
                     return false;
                 }
 
-                Matrix4x4 colliderToTargetWorldMatrix =
-                    targetRootMatrix * worldToRootLocalMatrix * collider.transform.localToWorldMatrix;
+                Matrix4x4 colliderToTargetWorldMatrix = targetRootMatrix * worldToRootLocalMatrix * collider.transform.localToWorldMatrix;
                 Bounds colliderWorldBounds = TransformBounds(colliderToTargetWorldMatrix, colliderLocalBounds);
 
                 if (!hasBounds)

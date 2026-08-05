@@ -12,7 +12,7 @@ namespace ElementalDef.Gameplay.StageMaps
         private readonly HashSet<string> spawnIds = new(StringComparer.Ordinal);
         private readonly HashSet<Vector2Int> spawnCells = new();
 
-        private Vector2Int? headquartersCell;
+        private RectInt? headquartersFootprint;
         private Vector2Int? routeGoalCell;
         private EnemyRouteGraph routeGraph;
 
@@ -100,23 +100,16 @@ namespace ElementalDef.Gameplay.StageMaps
             spawns.Add(spawn);
         }
 
-        public void SetHeadquarters(Vector2Int coordinates)
+        public void SetHeadquarters(RectInt footprint)
         {
-            EnsureInsideBounds(coordinates, nameof(coordinates));
-            if (headquartersCell.HasValue)
+            EnsureFootprintInsideBounds(footprint, nameof(footprint));
+            if (headquartersFootprint.HasValue)
             {
                 throw new InvalidOperationException(
-                    $"Headquarters cell {headquartersCell.Value} is already registered.");
+                    $"Headquarters footprint {headquartersFootprint.Value} is already registered.");
             }
 
-            if (routeGoalCell.HasValue && routeGoalCell.Value == coordinates)
-            {
-                throw new ArgumentException(
-                    "The Headquarters and route goal must use different cells.",
-                    nameof(coordinates));
-            }
-
-            headquartersCell = coordinates;
+            headquartersFootprint = footprint;
         }
 
         public void SetRouteGoal(Vector2Int coordinates)
@@ -126,13 +119,6 @@ namespace ElementalDef.Gameplay.StageMaps
             {
                 throw new InvalidOperationException(
                     $"Route goal cell {routeGoalCell.Value} is already registered.");
-            }
-
-            if (headquartersCell.HasValue && headquartersCell.Value == coordinates)
-            {
-                throw new ArgumentException(
-                    "The route goal and Headquarters must use different cells.",
-                    nameof(coordinates));
             }
 
             routeGoalCell = coordinates;
@@ -178,10 +164,10 @@ namespace ElementalDef.Gameplay.StageMaps
                     "A generated stage map requires at least one spawn.");
             }
 
-            if (!headquartersCell.HasValue)
+            if (!headquartersFootprint.HasValue)
             {
                 throw new InvalidOperationException(
-                    "A generated stage map requires a Headquarters cell.");
+                    "A generated stage map requires a Headquarters footprint.");
             }
 
             if (!routeGoalCell.HasValue)
@@ -203,7 +189,7 @@ namespace ElementalDef.Gameplay.StageMaps
                 PatternId,
                 cells,
                 spawns,
-                headquartersCell.Value,
+                headquartersFootprint.Value,
                 routeGoalCell.Value,
                 routeGraph);
         }
@@ -218,6 +204,30 @@ namespace ElementalDef.Gameplay.StageMaps
                     parameterName,
                     coordinates,
                     $"Cell {coordinates} is outside map bounds {Bounds}.");
+            }
+        }
+
+        private void EnsureFootprintInsideBounds(
+            RectInt footprint,
+            string parameterName)
+        {
+            if (footprint.width <= 0 || footprint.height <= 0)
+            {
+                throw new ArgumentOutOfRangeException(
+                    parameterName,
+                    footprint,
+                    "The Headquarters footprint must have a positive width and height.");
+            }
+
+            if (footprint.xMin < Bounds.xMin ||
+                footprint.yMin < Bounds.yMin ||
+                footprint.xMax > Bounds.xMax ||
+                footprint.yMax > Bounds.yMax)
+            {
+                throw new ArgumentOutOfRangeException(
+                    parameterName,
+                    footprint,
+                    $"The Headquarters footprint must be fully inside map bounds {Bounds}.");
             }
         }
     }

@@ -1,7 +1,7 @@
 using System;
 using DefCore.Gameplay.Placement;
 using DefCore.Gameplay.World;
-using ElementalDef.Gameplay.World;
+using ElementalDef.Gameplay.StageMaps;
 using UnityEngine;
 
 namespace ElementalDef.Gameplay.Placement
@@ -33,8 +33,9 @@ namespace ElementalDef.Gameplay.Placement
     public sealed class TowerPlacementValidator : MonoBehaviour
     {
         [SerializeField] private CellSpace targetCellSpace;
-        [SerializeField] private EnemyRoute enemyRoute;
         [SerializeField] private ColliderPlacementValidator colliderPlacementValidator;
+
+        private GeneratedStageMap stageMap;
 
         private void Awake()
         {
@@ -44,6 +45,11 @@ namespace ElementalDef.Gameplay.Placement
         public TowerPlacementResult EvaluatePlacement(GameObject towerSource, CellRef cell)
         {
             return EvaluatePlacement(towerSource, cell, Quaternion.identity);
+        }
+
+        public void Initialize(GeneratedStageMap map)
+        {
+            stageMap = map ?? throw new ArgumentNullException(nameof(map));
         }
 
         public TowerPlacementResult EvaluatePlacement(
@@ -66,6 +72,29 @@ namespace ElementalDef.Gameplay.Placement
                 return CreateResultWithoutPose(cell, "The target cell belongs to a different CellSpace.");
             }
 
+            if (stageMap == null)
+            {
+                return CreateResultWithoutPose(
+                    cell,
+                    "Stage map placement data is not initialized.");
+            }
+
+            if (!stageMap.TryGetCell(
+                    cell.Coordinates,
+                    out StageMapCell stageMapCell))
+            {
+                return CreateResultWithoutPose(
+                    cell,
+                    $"Cell {cell.Coordinates} is outside the generated stage map.");
+            }
+
+            if (!stageMapCell.IsDeployable)
+            {
+                return CreateResultWithoutPose(
+                    cell,
+                    $"Cell {cell.Coordinates} is not deployable.");
+            }
+
             if (!targetCellSpace.TryGetSurfaceCenter(cell.RefCoordinates, out Vector3 worldSurfaceCenter))
             {
                 return CreateResultWithoutPose(
@@ -74,15 +103,6 @@ namespace ElementalDef.Gameplay.Placement
             }
 
             Pose pose = new(worldSurfaceCenter, rotation);
-            if (enemyRoute.ContainsCell(cell.Coordinates))
-            {
-                return CreateResultWithPose(
-                    cell,
-                    pose,
-                    false,
-                    $"Cell {cell.Coordinates} belongs to the enemy route.");
-            }
-
             if (!colliderPlacementValidator.CanPlace(
                     towerSource,
                     pose.position,
@@ -127,12 +147,6 @@ namespace ElementalDef.Gameplay.Placement
             {
                 throw new InvalidOperationException(
                     $"{nameof(TowerPlacementValidator)} requires a {nameof(CellSpace)} reference.");
-            }
-
-            if (enemyRoute == null)
-            {
-                throw new InvalidOperationException(
-                    $"{nameof(TowerPlacementValidator)} requires an {nameof(EnemyRoute)} reference.");
             }
 
             if (colliderPlacementValidator == null)

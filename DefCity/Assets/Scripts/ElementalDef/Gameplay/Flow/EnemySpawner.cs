@@ -12,6 +12,7 @@ using ElementalDef.Gameplay.World;
 using UnityEngine;
 using UnityEngine.Events;
 using ElementalDef.Gameplay.Flow.Settings;
+using Unity.VisualScripting;
 
 namespace ElementalDef.Gameplay.Flow
 {
@@ -38,8 +39,13 @@ namespace ElementalDef.Gameplay.Flow
         private int remainingSpawnCount;
         private bool isSubscribedToTurnChanges;
 
+        public int CurrentActiveEnemyCount => activeEnemies.Count;
+        public IReadOnlyList<EnemyUnit> ActiveEnemies => (IReadOnlyList<EnemyUnit>)activeEnemies.AsReadOnlyList();
+        public bool IsWaveRunning => waveState == WaveRuntimeState.Running;
+
         public EnemySpawnerEvent OnWaveStarted = new();
         public EnemySpawnerEvent OnWaveCompleted = new();
+        public EnemySpawnerEvent OnEnemyDefeated = new();
 
         private void Awake()
         {
@@ -253,6 +259,8 @@ namespace ElementalDef.Gameplay.Flow
             {
                 defeatedEnemyFollower.OnRouteFailed.RemoveListener(HandleEnemyRouteFailed);
             }
+
+            OnEnemyDefeated?.Invoke(defeatedEnemy.gameObject);
 
             if (waveState != WaveRuntimeState.Running || remainingSpawnCount != 0 || activeEnemies.Count != 0)
             {

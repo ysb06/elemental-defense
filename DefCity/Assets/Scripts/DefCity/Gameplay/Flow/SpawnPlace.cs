@@ -3,9 +3,7 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using UnityEngine;
 using DefCity.Gameplay.World;
-#if UNITY_EDITOR
 using UnityEditor;
-#endif
 
 namespace DefCity.Gameplay.Flow
 {
@@ -112,12 +110,10 @@ namespace DefCity.Gameplay.Flow
             RecalculateSpawnableCellsInternal(null, rangeExclusion);
         }
 
-        private void OnDrawGizmosSelected()
-        {
-#if UNITY_EDITOR
-            DrawGizmos();
-#endif
-        }
+        // private void OnDrawGizmosSelected()
+        // {
+        //     DrawGizmos();
+        // }
 
         private void RecalculateSpawnableCellsInternal(
             HashSet<Vector3Int> excludedCellPositions,
@@ -179,25 +175,25 @@ namespace DefCity.Gameplay.Flow
             return value;
         }
 
-        private void DrawGizmos()
-        {
-            Vector3 center = transform.position;
+            // private void DrawGizmos()
+            // {
+            //     Vector3 center = transform.position;
 
-            Handles.color = SpawnRangeGizmoColor;
-            Handles.DrawWireDisc(center, Vector3.up, range, 2f);
+            //     Handles.color = SpawnRangeGizmoColor;
+            //     Handles.DrawWireDisc(center, Vector3.up, range, 2f);
 
-            if (excludedRange > 0f)
-            {
-                Handles.color = ExcludedRangeGizmoColor;
-                Handles.DrawWireDisc(GetExcludedRangeCenter(), Vector3.up, excludedRange, 2f);
-            }
+            //     if (excludedRange > 0f)
+            //     {
+            //         Handles.color = ExcludedRangeGizmoColor;
+            //         Handles.DrawWireDisc(GetExcludedRangeCenter(), Vector3.up, excludedRange, 2f);
+            //     }
 
-            Gizmos.color = SpawnableCellGizmoColor;
-            foreach (TerrainCell cell in spawnableCells)
-            {
-                DrawCellGizmo(cell);
-            }
-        }
+            //     Gizmos.color = SpawnableCellGizmoColor;
+            //     foreach (TerrainCell cell in spawnableCells)
+            //     {
+            //         DrawCellGizmo(cell);
+            //     }
+            // }
 
         private static void DrawCellGizmo(TerrainCell cell)
         {

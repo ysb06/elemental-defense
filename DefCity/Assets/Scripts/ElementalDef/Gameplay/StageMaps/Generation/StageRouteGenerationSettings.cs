@@ -23,19 +23,17 @@ namespace ElementalDef.Gameplay.StageMaps.Generation
         public const int DefaultConnectorDetourAllowance = 8;
 
         [Obsolete("Use DefaultMaxPhysicalLayoutCount instead.")]
-        public const int DefaultMaxGenerationAttempts =
-            DefaultMaxPhysicalLayoutCount;
+        public const int DefaultMaxGenerationAttempts = DefaultMaxPhysicalLayoutCount;
 
         [Obsolete("Use DefaultMaxSearchWorkPerCandidate instead.")]
-        public const int DefaultMaxPathSearchNodes =
-            DefaultMaxSearchWorkPerCandidate;
+        public const int DefaultMaxPathSearchNodes = DefaultMaxSearchWorkPerCandidate;
 
         public RectInt Bounds { get; }
         public int Seed { get; }
         public string SpawnId { get; }
         public Vector2Int SpawnCell { get; }
         public Vector2Int RouteGoalCell { get; }
-        public Vector2Int HeadquartersCell { get; }
+        public RectInt HeadquartersFootprint { get; }
         public int PatternCount { get; }
         public int CenterBandRadius { get; }
         public StageRoutePatternKinds AllowedPatternKinds { get; }
@@ -60,15 +58,14 @@ namespace ElementalDef.Gameplay.StageMaps.Generation
             string spawnId,
             Vector2Int spawnCell,
             Vector2Int routeGoalCell,
-            Vector2Int headquartersCell,
+            RectInt headquartersFootprint,
             int patternCount,
             int centerBandRadius = 0,
             StageRoutePatternKinds allowedPatternKinds = StageRoutePatternKinds.All,
             int maxGenerationAttempts = DefaultMaxPhysicalLayoutCount,
             int maxPathSearchNodes = DefaultMaxSearchWorkPerCandidate,
             int maxPhysicalLayoutDraws = DefaultMaxPhysicalLayoutDraws,
-            int orderVariantsPerPhysicalLayout =
-                DefaultOrderVariantsPerPhysicalLayout,
+            int orderVariantsPerPhysicalLayout = DefaultOrderVariantsPerPhysicalLayout,
             int maxRouteCandidateCount = DefaultMaxRouteCandidateCount,
             int maxTotalSearchWork = DefaultMaxTotalSearchWork,
             int maxConnectorAlternatives = DefaultMaxConnectorAlternatives,
@@ -98,7 +95,10 @@ namespace ElementalDef.Gameplay.StageMaps.Generation
 
             EnsureCellInBounds(bounds, spawnCell, nameof(spawnCell));
             EnsureCellInBounds(bounds, routeGoalCell, nameof(routeGoalCell));
-            EnsureCellInBounds(bounds, headquartersCell, nameof(headquartersCell));
+            EnsureFootprintInBounds(
+                bounds,
+                headquartersFootprint,
+                nameof(headquartersFootprint));
 
             if (!IsPerimeterCell(bounds, spawnCell))
             {
@@ -108,18 +108,22 @@ namespace ElementalDef.Gameplay.StageMaps.Generation
             }
 
             if (spawnCell == routeGoalCell ||
-                spawnCell == headquartersCell ||
-                routeGoalCell == headquartersCell)
+                headquartersFootprint.Contains(spawnCell) ||
+                headquartersFootprint.Contains(routeGoalCell))
             {
                 throw new ArgumentException(
-                    "Spawn, route goal, and Headquarters must use distinct cells.");
+                    "Spawn and route goal must be distinct and outside the " +
+                    "Headquarters footprint.");
             }
 
-            if (GetManhattanDistance(routeGoalCell, headquartersCell) != 1)
+            if (!IsCardinallyAdjacent(
+                    routeGoalCell,
+                    headquartersFootprint))
             {
                 throw new ArgumentException(
-                    "The route goal and Headquarters must be cardinally adjacent.",
-                    nameof(headquartersCell));
+                    "The route goal must be cardinally adjacent to the " +
+                    "Headquarters footprint.",
+                    nameof(headquartersFootprint));
             }
 
             if (patternCount < 1 || patternCount > 5)
@@ -234,7 +238,7 @@ namespace ElementalDef.Gameplay.StageMaps.Generation
             SpawnId = spawnId;
             SpawnCell = spawnCell;
             RouteGoalCell = routeGoalCell;
-            HeadquartersCell = headquartersCell;
+            HeadquartersFootprint = headquartersFootprint;
             PatternCount = patternCount;
             CenterBandRadius = centerBandRadius;
             AllowedPatternKinds = allowedPatternKinds;
@@ -246,6 +250,11 @@ namespace ElementalDef.Gameplay.StageMaps.Generation
             MaxTotalSearchWork = maxTotalSearchWork;
             MaxConnectorAlternatives = maxConnectorAlternatives;
             ConnectorDetourAllowance = connectorDetourAllowance;
+        }
+
+        public bool IsHeadquartersCell(Vector2Int cell)
+        {
+            return HeadquartersFootprint.Contains(cell);
         }
 
         private static void EnsureCellInBounds(
@@ -270,10 +279,54 @@ namespace ElementalDef.Gameplay.StageMaps.Generation
                    cell.y == bounds.yMax - 1;
         }
 
-        private static long GetManhattanDistance(Vector2Int first, Vector2Int second)
+        private static void EnsureFootprintInBounds(
+            RectInt bounds,
+            RectInt footprint,
+            string parameterName)
         {
-            return Math.Abs((long)first.x - second.x) +
-                   Math.Abs((long)first.y - second.y);
+            if (footprint.width <= 0 || footprint.height <= 0)
+            {
+                throw new ArgumentOutOfRangeException(
+                    parameterName,
+                    footprint,
+                    "The Headquarters footprint must have positive dimensions.");
+            }
+
+            long footprintXMax = (long)footprint.xMin + footprint.width;
+            long footprintYMax = (long)footprint.yMin + footprint.height;
+            if (footprint.xMin < bounds.xMin ||
+                footprint.yMin < bounds.yMin ||
+                footprintXMax > bounds.xMax ||
+                footprintYMax > bounds.yMax)
+            {
+                throw new ArgumentOutOfRangeException(
+                    parameterName,
+                    footprint,
+                    $"The Headquarters footprint {footprint} must be fully " +
+                    $"inside route generation bounds {bounds}.");
+            }
+        }
+
+        private static bool IsCardinallyAdjacent(
+            Vector2Int cell,
+            RectInt footprint)
+        {
+            long cellX = cell.x;
+            long cellY = cell.y;
+            long xMin = footprint.xMin;
+            long yMin = footprint.yMin;
+            long xMax = xMin + footprint.width;
+            long yMax = yMin + footprint.height;
+
+            bool touchesVerticalEdge =
+                (cellX == xMin - 1L || cellX == xMax) &&
+                cellY >= yMin &&
+                cellY < yMax;
+            bool touchesHorizontalEdge =
+                (cellY == yMin - 1L || cellY == yMax) &&
+                cellX >= xMin &&
+                cellX < xMax;
+            return touchesVerticalEdge || touchesHorizontalEdge;
         }
     }
 }

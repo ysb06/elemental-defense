@@ -18,8 +18,9 @@ namespace DefCore.Gameplay.Combat
         [SerializeField] private Entity entity;
 
         // 기본 발생 이벤트. Inspector에서도 확인 가능하도록 public으로 노출
-        public AttackStartedEvent OnAttackStarted = new();
+        public AttackEvent OnAttackStarted = new();
         public AttackRejectedEvent OnAttackRejected = new();
+        public AttackEvent OnAttackCommitted = new();
         public AttackResolvedEvent OnAttackResolved = new();
         public AttackFinishedEvent OnAttackFinished = new();
         public AttackCooldownEndEvent OnAttackCooldownEnd = new();
@@ -193,6 +194,10 @@ namespace DefCore.Gameplay.Combat
                         isOnCooldown = false;
                         pendingReject = new AttackRejectedEventArgs(attackInfoArgs, AttackRejectReason.WeaponRejected);
                         hasReject = true;
+                    }
+                    else
+                    {
+                        OnAttackCommitted.Invoke(gameObject, attackInfoArgs);
                     }
                 }
             }
@@ -385,7 +390,7 @@ namespace DefCore.Gameplay.Combat
     }
 
     [Serializable]
-    public class AttackStartedEvent : UnityEvent<GameObject, AttackInfoArgs> { }
+    public class AttackEvent : UnityEvent<GameObject, AttackInfoArgs> { }
 
     [Serializable]
     public class AttackRejectedEvent : UnityEvent<GameObject, AttackRejectedEventArgs> { }

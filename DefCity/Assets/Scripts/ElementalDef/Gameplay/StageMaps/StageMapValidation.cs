@@ -37,6 +37,11 @@ namespace ElementalDef.Gameplay.StageMaps
         InsufficientRoadAdjacentDeployableCells,
         BlockedCellInsideEndpointProtectionRadius,
         BlockedCellClusterTooLarge,
+        HeadquartersFootprintOverlapsSpawn,
+        HeadquartersFootprintOverlapsRouteGoal,
+        HeadquartersFootprintOverlapsRoad,
+        HeadquartersFootprintOverlapsRouteNode,
+        RouteGoalNotAdjacentToHeadquarters,
     }
 
     public readonly struct StageMapValidationError

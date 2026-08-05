@@ -3,6 +3,7 @@ using System.Text;
 using ElementalDef.Gameplay.Combat;
 using ElementalDef.Gameplay.StageMaps.Generation;
 using UnityEditor;
+using UnityEditor.SceneManagement;
 using UnityEngine;
 using UnityEngine.Tilemaps;
 
@@ -40,6 +41,16 @@ namespace ElementalDef.Gameplay.StageMaps.Testing.Editor
         private StageMapGeneratorTester EditTarget =>
             (StageMapGeneratorTester)target;
 
+        private void OnEnable()
+        {
+            Undo.undoRedoPerformed += HandleUndoRedo;
+        }
+
+        private void OnDisable()
+        {
+            Undo.undoRedoPerformed -= HandleUndoRedo;
+        }
+
         public override void OnInspectorGUI()
         {
             DrawDefaultInspector();
@@ -64,7 +75,40 @@ namespace ElementalDef.Gameplay.StageMaps.Testing.Editor
                 }
             }
 
+            EditorGUILayout.Space();
+            using (new EditorGUI.DisabledScope(!EditTarget.HasPreview))
+            {
+                if (GUILayout.Button("Apply Preview To Tilemap"))
+                {
+                    RegisterTilemapUndo("Apply Stage Map Preview");
+                    if (EditTarget.ApplyPreviewToTilemap())
+                    {
+                        MarkTilemapDirty();
+                    }
+
+                    Repaint();
+                    SceneView.RepaintAll();
+                }
+            }
+
+            using (new EditorGUI.DisabledScope(
+                       EditTarget.GroundTilemap == null))
+            {
+                if (GUILayout.Button("Clear Rendered Tilemap"))
+                {
+                    RegisterTilemapUndo("Clear Rendered Stage Map");
+                    if (EditTarget.ClearRenderedTilemap())
+                    {
+                        MarkTilemapDirty();
+                    }
+
+                    Repaint();
+                    SceneView.RepaintAll();
+                }
+            }
+
             DrawGenerationStatus();
+            DrawTilemapStatus();
         }
 
         private void OnSceneGUI()
@@ -126,6 +170,9 @@ namespace ElementalDef.Gameplay.StageMaps.Testing.Editor
             summary.AppendLine($"Pattern ID: {map.PatternId}");
             summary.AppendLine($"Generator: {map.GeneratorVersion}");
             summary.AppendLine(
+                $"Headquarters: origin {map.HeadquartersFootprint.position}, " +
+                $"size {map.HeadquartersFootprint.size}");
+            summary.AppendLine(
                 $"Patterns / Road / Ground: " +
                 $"{route.PatternPlacements.Count} / " +
                 $"{statistics.Road} / {result.GroundCellCount}");
@@ -158,6 +205,53 @@ namespace ElementalDef.Gameplay.StageMaps.Testing.Editor
                 "Darker cells with an X keep their element but are blocked. " +
                 "Gray is Road; magenta is Headquarters.",
                 MessageType.None);
+        }
+
+        private void DrawTilemapStatus()
+        {
+            if (string.IsNullOrEmpty(EditTarget.LastTilemapMessage))
+            {
+                return;
+            }
+
+            EditorGUILayout.HelpBox(
+                EditTarget.LastTilemapMessage,
+                EditTarget.LastTilemapOperationSucceeded
+                    ? MessageType.Info
+                    : MessageType.Error);
+        }
+
+        private void RegisterTilemapUndo(string label)
+        {
+            if (Application.isPlaying || EditTarget.GroundTilemap == null)
+            {
+                return;
+            }
+
+            Undo.RegisterCompleteObjectUndo(
+                EditTarget.GroundTilemap,
+                label);
+        }
+
+        private void MarkTilemapDirty()
+        {
+            if (Application.isPlaying || EditTarget.GroundTilemap == null)
+            {
+                return;
+            }
+
+            EditorUtility.SetDirty(EditTarget.GroundTilemap);
+            if (EditTarget.GroundTilemap.gameObject.scene.IsValid())
+            {
+                EditorSceneManager.MarkSceneDirty(
+                    EditTarget.GroundTilemap.gameObject.scene);
+            }
+        }
+
+        private void HandleUndoRedo()
+        {
+            Repaint();
+            SceneView.RepaintAll();
         }
 
         private void AppendRouteStatistics(
@@ -400,11 +494,9 @@ namespace ElementalDef.Gameplay.StageMaps.Testing.Editor
                 Color.red,
                 "Route Goal",
                 geometry);
-            DrawEndpoint(
+            DrawHeadquartersFootprint(
                 tilemap,
-                map.HeadquartersCell,
-                HeadquartersColor,
-                "Headquarters (Blocked / Neutral)",
+                map.HeadquartersFootprint,
                 geometry);
         }
 
@@ -430,6 +522,58 @@ namespace ElementalDef.Gameplay.StageMaps.Testing.Editor
                 position + geometry.CellY.normalized *
                 geometry.MarkerSize * 0.85f,
                 label);
+        }
+
+        private static void DrawHeadquartersFootprint(
+            Tilemap tilemap,
+            RectInt footprint,
+            GridGeometry geometry)
+        {
+            Vector3[] corners = geometry.GetBoundsCorners(
+                tilemap,
+                footprint,
+                RouteOverlayHeight + 0.04f);
+            Vector3[] closedCorners =
+            {
+                corners[0],
+                corners[1],
+                corners[2],
+                corners[3],
+                corners[0],
+            };
+            Handles.color = HeadquartersColor;
+            Handles.DrawAAPolyLine(4f, closedCorners);
+
+            Vector3 center = Vector3.zero;
+            int cellCount = 0;
+            for (int y = footprint.yMin; y < footprint.yMax; y++)
+            {
+                for (int x = footprint.xMin; x < footprint.xMax; x++)
+                {
+                    center += geometry.GetCellCenter(
+                        tilemap,
+                        new Vector2Int(x, y),
+                        RouteOverlayHeight + 0.04f);
+                    cellCount++;
+                }
+            }
+
+            if (cellCount == 0)
+            {
+                return;
+            }
+
+            center /= cellCount;
+            Handles.SphereHandleCap(
+                0,
+                center,
+                Quaternion.identity,
+                geometry.MarkerSize,
+                EventType.Repaint);
+            Handles.Label(
+                center + geometry.CellY.normalized *
+                geometry.MarkerSize * 0.85f,
+                $"Headquarters Center ({footprint.width}x{footprint.height})");
         }
 
         private static void DrawCrossings(

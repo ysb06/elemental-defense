@@ -9,6 +9,7 @@ using DefCore.Gameplay.Combat.Weapons;
 using ElementalDef.Gameplay.Combat.Weapons;
 using ElementalDef.Gameplay.Combat;
 using ElementalDef.Gameplay.Economy;
+using ElementalDef.Gameplay.Combat.Skills;
 
 namespace ElementalDef.Gameplay.Entities
 {
@@ -28,13 +29,19 @@ namespace ElementalDef.Gameplay.Entities
         [SerializeField] private ElementalWeaponBase weapon;
         [SerializeField] private ElementalCombatant elementalCombatant;
         [SerializeField] private TowerCost towerCost;
+        [SerializeField] private TowerSkillController skillController;
+        [SerializeField, Min(0f)] private float deathRemovalDelay = 5.5f;
 
+        public string InstanceId { get; private set; }
         public TowerUnitSpec Spec => spec;
+        public TowerSkillController SkillController => skillController;
 
         public TowerUnitEvent OnDestroyed = new();
 
         private void Awake()
         {
+            InstanceId = Guid.NewGuid().ToString("N");
+
             entity = entity != null ? entity : GetComponent<Entity>();
             health = health != null ? health : GetComponent<Health>();
             autoCombatController = autoCombatController != null ? autoCombatController : GetComponent<AutoCombatController>();
@@ -43,6 +50,7 @@ namespace ElementalDef.Gameplay.Entities
             weapon = weapon != null ? weapon : GetComponentInChildren<ElementalWeaponBase>();
             elementalCombatant = elementalCombatant != null ? elementalCombatant : GetComponent<ElementalCombatant>();
             towerCost = towerCost != null ? towerCost : GetComponent<TowerCost>();
+            skillController = skillController != null ? skillController : GetComponent<TowerSkillController>();
 
             health.OnDeath.AddListener(HandleDeath);
         }
@@ -76,6 +84,8 @@ namespace ElementalDef.Gameplay.Entities
             {
                 health.OnDeath.RemoveListener(HandleDeath);
             }
+
+            skillController?.Shutdown();
         }
 
         private void HandleDeath(GameObject sender, DamageEventArgs args)
@@ -95,7 +105,7 @@ namespace ElementalDef.Gameplay.Entities
             }
             finally
             {
-                Destroy(gameObject);
+                Destroy(gameObject, deathRemovalDelay);
             }
         }
 
@@ -107,9 +117,16 @@ namespace ElementalDef.Gameplay.Entities
             }
 
             isShutdown = true;
-            autoCombatController.Shutdown();
-            scanner.enabled = false;
-            attacker.enabled = false;
+            try
+            {
+                skillController?.Shutdown();
+            }
+            finally
+            {
+                autoCombatController.Shutdown();
+                scanner.enabled = false;
+                attacker.enabled = false;
+            }
         }
     }
 

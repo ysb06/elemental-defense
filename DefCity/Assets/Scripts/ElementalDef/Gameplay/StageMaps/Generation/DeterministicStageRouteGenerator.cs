@@ -7,7 +7,7 @@ namespace ElementalDef.Gameplay.StageMaps.Generation
 {
     public sealed class DeterministicStageRouteGenerator
     {
-        public const string GeneratorVersion = "deterministic-stage-route-v4";
+        public const string GeneratorVersion = "deterministic-stage-route-v5";
 
         private readonly IStageRoutePatternStrategy patternStrategy;
 
@@ -472,7 +472,7 @@ namespace ElementalDef.Gameplay.StageMaps.Generation
                         if (!settings.Bounds.Contains(cell) ||
                             cell == settings.SpawnCell ||
                             cell == settings.RouteGoalCell ||
-                            cell == settings.HeadquartersCell)
+                            settings.HeadquartersFootprint.Contains(cell))
                         {
                             throw new InvalidOperationException(
                                 $"Pattern passage '{passage.PassageId}' uses reserved " +

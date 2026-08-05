@@ -2,6 +2,7 @@ using System;
 using System.Diagnostics;
 using ElementalDef.Gameplay.StageMaps.Generation;
 using UnityEngine;
+using UnityEngine.Serialization;
 using UnityEngine.Tilemaps;
 
 namespace ElementalDef.Gameplay.StageMaps.Testing
@@ -79,8 +80,12 @@ namespace ElementalDef.Gameplay.StageMaps.Testing
         [SerializeField]
         private Vector2Int routeGoalCell = new(1, 6);
 
+        [FormerlySerializedAs("headquartersCell")]
         [SerializeField]
-        private Vector2Int headquartersCell = new(0, 6);
+        private Vector2Int headquartersOrigin = new(0, 6);
+
+        [SerializeField]
+        private Vector2Int headquartersSize = Vector2Int.one;
 
         [NonSerialized]
         private GeneratedStageRoute previewRoute;
@@ -101,6 +106,9 @@ namespace ElementalDef.Gameplay.StageMaps.Testing
         public RectInt Bounds => new(
             mapOrigin,
             new Vector2Int(width, height));
+        public RectInt HeadquartersFootprint => new(
+            headquartersOrigin,
+            headquartersSize);
         public bool HasPreview => previewRoute != null;
         public GeneratedStageRoute PreviewRoute => previewRoute;
         public StageRouteGenerationResult LastResult => lastResult;
@@ -129,7 +137,7 @@ namespace ElementalDef.Gameplay.StageMaps.Testing
                     PreviewSpawnId,
                     spawnCell,
                     routeGoalCell,
-                    headquartersCell,
+                    HeadquartersFootprint,
                     patternCount,
                     centerBandRadius,
                     allowedPatternKinds,

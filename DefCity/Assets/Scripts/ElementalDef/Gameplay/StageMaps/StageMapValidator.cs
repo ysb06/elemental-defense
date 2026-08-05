@@ -29,6 +29,7 @@ namespace ElementalDef.Gameplay.StageMaps
 
             List<StageMapValidationError> errors = new();
 
+            ValidateHeadquartersFootprint(map, errors);
             ValidateCellMarkers(map, errors);
             ValidateElementCounts(map, rules, errors);
             ValidateRoadAdjacentDeployableCells(map, rules, errors);
@@ -58,14 +59,25 @@ namespace ElementalDef.Gameplay.StageMaps
 
             if (rules.EndpointProtectionRadius > 0)
             {
-                List<Vector2Int> endpoints = new(map.Spawns.Count + 2);
+                List<Vector2Int> endpoints = new();
                 foreach (SpawnDefinition spawn in map.Spawns)
                 {
                     endpoints.Add(spawn.Cell);
                 }
 
                 endpoints.Add(map.RouteGoalCell);
-                endpoints.Add(map.HeadquartersCell);
+                RectInt headquartersFootprint = map.HeadquartersFootprint;
+                for (int y = headquartersFootprint.yMin;
+                     y < headquartersFootprint.yMax;
+                     y++)
+                {
+                    for (int x = headquartersFootprint.xMin;
+                         x < headquartersFootprint.xMax;
+                         x++)
+                    {
+                        endpoints.Add(new Vector2Int(x, y));
+                    }
+                }
                 foreach (Vector2Int blockedCell in blockedCells)
                 {
                     foreach (Vector2Int endpoint in endpoints)
@@ -199,6 +211,106 @@ namespace ElementalDef.Gameplay.StageMaps
                    cell.Element == ElementType.Earth;
         }
 
+        private static void ValidateHeadquartersFootprint(
+            GeneratedStageMap map,
+            ICollection<StageMapValidationError> errors)
+        {
+            foreach (SpawnDefinition spawn in map.Spawns)
+            {
+                if (!map.IsHeadquartersCell(spawn.Cell))
+                {
+                    continue;
+                }
+
+                AddError(
+                    errors,
+                    StageMapValidationErrorCode.HeadquartersFootprintOverlapsSpawn,
+                    $"Headquarters footprint {map.HeadquartersFootprint} overlaps " +
+                    $"spawn '{spawn.Id}' at {spawn.Cell}.",
+                    spawn.Cell,
+                    spawn.StartNodeId);
+            }
+
+            if (map.IsHeadquartersCell(map.RouteGoalCell))
+            {
+                AddError(
+                    errors,
+                    StageMapValidationErrorCode
+                        .HeadquartersFootprintOverlapsRouteGoal,
+                    $"Headquarters footprint {map.HeadquartersFootprint} overlaps " +
+                    $"the route goal at {map.RouteGoalCell}.",
+                    map.RouteGoalCell,
+                    map.RouteGraph.GoalNodeId);
+            }
+
+            if (!IsCardinallyAdjacentToHeadquarters(
+                    map,
+                    map.RouteGoalCell))
+            {
+                AddError(
+                    errors,
+                    StageMapValidationErrorCode
+                        .RouteGoalNotAdjacentToHeadquarters,
+                    $"Route goal {map.RouteGoalCell} must be cardinally adjacent " +
+                    $"to Headquarters footprint {map.HeadquartersFootprint}.",
+                    map.RouteGoalCell,
+                    map.RouteGraph.GoalNodeId);
+            }
+
+            foreach (StageMapCellEntry entry in map.EnumerateCells())
+            {
+                if (!map.IsHeadquartersCell(entry.Coordinates) ||
+                    !entry.Cell.IsRouteCell)
+                {
+                    continue;
+                }
+
+                AddError(
+                    errors,
+                    StageMapValidationErrorCode.HeadquartersFootprintOverlapsRoad,
+                    $"Headquarters footprint {map.HeadquartersFootprint} overlaps " +
+                    $"Road cell {entry.Coordinates}.",
+                    entry.Coordinates);
+            }
+
+            foreach (RouteNode node in map.RouteGraph.Nodes)
+            {
+                if (!map.IsHeadquartersCell(node.Cell))
+                {
+                    continue;
+                }
+
+                AddError(
+                    errors,
+                    StageMapValidationErrorCode
+                        .HeadquartersFootprintOverlapsRouteNode,
+                    $"Headquarters footprint {map.HeadquartersFootprint} overlaps " +
+                    $"route node {node.Id} at {node.Cell}.",
+                    node.Cell,
+                    node.Id);
+            }
+        }
+
+        private static bool IsCardinallyAdjacentToHeadquarters(
+            GeneratedStageMap map,
+            Vector2Int cell)
+        {
+            if (map.IsHeadquartersCell(cell))
+            {
+                return false;
+            }
+
+            foreach (Vector2Int offset in CardinalOffsets)
+            {
+                if (map.IsHeadquartersCell(cell + offset))
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
         private static void ValidateCellMarkers(
             GeneratedStageMap map,
             ICollection<StageMapValidationError> errors)
@@ -219,14 +331,29 @@ namespace ElementalDef.Gameplay.StageMaps
                 }
             }
 
-            StageMapCell headquartersCell = map.GetCell(map.HeadquartersCell);
-            if (headquartersCell.Marker != StageCellMarker.Headquarters)
+            RectInt headquartersFootprint = map.HeadquartersFootprint;
+            for (int y = headquartersFootprint.yMin;
+                 y < headquartersFootprint.yMax;
+                 y++)
             {
-                AddError(
-                    errors,
-                    StageMapValidationErrorCode.HeadquartersMarkerMismatch,
-                    $"Headquarters cell {map.HeadquartersCell} does not use the Headquarters marker.",
-                    map.HeadquartersCell);
+                for (int x = headquartersFootprint.xMin;
+                     x < headquartersFootprint.xMax;
+                     x++)
+                {
+                    Vector2Int coordinates = new(x, y);
+                    StageMapCell footprintCell = map.GetCell(coordinates);
+                    if (footprintCell.Marker == StageCellMarker.Headquarters)
+                    {
+                        continue;
+                    }
+
+                    AddError(
+                        errors,
+                        StageMapValidationErrorCode.HeadquartersMarkerMismatch,
+                        $"Headquarters footprint cell {coordinates} does not use " +
+                        "the Headquarters marker.",
+                        coordinates);
+                }
             }
 
             StageMapCell routeGoalCell = map.GetCell(map.RouteGoalCell);
@@ -257,7 +384,7 @@ namespace ElementalDef.Gameplay.StageMaps
                         break;
 
                     case StageCellMarker.Headquarters:
-                        if (entry.Coordinates != map.HeadquartersCell)
+                        if (!map.IsHeadquartersCell(entry.Coordinates))
                         {
                             AddError(
                                 errors,

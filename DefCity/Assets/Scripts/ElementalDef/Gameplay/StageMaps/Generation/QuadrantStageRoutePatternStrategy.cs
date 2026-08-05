@@ -14,7 +14,7 @@ namespace ElementalDef.Gameplay.StageMaps.Generation
     public sealed class QuadrantStageRoutePatternStrategy : IStageRoutePatternStrategy
     {
         public const string DefaultStrategyId = "quadrant-compact-patterns";
-        public const string CurrentVersion = "4";
+        public const string CurrentVersion = "5";
 
         private const int MaxPassageOrderDrawsPerPhysicalLayout = 64;
         private const int PreferredCompositionProbePhysicalLayoutCount = 4;
@@ -643,7 +643,7 @@ namespace ElementalDef.Gameplay.StageMaps.Generation
             HashSet<Vector2Int> passageEndpointCells)
         {
             if (!settings.Bounds.Contains(cell) ||
-                cell == settings.HeadquartersCell ||
+                settings.HeadquartersFootprint.Contains(cell) ||
                 reservedRoadCells.Contains(cell))
             {
                 return false;
@@ -1124,7 +1124,7 @@ namespace ElementalDef.Gameplay.StageMaps.Generation
                     if (!settings.Bounds.Contains(cell) ||
                         cell == settings.SpawnCell ||
                         cell == settings.RouteGoalCell ||
-                        cell == settings.HeadquartersCell)
+                        settings.HeadquartersFootprint.Contains(cell))
                     {
                         return false;
                     }

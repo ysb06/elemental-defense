@@ -17,5 +17,17 @@
 			"path": "defcity/Assets/Scripts/ElementalDef"
 		}
 	],
-	"settings": {}
+	"settings": {
+		"dotnet.defaultSolution": "./DefCity/DefCity.slnx",
+		"files.exclude": {
+			"**/Library/**": true
+		},
+		"search.exclude": {
+			"**/Library/**": true
+		},
+		"files.watcherExclude": {
+			"**/Library/**": true
+		},
+		"dotnet.preferCSharpExtension": true
+	}
 }

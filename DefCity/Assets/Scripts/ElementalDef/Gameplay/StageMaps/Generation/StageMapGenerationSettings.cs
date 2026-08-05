@@ -27,24 +27,17 @@ namespace ElementalDef.Gameplay.StageMaps.Generation
             StageRouteGenerationSettings routeSettings,
             double blockedCellRatio = DefaultBlockedCellRatio,
             int minimumDeployableCellCount = DefaultMinimumDeployableCellCount,
-            int minimumDeployableCellCountPerElement =
-                DefaultMinimumDeployableCellCountPerElement,
-            int minimumDeployableNeighborsPerRoadCell =
-                DefaultMinimumDeployableNeighborsPerRoadCell,
+            int minimumDeployableCellCountPerElement = DefaultMinimumDeployableCellCountPerElement,
+            int minimumDeployableNeighborsPerRoadCell = DefaultMinimumDeployableNeighborsPerRoadCell,
             int endpointProtectionRadius = DefaultEndpointProtectionRadius,
             int maximumBlockedClusterSize = DefaultMaximumBlockedClusterSize,
-            int maxBlockedCellPlacementAttempts =
-                DefaultMaxBlockedCellPlacementAttempts,
+            int maxBlockedCellPlacementAttempts = DefaultMaxBlockedCellPlacementAttempts,
             bool requireAcyclicRoutes = true,
             bool requireRoadAdjacencyMatchesGraph = true)
         {
-            RouteSettings = routeSettings ??
-                throw new ArgumentNullException(nameof(routeSettings));
+            RouteSettings = routeSettings ?? throw new ArgumentNullException(nameof(routeSettings));
 
-            if (double.IsNaN(blockedCellRatio) ||
-                double.IsInfinity(blockedCellRatio) ||
-                blockedCellRatio < 0d ||
-                blockedCellRatio > 1d)
+            if (double.IsNaN(blockedCellRatio) || double.IsInfinity(blockedCellRatio) || blockedCellRatio < 0d || blockedCellRatio > 1d)
             {
                 throw new ArgumentOutOfRangeException(
                     nameof(blockedCellRatio),

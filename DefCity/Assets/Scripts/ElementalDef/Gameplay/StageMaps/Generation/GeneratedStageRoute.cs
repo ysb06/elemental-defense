@@ -25,7 +25,7 @@ namespace ElementalDef.Gameplay.StageMaps.Generation
         public IReadOnlyList<StageRoutePatternPassage> OrderedPatternPassages =>
             orderedPatternPassages;
         public SpawnDefinition Spawn { get; }
-        public Vector2Int HeadquartersCell { get; }
+        public RectInt HeadquartersFootprint { get; }
         public Vector2Int RouteGoalCell { get; }
         public EnemyRouteGraph RouteGraph { get; }
         public IReadOnlyList<RouteCrossingDefinition> DisconnectedCrossings =>
@@ -118,9 +118,14 @@ namespace ElementalDef.Gameplay.StageMaps.Generation
             patternPlacements = Array.AsReadOnly(placementCopies);
             orderedPatternPassages = Array.AsReadOnly(orderedPassageCopies);
             Spawn = spawn;
-            HeadquartersCell = settings.HeadquartersCell;
+            HeadquartersFootprint = settings.HeadquartersFootprint;
             RouteGoalCell = settings.RouteGoalCell;
             RouteGraph = routeGraph ?? throw new ArgumentNullException(nameof(routeGraph));
+        }
+
+        public bool IsHeadquartersCell(Vector2Int cell)
+        {
+            return HeadquartersFootprint.Contains(cell);
         }
 
         private static int CompareCellsRowMajor(Vector2Int first, Vector2Int second)

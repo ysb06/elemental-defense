@@ -11,6 +11,7 @@ GameObject:
   - component: {fileID: 5930960493999079099}
   - component: {fileID: 5140306688700251329}
   - component: {fileID: -7804751943162356293}
+  - component: {fileID: 9093099532445306847}
   m_Layer: 6
   m_Name: Green ND Ground 0
   m_TagString: Untagged
@@ -69,6 +70,26 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ElementalDef.Gameplay.Combat.ElementalTile
   elementType: 3
+--- !u!114 &9093099532445306847
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8200054191946509998}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1e3fdca004f2d45fe8abbed571a8abd5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.AI.Navigation::Unity.AI.Navigation.NavMeshModifier
+  m_SerializedVersion: 0
+  m_OverrideArea: 1
+  m_Area: 1
+  m_OverrideGenerateLinks: 0
+  m_GenerateLinks: 0
+  m_IgnoreFromBuild: 0
+  m_ApplyToChildren: 1
+  m_AffectedAgents: ffffffff
 --- !u!1001 &1266549943514950835
 PrefabInstance:
   m_ObjectHideFlags: 0

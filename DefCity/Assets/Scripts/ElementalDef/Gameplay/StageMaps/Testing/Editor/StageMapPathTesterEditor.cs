@@ -244,11 +244,9 @@ namespace ElementalDef.Gameplay.StageMaps.Testing.Editor
                 route.RouteGoalCell,
                 Color.red,
                 "Route Goal");
-            DrawEndpoint(
+            DrawHeadquartersFootprint(
                 tilemap,
-                route.HeadquartersCell,
-                HeadquartersColor,
-                "Headquarters");
+                route.HeadquartersFootprint);
 
             foreach (RouteCrossingDefinition crossing in
                      route.DisconnectedCrossings)
@@ -292,6 +290,9 @@ namespace ElementalDef.Gameplay.StageMaps.Testing.Editor
             summary.AppendLine($"Road cells: {route.RoadCells.Count}");
             summary.AppendLine(
                 $"Crossings: {route.DisconnectedCrossings.Count}");
+            summary.AppendLine(
+                $"Headquarters: origin {route.HeadquartersFootprint.position}, " +
+                $"size {route.HeadquartersFootprint.size}");
             summary.AppendLine(
                 $"Passage order: {BuildPassageOrder(route)}");
             AppendGenerationStatistics(summary, result);
@@ -658,6 +659,65 @@ namespace ElementalDef.Gameplay.StageMaps.Testing.Editor
                 0.32f,
                 EventType.Repaint);
             Handles.Label(position + Vector3.up * 0.2f, label);
+        }
+
+        private static void DrawHeadquartersFootprint(
+            Tilemap tilemap,
+            RectInt footprint)
+        {
+            Vector3 center = Vector3.zero;
+            int cellCount = 0;
+            Handles.color = HeadquartersColor;
+            for (int y = footprint.yMin; y < footprint.yMax; y++)
+            {
+                for (int x = footprint.xMin; x < footprint.xMax; x++)
+                {
+                    Vector3[] cellCorners =
+                    {
+                        GetCellCorner(tilemap, x, y),
+                        GetCellCorner(tilemap, x + 1, y),
+                        GetCellCorner(tilemap, x + 1, y + 1),
+                        GetCellCorner(tilemap, x, y + 1),
+                    };
+                    Handles.DrawSolidRectangleWithOutline(
+                        cellCorners,
+                        new Color(
+                            HeadquartersColor.r,
+                            HeadquartersColor.g,
+                            HeadquartersColor.b,
+                            0.16f),
+                        HeadquartersColor);
+                    center += GetCellTop(tilemap, new Vector2Int(x, y));
+                    cellCount++;
+                }
+            }
+
+            if (cellCount == 0)
+            {
+                return;
+            }
+
+            Vector3[] outline =
+            {
+                GetCellCorner(tilemap, footprint.xMin, footprint.yMin),
+                GetCellCorner(tilemap, footprint.xMax, footprint.yMin),
+                GetCellCorner(tilemap, footprint.xMax, footprint.yMax),
+                GetCellCorner(tilemap, footprint.xMin, footprint.yMax),
+                GetCellCorner(tilemap, footprint.xMin, footprint.yMin),
+            };
+            Handles.color = HeadquartersColor;
+            Handles.DrawAAPolyLine(4f, outline);
+
+            center /= cellCount;
+            Handles.SphereHandleCap(
+                0,
+                center,
+                Quaternion.identity,
+                0.32f,
+                EventType.Repaint);
+            Handles.Label(
+                center + Vector3.up * 0.2f,
+                $"Headquarters Center ({footprint.width}x{footprint.height})");
         }
 
         private static Vector3 GetCellTop(

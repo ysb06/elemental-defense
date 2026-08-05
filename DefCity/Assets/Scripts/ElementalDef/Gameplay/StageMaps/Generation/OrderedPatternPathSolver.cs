@@ -143,7 +143,7 @@ namespace ElementalDef.Gameplay.StageMaps.Generation
         private readonly int seed;
         private readonly int candidateIndex;
         private readonly Vector2Int goal;
-        private readonly Vector2Int headquarters;
+        private readonly RectInt headquartersFootprint;
         private readonly IReadOnlyList<StageRoutePatternPassage> passages;
         private readonly int maxConnectorAlternatives;
         private readonly int connectorDetourAllowance;
@@ -225,7 +225,7 @@ namespace ElementalDef.Gameplay.StageMaps.Generation
             seed = settings.Seed;
             this.candidateIndex = candidateIndex;
             goal = settings.RouteGoalCell;
-            headquarters = settings.HeadquartersCell;
+            headquartersFootprint = settings.HeadquartersFootprint;
             passages = layout.OrderedPassages;
             this.maxConnectorAlternatives = maxConnectorAlternatives;
             this.connectorDetourAllowance = connectorDetourAllowance;
@@ -1163,7 +1163,8 @@ namespace ElementalDef.Gameplay.StageMaps.Generation
             Vector2Int source,
             Vector2Int target)
         {
-            if (!bounds.Contains(cell) || cell == headquarters)
+            if (!bounds.Contains(cell) ||
+                headquartersFootprint.Contains(cell))
             {
                 return false;
             }
@@ -1186,7 +1187,7 @@ namespace ElementalDef.Gameplay.StageMaps.Generation
             int passageIndex)
         {
             if (!bounds.Contains(candidate) ||
-                candidate == headquarters ||
+                headquartersFootprint.Contains(candidate) ||
                 usedCellCounts.ContainsKey(candidate))
             {
                 return false;
@@ -1260,7 +1261,7 @@ namespace ElementalDef.Gameplay.StageMaps.Generation
             Vector2Int current = connector[candidateIndex - 1];
             Vector2Int candidate = connector[candidateIndex];
             if (!bounds.Contains(candidate) ||
-                candidate == headquarters ||
+                headquartersFootprint.Contains(candidate) ||
                 usedCellCounts.ContainsKey(candidate) ||
                 ContainsConnectorCell(
                     connector,
@@ -1364,7 +1365,8 @@ namespace ElementalDef.Gameplay.StageMaps.Generation
             int cellIndex,
             Vector2Int cell)
         {
-            if (!bounds.Contains(cell) || cell == headquarters)
+            if (!bounds.Contains(cell) ||
+                headquartersFootprint.Contains(cell))
             {
                 return false;
             }

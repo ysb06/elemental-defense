@@ -8,7 +8,7 @@ namespace ElementalDef.Gameplay.StageMaps.Generation
 {
     public sealed class DeterministicStageMapGenerator
     {
-        public const string GeneratorVersion = "deterministic-stage-map-v1";
+        public const string GeneratorVersion = "deterministic-stage-map-v2";
 
         private static readonly ElementType[] SupportedElements =
         {
@@ -144,12 +144,7 @@ namespace ElementalDef.Gameplay.StageMaps.Generation
                 groundCells,
                 elementsByCell,
                 route.RoadCells,
-                new[]
-                {
-                    route.Spawn.Cell,
-                    route.RouteGoalCell,
-                    route.HeadquartersCell,
-                },
+                GetEndpointCells(route),
                 targetBlockedCellCount,
                 settings.MinimumDeployableCellCount,
                 settings.MinimumDeployableCellCountPerElement,
@@ -242,7 +237,14 @@ namespace ElementalDef.Gameplay.StageMaps.Generation
                 {
                     Vector2Int cell = new(x, y);
                     StageMapCell mapCell;
-                    if (roadCells.Contains(cell))
+                    if (route.HeadquartersFootprint.Contains(cell))
+                    {
+                        mapCell = new StageMapCell(
+                            StageTerrainKind.Object,
+                            ElementType.Neutral,
+                            StageCellMarker.Headquarters);
+                    }
+                    else if (roadCells.Contains(cell))
                     {
                         StageCellMarker marker = StageCellMarker.None;
                         if (cell == route.Spawn.Cell)
@@ -259,13 +261,6 @@ namespace ElementalDef.Gameplay.StageMaps.Generation
                             ElementType.Neutral,
                             marker);
                     }
-                    else if (cell == route.HeadquartersCell)
-                    {
-                        mapCell = new StageMapCell(
-                            StageTerrainKind.Object,
-                            ElementType.Neutral,
-                            StageCellMarker.Headquarters);
-                    }
                     else
                     {
                         ElementType element = elementsByCell[cell];
@@ -280,7 +275,7 @@ namespace ElementalDef.Gameplay.StageMaps.Generation
             }
 
             builder.AddSpawn(route.Spawn);
-            builder.SetHeadquarters(route.HeadquartersCell);
+            builder.SetHeadquarters(route.HeadquartersFootprint);
             builder.SetRouteGoal(route.RouteGoalCell);
             builder.SetRouteGraph(route.RouteGraph);
             return builder.Freeze();
@@ -307,7 +302,7 @@ namespace ElementalDef.Gameplay.StageMaps.Generation
                 {
                     Vector2Int cell = new(x, y);
                     if (!roadCells.Contains(cell) &&
-                        cell != route.HeadquartersCell)
+                        !route.HeadquartersFootprint.Contains(cell))
                     {
                         cells.Add(cell);
                     }
@@ -315,6 +310,28 @@ namespace ElementalDef.Gameplay.StageMaps.Generation
             }
 
             return cells;
+        }
+
+        private static IReadOnlyList<Vector2Int> GetEndpointCells(
+            GeneratedStageRoute route)
+        {
+            RectInt headquarters = route.HeadquartersFootprint;
+            List<Vector2Int> endpoints = new(
+                checked(2 + headquarters.width * headquarters.height))
+            {
+                route.Spawn.Cell,
+                route.RouteGoalCell,
+            };
+
+            for (int y = headquarters.yMin; y < headquarters.yMax; y++)
+            {
+                for (int x = headquarters.xMin; x < headquarters.xMax; x++)
+                {
+                    endpoints.Add(new Vector2Int(x, y));
+                }
+            }
+
+            return endpoints;
         }
 
         private static bool TryValidateElementPlacement(

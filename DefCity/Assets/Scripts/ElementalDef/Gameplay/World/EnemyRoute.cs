@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -23,6 +24,16 @@ namespace ElementalDef.Gameplay.World
         public Vector2Int EntryCell => fixedPath[0];
         public Vector2Int ExitCell => fixedPath[^1];
         public Vector2Int this[int pathIndex] => fixedPath[pathIndex];
+
+        public void Initialize(IReadOnlyList<Vector2Int> path)
+        {
+            if (path == null)
+            {
+                throw new ArgumentNullException(nameof(path));
+            }
+
+            fixedPath = new List<Vector2Int>(path);
+        }
 
         public bool ContainsCell(Vector2Int coordinates)
         {

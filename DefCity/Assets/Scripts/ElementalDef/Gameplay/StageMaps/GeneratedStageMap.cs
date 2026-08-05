@@ -15,7 +15,7 @@ namespace ElementalDef.Gameplay.StageMaps
         public string PatternId { get; }
         public int CellCount => cells.Length;
         public IReadOnlyList<SpawnDefinition> Spawns => spawns;
-        public Vector2Int HeadquartersCell { get; }
+        public RectInt HeadquartersFootprint { get; }
         public Vector2Int RouteGoalCell { get; }
         public EnemyRouteGraph RouteGraph { get; }
 
@@ -26,7 +26,7 @@ namespace ElementalDef.Gameplay.StageMaps
             string patternId,
             IReadOnlyList<StageMapCell> sourceCells,
             IReadOnlyList<SpawnDefinition> sourceSpawns,
-            Vector2Int headquartersCell,
+            RectInt headquartersFootprint,
             Vector2Int routeGoalCell,
             EnemyRouteGraph routeGraph)
         {
@@ -34,16 +34,12 @@ namespace ElementalDef.Gameplay.StageMaps
 
             if (string.IsNullOrWhiteSpace(generatorVersion))
             {
-                throw new ArgumentException(
-                    "A generator version is required.",
-                    nameof(generatorVersion));
+                throw new ArgumentException( "A generator version is required.", nameof(generatorVersion));
             }
 
             if (string.IsNullOrWhiteSpace(patternId))
             {
-                throw new ArgumentException(
-                    "A pattern ID is required.",
-                    nameof(patternId));
+                throw new ArgumentException("A pattern ID is required.", nameof(patternId));
             }
 
             if (sourceCells == null)
@@ -65,9 +61,7 @@ namespace ElementalDef.Gameplay.StageMaps
                 StageMapCell cell = sourceCells[index];
                 if (!cell.IsDefined)
                 {
-                    throw new ArgumentException(
-                        $"Cell index {index} is not assigned.",
-                        nameof(sourceCells));
+                    throw new ArgumentException($"Cell index {index} is not assigned.", nameof(sourceCells));
                 }
 
                 cells[index] = cell;
@@ -80,9 +74,7 @@ namespace ElementalDef.Gameplay.StageMaps
 
             if (sourceSpawns.Count == 0)
             {
-                throw new ArgumentException(
-                    "A generated stage map requires at least one spawn.",
-                    nameof(sourceSpawns));
+                throw new ArgumentException("A generated stage map requires at least one spawn.", nameof(sourceSpawns));
             }
 
             SpawnDefinition[] spawnCopies = new SpawnDefinition[sourceSpawns.Count];
@@ -93,55 +85,32 @@ namespace ElementalDef.Gameplay.StageMaps
                 SpawnDefinition spawn = sourceSpawns[index];
                 if (string.IsNullOrWhiteSpace(spawn.Id))
                 {
-                    throw new ArgumentException(
-                        $"Spawn index {index} has no ID.",
-                        nameof(sourceSpawns));
+                    throw new ArgumentException($"Spawn index {index} has no ID.", nameof(sourceSpawns));
                 }
 
                 if (!bounds.Contains(spawn.Cell))
                 {
-                    throw new ArgumentException(
-                        $"Spawn '{spawn.Id}' at {spawn.Cell} is outside the map bounds.",
-                        nameof(sourceSpawns));
+                    throw new ArgumentException($"Spawn '{spawn.Id}' at {spawn.Cell} is outside the map bounds.", nameof(sourceSpawns));
                 }
 
                 if (!spawnIds.Add(spawn.Id))
                 {
-                    throw new ArgumentException(
-                        $"Spawn ID '{spawn.Id}' is duplicated.",
-                        nameof(sourceSpawns));
+                    throw new ArgumentException($"Spawn ID '{spawn.Id}' is duplicated.", nameof(sourceSpawns));
                 }
 
                 if (!spawnCells.Add(spawn.Cell))
                 {
-                    throw new ArgumentException(
-                        $"Spawn cell {spawn.Cell} is duplicated.",
-                        nameof(sourceSpawns));
+                    throw new ArgumentException($"Spawn cell {spawn.Cell} is duplicated.", nameof(sourceSpawns));
                 }
 
                 spawnCopies[index] = spawn;
             }
 
-            if (!bounds.Contains(headquartersCell))
-            {
-                throw new ArgumentOutOfRangeException(
-                    nameof(headquartersCell),
-                    headquartersCell,
-                    "The Headquarters cell must be inside the map bounds.");
-            }
+            EnsureValidFootprint(bounds, headquartersFootprint);
 
             if (!bounds.Contains(routeGoalCell))
             {
-                throw new ArgumentOutOfRangeException(
-                    nameof(routeGoalCell),
-                    routeGoalCell,
-                    "The route goal cell must be inside the map bounds.");
-            }
-
-            if (headquartersCell == routeGoalCell)
-            {
-                throw new ArgumentException(
-                    "The Headquarters and route goal must use different cells.");
+                throw new ArgumentOutOfRangeException(nameof(routeGoalCell), routeGoalCell, "The route goal cell must be inside the map bounds.");
             }
 
             Bounds = bounds;
@@ -149,7 +118,7 @@ namespace ElementalDef.Gameplay.StageMaps
             GeneratorVersion = generatorVersion;
             PatternId = patternId;
             spawns = Array.AsReadOnly(spawnCopies);
-            HeadquartersCell = headquartersCell;
+            HeadquartersFootprint = headquartersFootprint;
             RouteGoalCell = routeGoalCell;
             RouteGraph = routeGraph ?? throw new ArgumentNullException(nameof(routeGraph));
         }
@@ -157,6 +126,11 @@ namespace ElementalDef.Gameplay.StageMaps
         public bool Contains(Vector2Int coordinates)
         {
             return Bounds.Contains(coordinates);
+        }
+
+        public bool IsHeadquartersCell(Vector2Int coordinates)
+        {
+            return HeadquartersFootprint.Contains(coordinates);
         }
 
         public StageMapCell GetCell(Vector2Int coordinates)
@@ -172,9 +146,7 @@ namespace ElementalDef.Gameplay.StageMaps
             return cell;
         }
 
-        public bool TryGetCell(
-            Vector2Int coordinates,
-            out StageMapCell cell)
+        public bool TryGetCell(Vector2Int coordinates, out StageMapCell cell)
         {
             if (!Bounds.Contains(coordinates))
             {
@@ -193,9 +165,7 @@ namespace ElementalDef.Gameplay.StageMaps
                 for (int localX = 0; localX < Bounds.width; localX++)
                 {
                     int index = localY * Bounds.width + localX;
-                    Vector2Int coordinates = new(
-                        Bounds.xMin + localX,
-                        Bounds.yMin + localY);
+                    Vector2Int coordinates = new(Bounds.xMin + localX, Bounds.yMin + localY);
                     yield return new StageMapCellEntry(coordinates, cells[index]);
                 }
             }
@@ -212,13 +182,35 @@ namespace ElementalDef.Gameplay.StageMaps
         {
             if (bounds.width <= 0 || bounds.height <= 0)
             {
-                throw new ArgumentOutOfRangeException(
-                    nameof(bounds),
-                    bounds,
-                    "Stage map bounds must have a positive width and height.");
+                throw new ArgumentOutOfRangeException(nameof(bounds), bounds, "Stage map bounds must have a positive width and height.");
             }
 
             _ = checked(bounds.width * bounds.height);
+        }
+
+        private static void EnsureValidFootprint(
+            RectInt bounds,
+            RectInt headquartersFootprint)
+        {
+            if (headquartersFootprint.width <= 0 ||
+                headquartersFootprint.height <= 0)
+            {
+                throw new ArgumentOutOfRangeException(
+                    nameof(headquartersFootprint),
+                    headquartersFootprint,
+                    "The Headquarters footprint must have a positive width and height.");
+            }
+
+            if (headquartersFootprint.xMin < bounds.xMin ||
+                headquartersFootprint.yMin < bounds.yMin ||
+                headquartersFootprint.xMax > bounds.xMax ||
+                headquartersFootprint.yMax > bounds.yMax)
+            {
+                throw new ArgumentOutOfRangeException(
+                    nameof(headquartersFootprint),
+                    headquartersFootprint,
+                    $"The Headquarters footprint must be fully inside map bounds {bounds}.");
+            }
         }
     }
 }

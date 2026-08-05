@@ -11,7 +11,13 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 8f135b33e5b14f2a95454bc53372499b, type: 3}
   m_Name: ElementalDef Base Wave Bundle
-  m_EditorClassIdentifier: Assembly-CSharp::ElementalDef.Gameplay.Flow.WaveBundle
+  m_EditorClassIdentifier: Assembly-CSharp::ElementalDef.Gameplay.Flow.Settings.WaveBundle
+  stageId: stage_01
+  displayOrder: 1
+  mapSeed: 1001
+  baseCreditReward: 100
+  baseExperienceReward: 100
+  usesPlaceholderTuning: 1
   waves:
   - {fileID: 11400000, guid: cf4b01eb7aafa40a69fefb414422e1b8, type: 2}
   - {fileID: 11400000, guid: 46f28dd2a68e41c88025d60e323f08fe, type: 2}

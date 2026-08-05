@@ -16,6 +16,7 @@ namespace ElementalDef.Presentation.Cameras
 
         [Header("References")]
         [SerializeField] private Camera targetCamera;
+        [SerializeField] private Tilemap groundTilemap;
 
         [Header("Movement")]
         [SerializeField, Min(0f)] private float moveSpeed = 8f;
@@ -50,6 +51,12 @@ namespace ElementalDef.Presentation.Cameras
         private void Awake()
         {
             EnsureConfigured();
+
+            movementPlane = groundTilemap.layoutGrid.transform;
+            BoundsInt cellBounds = groundTilemap.cellBounds;
+            RectInt mapBounds = new(cellBounds.xMin, cellBounds.yMin, cellBounds.size.x, cellBounds.size.y);
+            
+            CalculateMapBounds(groundTilemap, mapBounds);
 
             CenterOnMap();
             ClampViewFocusToMapBounds();
@@ -227,14 +234,10 @@ namespace ElementalDef.Presentation.Cameras
 
         private void CalculateMapBounds(Tilemap groundTilemap, RectInt mapBounds)
         {
-            Vector3Int bottomLeftCell =
-                new(mapBounds.xMin, mapBounds.yMin, 0);
-            Vector3Int bottomRightCell =
-                new(mapBounds.xMax, mapBounds.yMin, 0);
-            Vector3Int topRightCell =
-                new(mapBounds.xMax, mapBounds.yMax, 0);
-            Vector3Int topLeftCell =
-                new(mapBounds.xMin, mapBounds.yMax, 0);
+            Vector3Int bottomLeftCell = new(mapBounds.xMin, mapBounds.yMin, 0);
+            Vector3Int bottomRightCell = new(mapBounds.xMax, mapBounds.yMin, 0);
+            Vector3Int topRightCell = new(mapBounds.xMax, mapBounds.yMax, 0);
+            Vector3Int topLeftCell = new(mapBounds.xMin, mapBounds.yMax, 0);
 
             Vector3[] worldCorners =
             {
@@ -277,14 +280,12 @@ namespace ElementalDef.Presentation.Cameras
 
         private void ClampViewFocusToMapBounds()
         {
-            if (movementPlane == null ||
-                !TryGetViewFocusPoint(out Vector3 worldFocusPoint))
+            if (movementPlane == null || !TryGetViewFocusPoint(out Vector3 worldFocusPoint))
             {
                 return;
             }
 
-            Vector3 localFocusPoint =
-                movementPlane.InverseTransformPoint(worldFocusPoint);
+            Vector3 localFocusPoint = movementPlane.InverseTransformPoint(worldFocusPoint);
             Vector3 clampedLocalFocusPoint = new(
                 Mathf.Clamp(
                     localFocusPoint.x,
@@ -295,8 +296,7 @@ namespace ElementalDef.Presentation.Cameras
                     localFocusPoint.z,
                     minimumFocusZ - panBoundsPadding,
                     maximumFocusZ + panBoundsPadding));
-            Vector3 clampedWorldFocusPoint =
-                movementPlane.TransformPoint(clampedLocalFocusPoint);
+            Vector3 clampedWorldFocusPoint = movementPlane.TransformPoint(clampedLocalFocusPoint);
 
             transform.position += clampedWorldFocusPoint - worldFocusPoint;
         }
@@ -382,33 +382,27 @@ namespace ElementalDef.Presentation.Cameras
         {
             if (targetCamera == null)
             {
-                throw new MissingReferenceException(
-                    $"{nameof(OrthographicCameraController)} requires a {nameof(Camera)} reference.");
+                throw new MissingReferenceException($"{nameof(OrthographicCameraController)} requires a {nameof(Camera)} reference.");
             }
 
             if (!targetCamera.orthographic)
             {
-                throw new InvalidOperationException(
-                    $"{nameof(OrthographicCameraController)} requires an orthographic Camera.");
+                throw new InvalidOperationException($"{nameof(OrthographicCameraController)} requires an orthographic Camera.");
             }
 
-            if (targetCamera.transform != transform &&
-                !targetCamera.transform.IsChildOf(transform))
+            if (targetCamera.transform != transform && !targetCamera.transform.IsChildOf(transform))
             {
-                throw new InvalidOperationException(
-                    "The target Camera must belong to this camera rig.");
+                throw new InvalidOperationException("The target Camera must belong to this camera rig.");
             }
 
             if (!IsFiniteAndPositive(moveSpeed))
             {
-                throw new InvalidOperationException(
-                    "Camera move speed must be finite and greater than zero.");
+                throw new InvalidOperationException("Camera move speed must be finite and greater than zero.");
             }
 
             if (!IsFiniteAndPositive(zoomSpeed))
             {
-                throw new InvalidOperationException(
-                    "Camera zoom speed must be finite and greater than zero.");
+                throw new InvalidOperationException("Camera zoom speed must be finite and greater than zero.");
             }
 
             if (!IsFiniteAndNonNegative(panBoundsPadding))

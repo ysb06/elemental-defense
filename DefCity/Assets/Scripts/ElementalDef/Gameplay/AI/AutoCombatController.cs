@@ -26,6 +26,7 @@ namespace ElementalDef.Gameplay.AI
         [SerializeField] private Attacker attacker;
         [SerializeField] private UnitMovement movement;
         [SerializeField] private bool attackWhileMoving;
+        [SerializeField] private AutoCombatTargetPolicy targetPolicy;
 
         public bool AttackWhileMoving => attackWhileMoving;
 
@@ -50,6 +51,11 @@ namespace ElementalDef.Gameplay.AI
             if (movement == null)
             {
                 movement = GetComponent<UnitMovement>();
+            }
+
+            if (targetPolicy == null)
+            {
+                targetPolicy = GetComponent<AutoCombatTargetPolicy>();
             }
         }
 
@@ -115,7 +121,7 @@ namespace ElementalDef.Gameplay.AI
             // Cooldown is intentionally checked after target validity and range.
             // GetAttackStartRejectReason reports cooldown before range, which would
             // otherwise keep a moving unit paused after its target left attack range.
-            if (!attacker.IsAttackAvailable(currentTarget))
+            if (!IsTargetAllowed(currentTarget) || !attacker.IsAttackAvailable(currentTarget))
             {
                 EndEngagement();
                 return;
@@ -155,7 +161,7 @@ namespace ElementalDef.Gameplay.AI
             for (int i = 0; i < targets.Count; i++)
             {
                 Health target = targets[i];
-                if (!attacker.IsAttackAvailable(target))
+                if (!IsTargetAllowed(target) || !attacker.IsAttackAvailable(target))
                 {
                     continue;
                 }
@@ -178,8 +184,7 @@ namespace ElementalDef.Gameplay.AI
 
         private bool TryBeginEngagement(Health target)
         {
-            if (currentState != AutoCombatState.Searching ||
-                !attacker.IsAttackAvailable(target))
+            if (currentState != AutoCombatState.Searching || !IsTargetAllowed(target) || !attacker.IsAttackAvailable(target))
             {
                 return false;
             }
@@ -324,6 +329,18 @@ namespace ElementalDef.Gameplay.AI
             if (previousTarget != null)
             {
                 previousTarget.OnDeath.RemoveListener(HandleTargetDeath);
+            }
+        }
+
+        private bool IsTargetAllowed(Health target)
+        {
+            if (targetPolicy == null)
+            {
+                return target != null;
+            }
+            else
+            {
+                return target != null && (targetPolicy == null || targetPolicy.CanTarget(target));
             }
         }
     }

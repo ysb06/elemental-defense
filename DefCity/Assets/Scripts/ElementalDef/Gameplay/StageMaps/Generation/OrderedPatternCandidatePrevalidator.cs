@@ -34,7 +34,7 @@ namespace ElementalDef.Gameplay.StageMaps.Generation
         private readonly RectInt bounds;
         private readonly Vector2Int spawn;
         private readonly Vector2Int goal;
-        private readonly Vector2Int headquarters;
+        private readonly RectInt headquartersFootprint;
         private readonly IReadOnlyList<StageRoutePatternPassage> passages;
         private readonly HashSet<Vector2Int> reservedPatternCells = new();
         private readonly HashSet<CellPair> declaredPatternEdges = new();
@@ -60,7 +60,7 @@ namespace ElementalDef.Gameplay.StageMaps.Generation
             bounds = settings.Bounds;
             spawn = settings.SpawnCell;
             goal = settings.RouteGoalCell;
-            headquarters = settings.HeadquartersCell;
+            headquartersFootprint = settings.HeadquartersFootprint;
             passages = layout.OrderedPassages;
 
             foreach (StageRoutePatternPlacement placement in layout.Placements)
@@ -252,7 +252,7 @@ namespace ElementalDef.Gameplay.StageMaps.Generation
                 if (!bounds.Contains(cell) ||
                     cell == spawn ||
                     cell == goal ||
-                    cell == headquarters ||
+                    headquartersFootprint.Contains(cell) ||
                     occurrence.Value != allowedOccurrenceCount)
                 {
                     return false;
@@ -533,7 +533,7 @@ namespace ElementalDef.Gameplay.StageMaps.Generation
             Vector2Int cell,
             IReadOnlyDictionary<Vector2Int, int> usedCells)
         {
-            return cell != headquarters &&
+            return !headquartersFootprint.Contains(cell) &&
                    cell != goal &&
                    !usedCells.ContainsKey(cell) &&
                    !reservedPatternCells.Contains(cell);
