@@ -309,6 +309,7 @@ MonoBehaviour:
   attacker: {fileID: 1757815494118602814}
   movement: {fileID: 0}
   attackWhileMoving: 0
+  targetPolicy: {fileID: 0}
 --- !u!114 &2468135790246813579
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -344,8 +345,8 @@ MonoBehaviour:
   isShutdown: 0
   weapon: {fileID: 5037959525103639830}
   elementalCombatant: {fileID: 2468135790246813579}
-  towerCost: {fileID: 0}
-  skillController: {fileID: 0}
+  towerCost: {fileID: 7251838954667694415}
+  skillController: {fileID: 9109142033902444059}
   deathRemovalDelay: 4.5
   OnDestroyed:
     m_PersistentCalls:
@@ -363,7 +364,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ElementalDef.Gameplay.Economy.TowerCost
   cost: 1
-  targetTower: {fileID: 76587187693198002}
 --- !u!114 &-8567322740385183067
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -390,7 +390,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 154379c646254035a0bf59d8bfa33ffd, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ElementalDef.Gameplay.Combat.Skills.TowerSkillController
-  executor: {fileID: 0}
+  executor: {fileID: -8567322740385183067}
 --- !u!114 &8818076161465402811
 MonoBehaviour:
   m_ObjectHideFlags: 0

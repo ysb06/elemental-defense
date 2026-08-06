@@ -2292,6 +2292,7 @@ GameObject:
   - component: {fileID: 388476380}
   - component: {fileID: 388476382}
   - component: {fileID: 388476383}
+  - component: {fileID: 388476384}
   m_Layer: 7
   m_Name: Headquarter
   m_TagString: Untagged
@@ -2330,7 +2331,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::DefCore.Gameplay.Combat.Health
   maxHealth: 100
   health: 100
-  damageCollider: {fileID: 0}
+  damageCollider: {fileID: 388476384}
   destroyOnDeath: 0
   deathDestroyDelay: 3
   OnDamaged:
@@ -2384,6 +2385,27 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::ElementalDef.Gameplay.Combat.ElementalCombatant
   defenseElement: 0
   defense: 0
+--- !u!65 &388476384
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 388476378}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 2, y: 2, z: 2}
+  m_Center: {x: 0, y: 1, z: 0}
 --- !u!1 &416906284
 GameObject:
   m_ObjectHideFlags: 0
