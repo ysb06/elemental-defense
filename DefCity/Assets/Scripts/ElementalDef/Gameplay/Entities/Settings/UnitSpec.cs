@@ -39,10 +39,12 @@ namespace ElementalDef.Gameplay.Entities.Settings
 
     public abstract class UnitSpec : ScriptableObject
     {
+        [SerializeField] private string contentId;
         [SerializeField] private AttackStats attack;
         [SerializeField] private DefenseStats defense;
         [SerializeField] private ScannerStats scanner;
 
+        public string ContentId => contentId;
         public AttackStats Attack => attack;
         public DefenseStats Defense => defense;
         public ScannerStats Scanner => scanner;

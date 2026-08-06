@@ -9,22 +9,25 @@ EditorBuildSettings:
     path: Assets/Scenes/ElementalDefMainMenu.unity
     guid: 14f5074a1e9f4597986f388494c25ee1
   - enabled: 1
-    path: Assets/Scenes/ElementalDefMain.unity
+    path: Assets/Scenes/ElementalDef/ElementalDefStageSelect.unity
+    guid: 6075b624298594f358ec034a7c53a89c
+  - enabled: 1
+    path: Assets/Scenes/ElementalDef/ElementalDefMain.unity
     guid: 773cbaf53253d4d4db9efc18a4c1f182
   - enabled: 1
-    path: Assets/Scenes/ElementalDefVictory.unity
+    path: Assets/Scenes/ElementalDef/ElementalDefVictory.unity
     guid: b4aa83ed568344d29b16f90747aa04f4
   - enabled: 1
-    path: Assets/Scenes/ElementalDefDefeat.unity
+    path: Assets/Scenes/ElementalDef/ElementalDefDefeat.unity
     guid: 45d90bd6448c433e8961b9366ea124dd
-  - enabled: 1
-    path: Assets/Scenes/SampleScene.unity
+  - enabled: 0
+    path: Assets/Scenes/Legacy/SampleScene.unity
     guid: 99c9720ab356a0642a771bea13969a05
-  - enabled: 1
-    path: Assets/Scenes/SampleGameOverScene.unity
+  - enabled: 0
+    path: Assets/Scenes/Legacy/SampleGameOverScene.unity
     guid: 7ab66d3dd519c40af865628036fbb9ce
-  - enabled: 1
-    path: Assets/Scenes/VictoryScene.unity
+  - enabled: 0
+    path: Assets/Scenes/Legacy/VictoryScene.unity
     guid: 8e2bc133f8dad4a4f8fa3fe2a9d72a3e
   m_configObjects:
     com.unity.dt.app-ui: {fileID: 11400000, guid: 1b1c20d82303e4b5781c3ef50ac1449f, type: 2}

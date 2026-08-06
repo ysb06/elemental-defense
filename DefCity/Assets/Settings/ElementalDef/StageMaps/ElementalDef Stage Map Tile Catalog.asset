@@ -1,0 +1,46 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 513a628cdd1843a38dc488813f90df72, type: 3}
+  m_Name: ElementalDef Stage Map Tile Catalog
+  m_EditorClassIdentifier: Assembly-CSharp::ElementalDef.Gameplay.StageMaps.Rendering.StageMapTileCatalog
+  roadTile: {fileID: 11400000, guid: 79d026f7a0ed344afbb04fb23f7ac88a, type: 2}
+  headquartersTile: {fileID: 11400000, guid: 188dc074a6ea4a51bd6930f368cb13ce, type: 2}
+  waterDeployableTiles:
+  - {fileID: 11400000, guid: 6f8006b59349745c99c3260608ee43f8, type: 2}
+  - {fileID: 11400000, guid: de845b698b3d74aaca40ae5a5d9907f2, type: 2}
+  - {fileID: 11400000, guid: 20f5f2caa67f34fe08d85799558a3955, type: 2}
+  - {fileID: 11400000, guid: 0386ed550e7a2467d9911f93526f567d, type: 2}
+  fireDeployableTiles:
+  - {fileID: 11400000, guid: 5f69ae317ff7a4aed98d288f2d70936c, type: 2}
+  - {fileID: 11400000, guid: 0bca8b770eb484150b3194756d48cce7, type: 2}
+  - {fileID: 11400000, guid: 98780be7e3b874846ba23c7c75a27808, type: 2}
+  - {fileID: 11400000, guid: a89b19c83da094ddfa9f7fb26dddd04a, type: 2}
+  earthDeployableTiles:
+  - {fileID: 11400000, guid: 04b122d4bbc0d41308e4180a9f969280, type: 2}
+  - {fileID: 11400000, guid: fcc54ef2435ca41b39039d8b5c428a0f, type: 2}
+  - {fileID: 11400000, guid: 637b8593b73b44978a81b902ab218a25, type: 2}
+  - {fileID: 11400000, guid: e48d0000b91c04856881c2ae1448b441, type: 2}
+  waterBlockedTiles:
+  - {fileID: 11400000, guid: 442668937ab574d2abdbce93eb2c3911, type: 2}
+  - {fileID: 11400000, guid: 6ac9e66ebac91454ea3b3ec574295f24, type: 2}
+  - {fileID: 11400000, guid: afa384a8103a641d9bac1c65748aa56a, type: 2}
+  - {fileID: 11400000, guid: 79dd76fb2edd140519ba38565168b1b6, type: 2}
+  fireBlockedTiles:
+  - {fileID: 11400000, guid: 055473d4d7c434d7a84dd0e8570f832a, type: 2}
+  - {fileID: 11400000, guid: 3ee135256f38343eb93e96f2f378a375, type: 2}
+  - {fileID: 11400000, guid: 9719284a953ed4414b7514a94d9db75a, type: 2}
+  - {fileID: 11400000, guid: f0305b4b84c38449aab11ceb3edd3b17, type: 2}
+  earthBlockedTiles:
+  - {fileID: 11400000, guid: 3a8d142ee14e341d18e21185334884c4, type: 2}
+  - {fileID: 11400000, guid: db7a17468a88c4f299ce81878d399f27, type: 2}
+  - {fileID: 11400000, guid: c03fee4ca965f46098ea755d4373ef88, type: 2}
+  - {fileID: 11400000, guid: 5c7a55b315d9e4570ab79fde82c6c3d4, type: 2}

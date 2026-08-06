@@ -1,7 +1,9 @@
 using System;
 using System.Collections.Generic;
 using ElementalDef.Gameplay.Combat;
+using ElementalDef.Gameplay.Combat.Skills;
 using ElementalDef.Gameplay.Combat.Weapons;
+using ElementalDef.Gameplay.Entities.Settings;
 using UnityEngine;
 
 namespace ElementalDef.Gameplay.Entities
@@ -16,6 +18,8 @@ namespace ElementalDef.Gameplay.Entities
         private bool isShutdown;
 
         public IReadOnlyCollection<TowerUnit> Towers => towers;
+        public TowerUnitEvent OnTowerRegistered = new();
+        public TowerUnitEvent OnTowerUnregistered = new();
 
         private void Awake()
         {
@@ -98,9 +102,11 @@ namespace ElementalDef.Gameplay.Entities
             }
 
             elementalWeapon.Initialize(elementalDamageCalculator);
+            InitializeSkill(tower, elementalWeapon);
 
             towers.Add(tower);
             tower.OnDestroyed.AddListener(HandleTowerDestroyed);
+            OnTowerRegistered?.Invoke(tower.gameObject);
         }
 
         public bool UnregisterTower(TowerUnit tower)
@@ -116,6 +122,7 @@ namespace ElementalDef.Gameplay.Entities
             }
 
             tower.OnDestroyed.RemoveListener(HandleTowerDestroyed);
+            OnTowerUnregistered?.Invoke(tower.gameObject);
             return true;
         }
 
@@ -148,6 +155,65 @@ namespace ElementalDef.Gameplay.Entities
             }
 
             UnregisterTower(destroyedTower);
+        }
+
+        private void InitializeSkill(TowerUnit tower, ElementalWeaponBase elementalWeapon)
+        {
+            TowerSkillController[] controllers = tower.GetComponents<TowerSkillController>();
+            SkillExecutorBase[] executors = tower.GetComponents<SkillExecutorBase>();
+            TowerUnitSpec towerSpec = tower.Spec;
+            SkillDefinition skillDefinition = towerSpec != null ? towerSpec.Skill : null;
+
+            if (skillDefinition == null)
+            {
+                if (controllers.Length != 0 || executors.Length != 0)
+                {
+                    throw new InvalidOperationException(
+                        $"[{tower.name}] A tower without a skill definition cannot have a " +
+                        $"{nameof(TowerSkillController)} or {nameof(SkillExecutorBase)} component.");
+                }
+
+                return;
+            }
+
+            if (controllers.Length != 1)
+            {
+                throw new InvalidOperationException(
+                    $"[{tower.name}] Skill '{skillDefinition.SkillId}' requires exactly one " +
+                    $"{nameof(TowerSkillController)}, but found {controllers.Length}.");
+            }
+
+            if (executors.Length != 1)
+            {
+                throw new InvalidOperationException(
+                    $"[{tower.name}] Skill '{skillDefinition.SkillId}' requires exactly one " +
+                    $"{nameof(SkillExecutorBase)}, but found {executors.Length}.");
+            }
+
+            if (!tower.TryGetComponent(out DefCore.Gameplay.Combat.Attacker attacker) ||
+                attacker.EquippedWeapon != elementalWeapon)
+            {
+                throw new InvalidOperationException(
+                    $"[{tower.name}] A configured skill requires the registered " +
+                    $"{nameof(ElementalWeaponBase)} to be the attacker's equipped weapon.");
+            }
+
+            TowerSkillController controller = controllers[0];
+            if (controller.Executor != executors[0])
+            {
+                throw new InvalidOperationException(
+                    $"[{tower.name}] {nameof(TowerSkillController)} does not reference the " +
+                    $"{nameof(SkillExecutorBase)} configured on the same tower.");
+            }
+
+            if (tower.SkillController != controller)
+            {
+                throw new InvalidOperationException(
+                    $"[{tower.name}] {nameof(TowerUnit)} does not reference its configured " +
+                    $"{nameof(TowerSkillController)}.");
+            }
+
+            controller.Initialize(tower, skillDefinition, elementalDamageCalculator);
         }
     }
 }

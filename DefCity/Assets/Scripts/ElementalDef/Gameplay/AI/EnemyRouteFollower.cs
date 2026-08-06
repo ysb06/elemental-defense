@@ -24,6 +24,8 @@ namespace ElementalDef.Gameplay.AI
         public EnemyRouteFollowerEvent OnRouteCompleted = new();
         public EnemyRouteFollowerEvent OnRouteFailed = new();
 
+        public bool HasCompletedRoute { get; private set; }
+
         private void Awake()
         {
             if (movement == null)
@@ -34,6 +36,8 @@ namespace ElementalDef.Gameplay.AI
 
         private void OnEnable()
         {
+            HasCompletedRoute = false;
+
             movement.OnMovingStart.AddListener(HandleMovingStart);
             movement.OnMovingComplete.AddListener(HandleMovingComplete);
             movement.OnMovingFailed.AddListener(HandleMovingFailed);
@@ -53,6 +57,7 @@ namespace ElementalDef.Gameplay.AI
 
             isFollowing = false;
             targetPathIndex = -1;
+            HasCompletedRoute = false;
 
             if (wasFollowing && movement != null)
             {
@@ -68,6 +73,8 @@ namespace ElementalDef.Gameplay.AI
             {
                 throw new InvalidOperationException($"Already following a route. Stopping current route and starting new one.");
             }
+
+            HasCompletedRoute = false;
 
             if (route == null)
             {
@@ -90,6 +97,7 @@ namespace ElementalDef.Gameplay.AI
         {
             isFollowing = false;
             targetPathIndex = -1;
+            HasCompletedRoute = false;
 
             if (movement != null)
             {
@@ -130,6 +138,7 @@ namespace ElementalDef.Gameplay.AI
             {
                 isFollowing = false;
                 targetPathIndex = -1;
+                HasCompletedRoute = true;
 
                 OnRouteCompleted?.Invoke(gameObject);
                 return;
@@ -159,6 +168,7 @@ namespace ElementalDef.Gameplay.AI
             // 추종 중 발생한 모든 중단은 경로 실패
             isFollowing = false;
             targetPathIndex = -1;
+            HasCompletedRoute = false;
             OnRouteFailed?.Invoke(gameObject);
         }
 
@@ -175,6 +185,7 @@ namespace ElementalDef.Gameplay.AI
             {
                 isFollowing = false;
                 targetPathIndex = -1;
+                HasCompletedRoute = false;
                 return;
             }
 
@@ -190,6 +201,7 @@ namespace ElementalDef.Gameplay.AI
         {
             isFollowing = false;
             targetPathIndex = -1;
+            HasCompletedRoute = false;
             movement.Stop();
             OnRouteFailed?.Invoke(gameObject);
         }

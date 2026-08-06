@@ -22,6 +22,42 @@ namespace ElementalDef.Gameplay.World
                 $"{nameof(Tile3DCellManager)} '{name}' failed to resolve the surface center for cell {coordinates}.");
         }
 
+        public bool TryGetSurfaceCenter(
+            RectInt footprint,
+            out Vector3 worldSurfaceCenter)
+        {
+            if (footprint.width <= 0 || footprint.height <= 0)
+            {
+                throw new ArgumentOutOfRangeException(
+                    nameof(footprint),
+                    footprint,
+                    "A surface footprint must have a positive width and height.");
+            }
+
+            Vector3 accumulatedSurfaceCenter = Vector3.zero;
+            int cellCount = checked(footprint.width * footprint.height);
+
+            for (int y = footprint.yMin; y < footprint.yMax; y++)
+            {
+                for (int x = footprint.xMin; x < footprint.xMax; x++)
+                {
+                    Vector3Int coordinates = new(x, y, 0);
+                    if (!TryGetSurfaceCenter(
+                            coordinates,
+                            out Vector3 cellSurfaceCenter))
+                    {
+                        worldSurfaceCenter = default;
+                        return false;
+                    }
+
+                    accumulatedSurfaceCenter += cellSurfaceCenter;
+                }
+            }
+
+            worldSurfaceCenter = accumulatedSurfaceCenter / cellCount;
+            return true;
+        }
+
         protected override bool ContainsCell(Vector3Int refCoordinates)
         {
             return groundTilemap != null && groundTilemap.HasTile(refCoordinates);

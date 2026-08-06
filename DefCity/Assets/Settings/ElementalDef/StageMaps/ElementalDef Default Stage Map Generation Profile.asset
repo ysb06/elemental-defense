@@ -1,0 +1,41 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 11186deb24cf44daa06764b011346349, type: 3}
+  m_Name: ElementalDef Default Stage Map Generation Profile
+  m_EditorClassIdentifier: Assembly-CSharp::ElementalDef.Gameplay.StageMaps.Generation.StageMapGenerationProfile
+  mapOrigin: {x: 0, y: 0}
+  width: 12
+  height: 10
+  spawnCell: {x: 0, y: 1}
+  routeGoalCell: {x: 2, y: 7}
+  headquartersOrigin: {x: 2, y: 8}
+  headquartersSize: {x: 2, y: 2}
+  patternCount: 4
+  centerBandRadius: 1
+  allowedPatternKinds: 7
+  maxPhysicalLayoutDraws: 1024
+  maxPhysicalLayoutCount: 32
+  orderVariantsPerPhysicalLayout: 8
+  maxRouteCandidateCount: 256
+  maxSearchWorkPerCandidate: 25000
+  maxTotalSearchWork: 500000
+  maxConnectorAlternatives: 8
+  connectorDetourAllowance: 8
+  blockedCellRatio: 0.15
+  minimumDeployableCellCount: 12
+  minimumDeployableCellCountPerElement: 3
+  minimumDeployableNeighborsPerRoadCell: 1
+  endpointProtectionRadius: 1
+  maximumBlockedClusterSize: 3
+  maxBlockedCellPlacementAttempts: 16
+  requireAcyclicRoutes: 1
+  requireRoadAdjacencyMatchesGraph: 1

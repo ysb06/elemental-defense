@@ -18,44 +18,42 @@ namespace ElementalDef.Gameplay.Flow
             Stopped,
         }
 
-        [SerializeField] private WaveBundle waveBundle;
+        [SerializeField] private WaveBundle activeBundle;
         [SerializeField] private TurnManager turnManager;
         [SerializeField] private EnemySpawner enemySpawner;
 
         private WaveBundleRuntimeState bundleState;
         private int currentWaveIndex = -1;
         private int transitionRequestedFrame = -1;
-        private bool isConfigured;
-        private bool isSubscribedToEnemySpawner;
 
-        public int TotalWaveCount => waveBundle.Waves.Count;
+        public int TotalWaveCount => activeBundle.Waves.Count;
         public int CurrentWaveIndex => currentWaveIndex;
+        public bool IsBattleActive => bundleState == WaveBundleRuntimeState.Running || bundleState == WaveBundleRuntimeState.WaitingForNextWave;
 
         public WaveBundleControllerEvent OnBundleStarted = new();
         public WaveBundleControllerEvent OnBundleCompleted = new();
 
-        private void Awake()
+        public void Initialize()
         {
-            EnsureConfigured();
-            isConfigured = true;
-        }
-
-        private void Start()
-        {
-            if (!isConfigured || bundleState != WaveBundleRuntimeState.Idle)
+            if (bundleState != WaveBundleRuntimeState.Idle)
             {
-                return;
+                throw new InvalidOperationException($"{nameof(WaveBundleController)} cannot be initialized when it is not in the {nameof(WaveBundleRuntimeState.Idle)} state.");
             }
 
-            SubscribeToEnemySpawner();
+            enemySpawner.OnWaveCompleted.AddListener(HandleWaveCompleted);
             StartWave(0);
             OnBundleStarted?.Invoke(gameObject);
         }
 
+        public void Initialize(WaveBundle bundle)
+        {
+            activeBundle = bundle;
+            Initialize();
+        }
+
         private void Update()
         {
-            if (bundleState != WaveBundleRuntimeState.WaitingForNextWave ||
-                Time.frameCount <= transitionRequestedFrame)
+            if (bundleState != WaveBundleRuntimeState.WaitingForNextWave || Time.frameCount <= transitionRequestedFrame)
             {
                 return;
             }
@@ -78,7 +76,7 @@ namespace ElementalDef.Gameplay.Flow
             bundleState = WaveBundleRuntimeState.Stopped;
             transitionRequestedFrame = -1;
 
-            UnsubscribeFromEnemySpawner();
+            enemySpawner.OnWaveCompleted.RemoveListener(HandleWaveCompleted);
 
             if (turnManager != null)
             {
@@ -100,11 +98,11 @@ namespace ElementalDef.Gameplay.Flow
 
             turnManager.IsRunning = false;
 
-            if (currentWaveIndex + 1 >= waveBundle.Waves.Count)
+            if (currentWaveIndex + 1 >= activeBundle.Waves.Count)
             {
                 bundleState = WaveBundleRuntimeState.Completed;
                 transitionRequestedFrame = -1;
-                UnsubscribeFromEnemySpawner();
+                enemySpawner.OnWaveCompleted.RemoveListener(HandleWaveCompleted);
                 OnBundleCompleted?.Invoke(gameObject);
                 return;
             }
@@ -120,7 +118,7 @@ namespace ElementalDef.Gameplay.Flow
             try
             {
                 turnManager.ResetTurn(0);
-                enemySpawner.PrepareWave(waveBundle.Waves[waveIndex]);
+                enemySpawner.PrepareWave(activeBundle.Waves[waveIndex]);
             }
             catch
             {
@@ -142,71 +140,7 @@ namespace ElementalDef.Gameplay.Flow
             turnManager.IsRunning = true;
         }
 
-        private void SubscribeToEnemySpawner()
-        {
-            if (isSubscribedToEnemySpawner)
-            {
-                return;
-            }
 
-            enemySpawner.OnWaveCompleted.AddListener(HandleWaveCompleted);
-            isSubscribedToEnemySpawner = true;
-        }
-
-        private void UnsubscribeFromEnemySpawner()
-        {
-            if (!isSubscribedToEnemySpawner)
-            {
-                return;
-            }
-
-            if (enemySpawner != null)
-            {
-                enemySpawner.OnWaveCompleted.RemoveListener(HandleWaveCompleted);
-            }
-
-            isSubscribedToEnemySpawner = false;
-        }
-
-        private void EnsureConfigured()
-        {
-            if (waveBundle == null)
-            {
-                throw new InvalidOperationException(
-                    $"{nameof(WaveBundleController)} requires a {nameof(WaveBundle)} reference.");
-            }
-
-            if (turnManager == null)
-            {
-                throw new InvalidOperationException(
-                    $"{nameof(WaveBundleController)} requires a {nameof(TurnManager)} reference.");
-            }
-
-            if (enemySpawner == null)
-            {
-                throw new InvalidOperationException(
-                    $"{nameof(WaveBundleController)} requires an {nameof(EnemySpawner)} reference.");
-            }
-
-            if (waveBundle.Waves.Count == 0)
-            {
-                throw new InvalidOperationException("A wave bundle must contain at least one wave schedule.");
-            }
-
-            for (int i = 0; i < waveBundle.Waves.Count; i++)
-            {
-                WaveSchedule schedule = waveBundle.Waves[i];
-                if (schedule == null)
-                {
-                    throw new InvalidOperationException($"Wave bundle has a missing schedule at index {i}.");
-                }
-
-                if (schedule.Entries.Count == 0)
-                {
-                    throw new InvalidOperationException($"Wave schedule at index {i} must contain at least one entry.");
-                }
-            }
-        }
     }
 
     [Serializable]

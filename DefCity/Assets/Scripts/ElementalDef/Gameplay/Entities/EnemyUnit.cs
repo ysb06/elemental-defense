@@ -30,6 +30,8 @@ namespace ElementalDef.Gameplay.Entities
         [SerializeField] private ElementalCombatant elementalCombatant;
         [SerializeField] private UnitMovement movement;
         [SerializeField] private EnemyRouteFollower routeFollower;
+        [SerializeField, Min(0f)] private float deathRemovalDelay = 5.5f;
+
         private bool isShutdown;
 
         public EnemyUnitSpec Spec => spec;
@@ -90,14 +92,8 @@ namespace ElementalDef.Gameplay.Entities
 
             Shutdown();
 
-            try
-            {
-                OnDefeated?.Invoke(gameObject);
-            }
-            finally
-            {
-                Destroy(gameObject);
-            }
+            OnDefeated?.Invoke(gameObject);
+            Destroy(gameObject, deathRemovalDelay);
         }
 
         public void Shutdown()

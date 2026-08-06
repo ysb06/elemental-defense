@@ -1,4 +1,5 @@
 using System;
+using ElementalDef.Gameplay.Flow;
 using UnityEngine;
 using UnityEngine.Events;
 
@@ -9,15 +10,49 @@ namespace ElementalDef.Gameplay.Economy
     {
         [SerializeField, Min(0f)] private float maxEnergy = 100f;
         [SerializeField, Min(0f)] private float currentEnergy;
+        [SerializeField] private EnemySpawner enemySpawner;
+        [SerializeField, Min(0f)] private float energyPerSecondDuringWave;
+        [SerializeField, Min(0f)] private float energyOnWaveCompleted;
 
         public float MaxEnergy => maxEnergy;
         public float CurrentEnergy => currentEnergy;
+        public float EnergyPerSecondDuringWave => energyPerSecondDuringWave;
+        public float EnergyOnWaveCompleted => energyOnWaveCompleted;
 
         public TowerEnergyEvent OnTowerEnergyConsumed = new();
+        public event Action<float> EnergyChanged;
 
         private void Awake()
         {
-            currentEnergy = maxEnergy;
+            if (enemySpawner == null)
+            {
+                throw new InvalidOperationException(
+                    $"{nameof(TowerEnergyManager)} requires an {nameof(EnemySpawner)} reference.");
+            }
+            EnergyChanged?.Invoke(currentEnergy);
+        }
+
+        private void OnEnable()
+        {
+            enemySpawner.OnWaveCompleted.AddListener(HandleWaveCompleted);
+        }
+
+        private void OnDisable()
+        {
+            if (enemySpawner != null)
+            {
+                enemySpawner.OnWaveCompleted.RemoveListener(HandleWaveCompleted);
+            }
+        }
+
+        private void Update()
+        {
+            if (!enemySpawner.IsWaveRunning || energyPerSecondDuringWave <= 0f)
+            {
+                return;
+            }
+
+            AddEnergy(energyPerSecondDuringWave * Time.deltaTime);
         }
 
         public bool CanAfford(TowerCost towerCost)
@@ -28,7 +63,7 @@ namespace ElementalDef.Gameplay.Economy
             }
 
             float amount = towerCost.Cost;
-            return amount >= 0f && currentEnergy >= amount;
+            return currentEnergy >= amount;
         }
 
         public TowerEnergyEventArgs TryConsumeEnergy(TowerCost towerCost)
@@ -46,17 +81,6 @@ namespace ElementalDef.Gameplay.Economy
             }
 
             float amount = towerCost.Cost;
-            if (amount < 0f)
-            {
-                TowerEnergyEventArgs invalidCostResult = new(
-                    towerCost.gameObject,
-                    currentEnergy,
-                    0f,
-                    currentEnergy,
-                    TowerEnergyResult.InvalidCost);
-                OnTowerEnergyConsumed?.Invoke(gameObject, invalidCostResult);
-                return invalidCostResult;
-            }
 
             if (currentEnergy < amount)
             {
@@ -72,6 +96,7 @@ namespace ElementalDef.Gameplay.Economy
 
             float previousEnergy = currentEnergy;
             currentEnergy -= amount;
+            EnergyChanged?.Invoke(currentEnergy);
 
             TowerEnergyEventArgs successResult = new(
                 towerCost.gameObject,
@@ -81,6 +106,27 @@ namespace ElementalDef.Gameplay.Economy
                 TowerEnergyResult.Success);
             OnTowerEnergyConsumed?.Invoke(gameObject, successResult);
             return successResult;
+        }
+
+        public void AddEnergy(float amount)
+        {
+            if (amount == 0f)
+            {
+                return;
+            }
+
+            currentEnergy += amount;
+            EnergyChanged?.Invoke(currentEnergy);
+        }
+
+        private void HandleWaveCompleted(GameObject sender)
+        {
+            if (sender != enemySpawner.gameObject)
+            {
+                return;
+            }
+
+            AddEnergy(energyOnWaveCompleted);
         }
     }
 

@@ -1,0 +1,31 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fe272d417250f4f8e9807e922424add5, type: 3}
+  m_Name: ElementalDef Stage 10 Wave 03
+  m_EditorClassIdentifier: Assembly-CSharp::ElementalDef.Gameplay.Flow.Settings.WaveSchedule
+  entries:
+  - turn: 3
+    entity: {fileID: 8900581486461593881, guid: 9290cbe2a1b154048a81d167bef12adc, type: 3}
+  - turn: 5
+    entity: {fileID: 7655338829751029028, guid: 17e9ac4de16734e0783a2770ddd57fb8, type: 3}
+  - turn: 7
+    entity: {fileID: 8900581486461593881, guid: 9290cbe2a1b154048a81d167bef12adc, type: 3}
+  - turn: 9
+    entity: {fileID: 4950721011308204896, guid: 526479db6b2164f88858eb9b4c16bbff, type: 3}
+  - turn: 11
+    entity: {fileID: 4950721011308204896, guid: 46ab591c0a6464b7b8b518edeec098e6, type: 3}
+  - turn: 13
+    entity: {fileID: 7655338829751029028, guid: ddfa603aa45b34bb2876cc0841144e27, type: 3}
+  - turn: 15
+    entity: {fileID: 8900581486461593881, guid: e2ef64d7dc4b84b12bc45bc9b1c99b0e, type: 3}
+  - turn: 17
+    entity: {fileID: 7655338829751029028, guid: ddfa603aa45b34bb2876cc0841144e27, type: 3}

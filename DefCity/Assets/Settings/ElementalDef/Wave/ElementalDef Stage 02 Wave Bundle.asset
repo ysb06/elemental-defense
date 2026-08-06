@@ -1,0 +1,31 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8f135b33e5b14f2a95454bc53372499b, type: 3}
+  m_Name: ElementalDef Stage 02 Wave Bundle
+  m_EditorClassIdentifier: Assembly-CSharp::ElementalDef.Gameplay.Flow.Settings.WaveBundle
+  stageId: stage_02
+  displayOrder: 2
+  mapSeed: 1002
+  baseCreditReward: 150
+  baseExperienceReward: 150
+  usesPlaceholderTuning: 1
+  waves:
+  - {fileID: 11400000, guid: dd24f129a9a40426791b3afe43692504, type: 2}
+  - {fileID: 11400000, guid: ed020200000000000000000000000000, type: 2}
+  - {fileID: 11400000, guid: ed020300000000000000000000000000, type: 2}
+  - {fileID: 11400000, guid: ed020400000000000000000000000000, type: 2}
+  - {fileID: 11400000, guid: ed020500000000000000000000000000, type: 2}
+  - {fileID: 11400000, guid: ed020600000000000000000000000000, type: 2}
+  - {fileID: 11400000, guid: ed020700000000000000000000000000, type: 2}
+  - {fileID: 11400000, guid: ed020800000000000000000000000000, type: 2}
+  - {fileID: 11400000, guid: ed020900000000000000000000000000, type: 2}
+  - {fileID: 11400000, guid: ed021000000000000000000000000000, type: 2}
