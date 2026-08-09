@@ -9,12 +9,21 @@ namespace ElementalDef.Data
 {
     public sealed class EDataStore : IElementalDefRunStore
     {
-        private const int SchemaVersion = 1;
+        private const int SchemaVersion = 4;
+        private const int MigratableSchemaVersion = 3;
+        private const long PlayerId = 1;
+        private const int FinalStageDisplayOrder = 10;
         private const string StageRunsTableName = "stage_runs";
+        private const string PlayerProgressTableName = "player_progress";
         private const string SelectRunColumns =
-            "SELECT completion_sequence, run_id, payload_hash, stage_id, " +
-            "play_duration_ms, headquarters_remaining_hp, defeated_enemy_count, " +
-            "attack_count, outcome, completed_at_utc_ms FROM stage_runs";
+            "SELECT completion_sequence, run_id, payload_hash, stage_id, stage_display_order, " +
+            "play_duration_ms, headquarters_remaining_hp, headquarters_max_hp, " +
+            "defeated_enemy_count, " +
+            "attack_count, earned_credits, earned_experience, outcome, " +
+            "completed_at_utc_ms FROM stage_runs";
+        private const string SelectPlayerProgressColumns =
+            "SELECT player_id, total_credits, total_experience, max_stage_progress, " +
+            "loop, total_defeat_count, updated_at_utc_ms FROM player_progress";
 
         private static readonly HashSet<string> ExpectedStageRunColumns =
             new(StringComparer.Ordinal)
@@ -23,12 +32,57 @@ namespace ElementalDef.Data
                 "run_id",
                 "payload_hash",
                 "stage_id",
+                "stage_display_order",
+                "play_duration_ms",
+                "headquarters_remaining_hp",
+                "headquarters_max_hp",
+                "defeated_enemy_count",
+                "attack_count",
+                "earned_credits",
+                "earned_experience",
+                "outcome",
+                "completed_at_utc_ms"
+            };
+
+        private static readonly HashSet<string> ExpectedPlayerProgressColumns =
+            new(StringComparer.Ordinal)
+            {
+                "player_id",
+                "total_credits",
+                "total_experience",
+                "max_stage_progress",
+                "loop",
+                "total_defeat_count",
+                "updated_at_utc_ms"
+            };
+
+        private static readonly HashSet<string> VersionThreeStageRunColumns =
+            new(StringComparer.Ordinal)
+            {
+                "completion_sequence",
+                "run_id",
+                "payload_hash",
+                "stage_id",
+                "stage_display_order",
                 "play_duration_ms",
                 "headquarters_remaining_hp",
                 "defeated_enemy_count",
                 "attack_count",
+                "earned_credits",
+                "earned_experience",
                 "outcome",
                 "completed_at_utc_ms"
+            };
+
+        private static readonly HashSet<string> VersionThreePlayerProgressColumns =
+            new(StringComparer.Ordinal)
+            {
+                "player_id",
+                "total_credits",
+                "total_experience",
+                "max_stage_progress",
+                "loop",
+                "updated_at_utc_ms"
             };
 
         private readonly string databasePath;
@@ -79,6 +133,12 @@ namespace ElementalDef.Data
                 connection = OpenConnection();
                 ConfigureConnection(connection);
 
+                int currentVersion = connection.ExecuteScalar<int>("PRAGMA user_version");
+                if (currentVersion == MigratableSchemaVersion)
+                {
+                    MigrateVersionThreeToFour(connection);
+                }
+
                 if (!HasExpectedSchema(connection))
                 {
                     CreateSchema(connection);
@@ -109,6 +169,8 @@ namespace ElementalDef.Data
 
             EnsureReady();
             string payloadHash = ComputePayloadHash(snapshot);
+            long progressUpdatedAtUtcMilliseconds =
+                DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
             CompletedStageRunCommitResult result = null;
 
             connection.RunInTransaction(() =>
@@ -128,31 +190,41 @@ namespace ElementalDef.Data
 
                 connection.Execute(
                     "INSERT INTO stage_runs " +
-                    "(run_id, payload_hash, stage_id, play_duration_ms, " +
-                    "headquarters_remaining_hp, defeated_enemy_count, attack_count, " +
-                    "outcome, completed_at_utc_ms) " +
-                    "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                    "(run_id, payload_hash, stage_id, stage_display_order, play_duration_ms, " +
+                    "headquarters_remaining_hp, headquarters_max_hp, defeated_enemy_count, attack_count, " +
+                    "earned_credits, earned_experience, outcome, completed_at_utc_ms) " +
+                    "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
                     snapshot.RunId,
                     payloadHash,
                     snapshot.StageId,
+                    snapshot.StageDisplayOrder,
                     snapshot.PlayDurationMilliseconds,
                     snapshot.HeadquartersRemainingHealth,
+                    snapshot.HeadquartersMaxHealth,
                     snapshot.DefeatedEnemyCount,
                     snapshot.AttackCount,
+                    snapshot.EarnedCredits,
+                    snapshot.EarnedExperience,
                     (int)snapshot.Outcome,
                     snapshot.CompletedAtUtc.ToUnixTimeMilliseconds());
 
                 long completionSequence = connection.ExecuteScalar<long>("SELECT last_insert_rowid()");
+                UpdatePlayerProgress(snapshot, progressUpdatedAtUtcMilliseconds);
+
                 result = new CompletedStageRunCommitResult(
                     CompletedStageRunCommitStatus.Committed,
                     new CompletedStageRunRecord(
                         completionSequence,
                         snapshot.RunId,
                         snapshot.StageId,
+                        snapshot.StageDisplayOrder,
                         snapshot.PlayDurationMilliseconds,
                         snapshot.HeadquartersRemainingHealth,
+                        snapshot.HeadquartersMaxHealth,
                         snapshot.DefeatedEnemyCount,
                         snapshot.AttackCount,
+                        snapshot.EarnedCredits,
+                        snapshot.EarnedExperience,
                         snapshot.Outcome,
                         snapshot.CompletedAtUtc));
             });
@@ -166,6 +238,19 @@ namespace ElementalDef.Data
             }
 
             return commitResult;
+        }
+
+        public PlayerProgressSnapshot GetPlayerProgress()
+        {
+            EnsureReady();
+            PlayerProgressRow row = FindPlayerProgressRow();
+            if (row == null)
+            {
+                throw new InvalidOperationException(
+                    "The singleton player-progress row is missing.");
+            }
+
+            return ToProgressSnapshot(row);
         }
 
         public IReadOnlyList<CompletedStageRunRecord> GetRecentRuns(int limit)
@@ -259,11 +344,32 @@ namespace ElementalDef.Data
             {
                 probe = OpenConnection();
                 ConfigureConnection(probe);
-                return !HasExpectedSchema(probe);
-            }
-            catch
-            {
-                return true;
+                int version = probe.ExecuteScalar<int>("PRAGMA user_version");
+                if (version == 1 || version == 2)
+                {
+                    return true;
+                }
+
+                if (version > SchemaVersion)
+                {
+                    throw new InvalidOperationException(
+                        $"The database schema version {version} is newer than the supported " +
+                        $"version {SchemaVersion}.");
+                }
+
+                if (version == MigratableSchemaVersion && !HasExpectedVersionThreeSchema(probe))
+                {
+                    throw new InvalidOperationException(
+                        "The version 3 database does not match the expected schema.");
+                }
+
+                if (version == SchemaVersion && !HasExpectedSchema(probe))
+                {
+                    throw new InvalidOperationException(
+                        $"The version {SchemaVersion} database does not match the expected schema.");
+                }
+
+                return false;
             }
             finally
             {
@@ -275,7 +381,7 @@ namespace ElementalDef.Data
                     }
                     catch
                     {
-                        // The incompatible development database will be removed below.
+                        // Preserve the original probe or initialization exception.
                     }
                 }
             }
@@ -291,13 +397,35 @@ namespace ElementalDef.Data
         private static void ConfigureConnection(SQLiteConnection target)
         {
             target.Execute("PRAGMA foreign_keys = ON");
-            target.Execute("PRAGMA busy_timeout = 5000");
+            target.BusyTimeout = TimeSpan.FromSeconds(5);
         }
 
         private static bool HasExpectedSchema(SQLiteConnection target)
         {
+            return HasExpectedSchema(
+                target,
+                SchemaVersion,
+                ExpectedStageRunColumns,
+                ExpectedPlayerProgressColumns);
+        }
+
+        private static bool HasExpectedVersionThreeSchema(SQLiteConnection target)
+        {
+            return HasExpectedSchema(
+                target,
+                MigratableSchemaVersion,
+                VersionThreeStageRunColumns,
+                VersionThreePlayerProgressColumns);
+        }
+
+        private static bool HasExpectedSchema(
+            SQLiteConnection target,
+            int expectedVersion,
+            HashSet<string> expectedStageRunColumns,
+            HashSet<string> expectedPlayerProgressColumns)
+        {
             int version = target.ExecuteScalar<int>("PRAGMA user_version");
-            if (version != SchemaVersion)
+            if (version != expectedVersion)
             {
                 return false;
             }
@@ -305,21 +433,39 @@ namespace ElementalDef.Data
             List<SqliteNameRow> tables = target.Query<SqliteNameRow>(
                 "SELECT name FROM sqlite_master " +
                 "WHERE type = 'table' AND name NOT LIKE 'sqlite_%' ORDER BY name");
-            if (tables.Count != 1 ||
-                !string.Equals(tables[0].Name, StageRunsTableName, StringComparison.Ordinal))
+            var actualTables = new HashSet<string>(StringComparer.Ordinal);
+            foreach (SqliteNameRow table in tables)
+            {
+                actualTables.Add(table.Name);
+            }
+
+            if (!actualTables.SetEquals(new[] { StageRunsTableName, PlayerProgressTableName }))
             {
                 return false;
             }
 
-            List<SqliteNameRow> columns = target.Query<SqliteNameRow>(
+            List<SqliteNameRow> stageRunColumns = target.Query<SqliteNameRow>(
                 "PRAGMA table_info(stage_runs)");
-            var actualColumns = new HashSet<string>(StringComparer.Ordinal);
-            foreach (SqliteNameRow column in columns)
+            var actualStageRunColumns = new HashSet<string>(StringComparer.Ordinal);
+            foreach (SqliteNameRow column in stageRunColumns)
             {
-                actualColumns.Add(column.Name);
+                actualStageRunColumns.Add(column.Name);
             }
 
-            return actualColumns.SetEquals(ExpectedStageRunColumns);
+            if (!actualStageRunColumns.SetEquals(expectedStageRunColumns))
+            {
+                return false;
+            }
+
+            List<SqliteNameRow> playerProgressColumns = target.Query<SqliteNameRow>(
+                "PRAGMA table_info(player_progress)");
+            var actualPlayerProgressColumns = new HashSet<string>(StringComparer.Ordinal);
+            foreach (SqliteNameRow column in playerProgressColumns)
+            {
+                actualPlayerProgressColumns.Add(column.Name);
+            }
+
+            return actualPlayerProgressColumns.SetEquals(expectedPlayerProgressColumns);
         }
 
         private static void CreateSchema(SQLiteConnection target)
@@ -332,15 +478,79 @@ namespace ElementalDef.Data
                     "run_id TEXT NOT NULL UNIQUE, " +
                     "payload_hash TEXT NOT NULL, " +
                     "stage_id TEXT NOT NULL, " +
+                    "stage_display_order INTEGER NOT NULL " +
+                    "CHECK (stage_display_order BETWEEN 1 AND 10), " +
                     "play_duration_ms INTEGER NOT NULL CHECK (play_duration_ms >= 0), " +
                     "headquarters_remaining_hp REAL NOT NULL CHECK (headquarters_remaining_hp >= 0), " +
+                    "headquarters_max_hp REAL NOT NULL CHECK (headquarters_max_hp > 0), " +
                     "defeated_enemy_count INTEGER NOT NULL CHECK (defeated_enemy_count >= 0), " +
                     "attack_count INTEGER NOT NULL CHECK (attack_count >= 0), " +
+                    "earned_credits INTEGER NOT NULL CHECK (earned_credits >= 0), " +
+                    "earned_experience INTEGER NOT NULL CHECK (earned_experience >= 0), " +
                     "outcome INTEGER NOT NULL CHECK (outcome IN (1, 2)), " +
-                    "completed_at_utc_ms INTEGER NOT NULL)");
+                    "completed_at_utc_ms INTEGER NOT NULL, " +
+                    "CHECK (headquarters_remaining_hp <= headquarters_max_hp), " +
+                    "CHECK (outcome = 1 OR " +
+                    "(earned_credits = 0 AND earned_experience = 0)))");
+                target.Execute(
+                    "CREATE TABLE player_progress (" +
+                    "player_id INTEGER PRIMARY KEY CHECK (player_id = 1), " +
+                    "total_credits INTEGER NOT NULL CHECK (total_credits >= 0), " +
+                    "total_experience INTEGER NOT NULL CHECK (total_experience >= 0), " +
+                    "max_stage_progress INTEGER NOT NULL " +
+                    "CHECK (max_stage_progress BETWEEN 0 AND 9), " +
+                    "loop INTEGER NOT NULL CHECK (loop >= 0), " +
+                    "total_defeat_count INTEGER NOT NULL CHECK (total_defeat_count >= 0), " +
+                    "updated_at_utc_ms INTEGER NOT NULL)");
+                target.Execute(
+                    "INSERT INTO player_progress " +
+                    "(player_id, total_credits, total_experience, max_stage_progress, " +
+                    "loop, total_defeat_count, updated_at_utc_ms) " +
+                    "VALUES (?, 0, 0, 0, 0, 0, 0)",
+                    PlayerId);
                 EnsureIndexes(target);
                 target.Execute($"PRAGMA user_version = {SchemaVersion}");
             });
+        }
+
+        private static void MigrateVersionThreeToFour(SQLiteConnection target)
+        {
+            if (!HasExpectedVersionThreeSchema(target))
+            {
+                throw new InvalidOperationException(
+                    "The version 3 database does not match the expected schema.");
+            }
+
+            target.RunInTransaction(() =>
+            {
+                target.Execute(
+                    "ALTER TABLE stage_runs ADD COLUMN headquarters_max_hp REAL " +
+                    "CHECK (headquarters_max_hp IS NULL OR headquarters_max_hp > 0)");
+                target.Execute(
+                    "ALTER TABLE player_progress ADD COLUMN total_defeat_count INTEGER " +
+                    "NOT NULL DEFAULT 0 CHECK (total_defeat_count >= 0)");
+
+                int updatedRows = target.Execute(
+                    "UPDATE player_progress SET total_defeat_count = " +
+                    "(SELECT COUNT(*) FROM stage_runs WHERE outcome = ?), " +
+                    "updated_at_utc_ms = updated_at_utc_ms WHERE player_id = ?",
+                    (int)StageRunOutcome.Defeat,
+                    PlayerId);
+                if (updatedRows != 1)
+                {
+                    throw new InvalidOperationException(
+                        $"Expected to migrate one player-progress row, but updated {updatedRows}.");
+                }
+
+                EnsureIndexes(target);
+                target.Execute($"PRAGMA user_version = {SchemaVersion}");
+            });
+
+            if (!HasExpectedSchema(target))
+            {
+                throw new InvalidOperationException(
+                    $"The migrated version {SchemaVersion} database does not match the expected schema.");
+            }
         }
 
         private static void EnsureIndexes(SQLiteConnection target)
@@ -358,6 +568,73 @@ namespace ElementalDef.Data
             return connection.FindWithQuery<StageRunRow>(
                 SelectRunColumns + " WHERE run_id = ? LIMIT 1",
                 runId);
+        }
+
+        private PlayerProgressRow FindPlayerProgressRow()
+        {
+            return connection.FindWithQuery<PlayerProgressRow>(
+                SelectPlayerProgressColumns + " WHERE player_id = ? LIMIT 1",
+                PlayerId);
+        }
+
+        private void UpdatePlayerProgress(
+            CompletedStageRunSnapshot snapshot,
+            long updatedAtUtcMilliseconds)
+        {
+            PlayerProgressRow progress = FindPlayerProgressRow();
+            if (progress == null)
+            {
+                throw new InvalidOperationException(
+                    "The singleton player-progress row is missing.");
+            }
+
+            long totalCredits;
+            long totalExperience;
+            int maxStageProgress = progress.MaxStageProgress;
+            long loop = progress.Loop;
+            long totalDefeatCount = progress.TotalDefeatCount;
+
+            checked
+            {
+                totalCredits = progress.TotalCredits + snapshot.EarnedCredits;
+                totalExperience = progress.TotalExperience + snapshot.EarnedExperience;
+                if (snapshot.Outcome == StageRunOutcome.Defeat)
+                {
+                    totalDefeatCount += 1;
+                }
+
+                if (snapshot.Outcome == StageRunOutcome.Victory &&
+                    snapshot.StageDisplayOrder == maxStageProgress + 1)
+                {
+                    if (snapshot.StageDisplayOrder == FinalStageDisplayOrder)
+                    {
+                        maxStageProgress = 0;
+                        loop += 1;
+                    }
+                    else
+                    {
+                        maxStageProgress = snapshot.StageDisplayOrder;
+                    }
+                }
+            }
+
+            int updatedRows = connection.Execute(
+                "UPDATE player_progress SET total_credits = ?, total_experience = ?, " +
+                "max_stage_progress = ?, loop = ?, total_defeat_count = ?, " +
+                "updated_at_utc_ms = ? " +
+                "WHERE player_id = ?",
+                totalCredits,
+                totalExperience,
+                maxStageProgress,
+                loop,
+                totalDefeatCount,
+                Math.Max(progress.UpdatedAtUtcMilliseconds, updatedAtUtcMilliseconds),
+                PlayerId);
+            if (updatedRows != 1)
+            {
+                throw new InvalidOperationException(
+                    $"Expected to update one player-progress row, but updated {updatedRows}.");
+            }
         }
 
         private void NotifyRunCommitted(CompletedStageRunRecord record)
@@ -389,12 +666,27 @@ namespace ElementalDef.Data
                 row.CompletionSequence,
                 row.RunId,
                 row.StageId,
+                row.StageDisplayOrder,
                 row.PlayDurationMilliseconds,
                 row.HeadquartersRemainingHealth,
+                row.HeadquartersMaxHealth,
                 row.DefeatedEnemyCount,
                 row.AttackCount,
+                row.EarnedCredits,
+                row.EarnedExperience,
                 (StageRunOutcome)row.Outcome,
                 DateTimeOffset.FromUnixTimeMilliseconds(row.CompletedAtUtcMilliseconds));
+        }
+
+        private static PlayerProgressSnapshot ToProgressSnapshot(PlayerProgressRow row)
+        {
+            return new PlayerProgressSnapshot(
+                row.TotalCredits,
+                row.TotalExperience,
+                row.MaxStageProgress,
+                row.Loop,
+                row.TotalDefeatCount,
+                DateTimeOffset.FromUnixTimeMilliseconds(row.UpdatedAtUtcMilliseconds));
         }
 
         private static string ComputePayloadHash(CompletedStageRunSnapshot snapshot)
@@ -406,10 +698,14 @@ namespace ElementalDef.Data
                 {
                     writer.Write(snapshot.RunId);
                     writer.Write(snapshot.StageId);
+                    writer.Write(snapshot.StageDisplayOrder);
                     writer.Write(snapshot.PlayDurationMilliseconds);
                     writer.Write(snapshot.HeadquartersRemainingHealth);
+                    writer.Write(snapshot.HeadquartersMaxHealth);
                     writer.Write(snapshot.DefeatedEnemyCount);
                     writer.Write(snapshot.AttackCount);
+                    writer.Write(snapshot.EarnedCredits);
+                    writer.Write(snapshot.EarnedExperience);
                     writer.Write((int)snapshot.Outcome);
                     writer.Write(snapshot.CompletedAtUtc.ToUnixTimeMilliseconds());
                 }
@@ -487,11 +783,17 @@ namespace ElementalDef.Data
         [Column("stage_id")]
         public string StageId { get; set; }
 
+        [Column("stage_display_order")]
+        public int StageDisplayOrder { get; set; }
+
         [Column("play_duration_ms")]
         public long PlayDurationMilliseconds { get; set; }
 
         [Column("headquarters_remaining_hp")]
         public double HeadquartersRemainingHealth { get; set; }
+
+        [Column("headquarters_max_hp")]
+        public double? HeadquartersMaxHealth { get; set; }
 
         [Column("defeated_enemy_count")]
         public long DefeatedEnemyCount { get; set; }
@@ -499,11 +801,43 @@ namespace ElementalDef.Data
         [Column("attack_count")]
         public long AttackCount { get; set; }
 
+        [Column("earned_credits")]
+        public long EarnedCredits { get; set; }
+
+        [Column("earned_experience")]
+        public long EarnedExperience { get; set; }
+
         [Column("outcome")]
         public int Outcome { get; set; }
 
         [Column("completed_at_utc_ms")]
         public long CompletedAtUtcMilliseconds { get; set; }
+    }
+
+    [Table("player_progress")]
+    [Preserve(AllMembers = true)]
+    internal sealed class PlayerProgressRow
+    {
+        [Column("player_id")]
+        public long PlayerId { get; set; }
+
+        [Column("total_credits")]
+        public long TotalCredits { get; set; }
+
+        [Column("total_experience")]
+        public long TotalExperience { get; set; }
+
+        [Column("max_stage_progress")]
+        public int MaxStageProgress { get; set; }
+
+        [Column("loop")]
+        public long Loop { get; set; }
+
+        [Column("total_defeat_count")]
+        public long TotalDefeatCount { get; set; }
+
+        [Column("updated_at_utc_ms")]
+        public long UpdatedAtUtcMilliseconds { get; set; }
     }
 
     [Preserve(AllMembers = true)]

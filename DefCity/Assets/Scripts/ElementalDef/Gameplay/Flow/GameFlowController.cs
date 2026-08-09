@@ -90,7 +90,18 @@ namespace ElementalDef.Gameplay.Flow
                 return;
             }
 
+            TryCompleteDefeat();
+        }
+
+        public bool TryCompleteDefeat()
+        {
+            if (IsCompleted)
+            {
+                return false;
+            }
+
             CompleteGame(GameResult.Defeat);
+            return true;
         }
 
         private void CompleteGame(GameResult result)

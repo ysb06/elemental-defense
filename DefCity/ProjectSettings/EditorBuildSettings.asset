@@ -9,17 +9,20 @@ EditorBuildSettings:
     path: Assets/Scenes/ElementalDefMainMenu.unity
     guid: 14f5074a1e9f4597986f388494c25ee1
   - enabled: 1
+    path: Assets/Scenes/ElementalDef/ElementalDefLobby.unity
+    guid: c8888393190234caead5c720cab337c4
+  - enabled: 1
+    path: Assets/Scenes/ElementalDef/ElementalDefCharacter.unity
+    guid: 3fa9ec3ea4ef345559bb5423e9b9328a
+  - enabled: 1
     path: Assets/Scenes/ElementalDef/ElementalDefStageSelect.unity
     guid: 6075b624298594f358ec034a7c53a89c
   - enabled: 1
-    path: Assets/Scenes/ElementalDef/ElementalDefMain.unity
+    path: Assets/Scenes/ElementalDef/ElementalDefGame.unity
     guid: 773cbaf53253d4d4db9efc18a4c1f182
   - enabled: 1
-    path: Assets/Scenes/ElementalDef/ElementalDefVictory.unity
-    guid: b4aa83ed568344d29b16f90747aa04f4
-  - enabled: 1
-    path: Assets/Scenes/ElementalDef/ElementalDefDefeat.unity
-    guid: 45d90bd6448c433e8961b9366ea124dd
+    path: Assets/Scenes/ElementalDef/ElementalDefResult.unity
+    guid: 968dac548782346759e75c84ce8c51cc
   - enabled: 0
     path: Assets/Scenes/Legacy/SampleScene.unity
     guid: 99c9720ab356a0642a771bea13969a05

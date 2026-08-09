@@ -11,15 +11,8 @@ namespace ElementalDef.Gameplay.StageMaps.Generation
     {
         private const int RandomStream = unchecked((int)0x6E624EB7);
 
-        private static readonly ElementType[] SupportedElements =
-        {
-            ElementType.Water,
-            ElementType.Fire,
-            ElementType.Earth,
-        };
-
         public string StrategyId => "element-region-growth";
-        public string Version => "1";
+        public string Version => "2";
 
         public IReadOnlyDictionary<Vector2Int, ElementType> PlaceElements(
             StageElementPlacementContext context)
@@ -32,12 +25,12 @@ namespace ElementalDef.Gameplay.StageMaps.Generation
             int candidateCount = context.CandidateCells.Count;
             int requiredCellCount = checked(
                 context.MinimumDeployableCellCountPerElement *
-                SupportedElements.Length);
+                StageGroundElementTypes.Count);
             if (candidateCount < requiredCellCount)
             {
                 throw new InvalidOperationException(
-                    $"Element placement has {candidateCount} cells but requires " +
-                    $"at least {requiredCellCount} to satisfy its per-element quota.");
+                    $"Ground-type placement has {candidateCount} cells but requires " +
+                    $"at least {requiredCellCount} to satisfy its per-ground-type quota.");
             }
 
             Dictionary<Vector2Int, ElementType> assignments =
@@ -50,7 +43,7 @@ namespace ElementalDef.Gameplay.StageMaps.Generation
             List<Vector2Int> randomizedCells =
                 new(context.CandidateCells);
             ElementType[] randomizedElements =
-                (ElementType[])SupportedElements.Clone();
+                StageGroundElementTypes.CreateOrderedCopy();
             StageRouteDeterministicRandom random =
                 new(context.Seed, RandomStream);
             random.Shuffle(randomizedCells);
@@ -151,7 +144,7 @@ namespace ElementalDef.Gameplay.StageMaps.Generation
             if (!found)
             {
                 throw new InvalidOperationException(
-                    "A distinct elemental region seed could not be selected.");
+                    "A distinct ground-type region seed could not be selected.");
             }
 
             return selected;
@@ -191,7 +184,7 @@ namespace ElementalDef.Gameplay.StageMaps.Generation
             if (!found)
             {
                 throw new InvalidOperationException(
-                    "An unassigned elemental cell could not be selected.");
+                    "An unassigned ground cell could not be selected.");
             }
 
             return selected;
@@ -225,7 +218,7 @@ namespace ElementalDef.Gameplay.StageMaps.Generation
             if (!found)
             {
                 throw new InvalidOperationException(
-                    "No elemental region seed is available.");
+                    "No ground-type region seed is available.");
             }
 
             return selected;

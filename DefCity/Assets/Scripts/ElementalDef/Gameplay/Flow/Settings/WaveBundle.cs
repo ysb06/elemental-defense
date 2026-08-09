@@ -11,6 +11,7 @@ namespace ElementalDef.Gameplay.Flow.Settings
         [SerializeField] private string stageId;
         [SerializeField, Min(1)] private int displayOrder = 1;
         [SerializeField] private int mapSeed;
+        [SerializeField, Min(0.01f)] private float timeLimitSeconds = 600f;
 
         [Header("Base Rewards")]
         [SerializeField, Min(0)] private int baseCreditReward;
@@ -23,6 +24,7 @@ namespace ElementalDef.Gameplay.Flow.Settings
         public string StageId => stageId;
         public int DisplayOrder => displayOrder;
         public int MapSeed => mapSeed;
+        public float TimeLimitSeconds => timeLimitSeconds;
         public int BaseCreditReward => baseCreditReward;
         public int BaseExperienceReward => baseExperienceReward;
         public bool UsesPlaceholderTuning => usesPlaceholderTuning;
@@ -59,6 +61,14 @@ namespace ElementalDef.Gameplay.Flow.Settings
             if (displayOrder < 1)
             {
                 errors.Add($"Display order must be at least 1, but is {displayOrder}.");
+            }
+
+            if (float.IsNaN(timeLimitSeconds) ||
+                float.IsInfinity(timeLimitSeconds) ||
+                timeLimitSeconds <= 0f)
+            {
+                errors.Add(
+                    $"Time limit must be finite and greater than 0 seconds, but is {timeLimitSeconds}.");
             }
 
             if (baseCreditReward < 0)

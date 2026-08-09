@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.Text;
 using ElementalDef.Gameplay.Combat;
+using ElementalDef.Gameplay.StageMaps.Decoration;
 using ElementalDef.Gameplay.StageMaps.Generation;
 using UnityEditor;
 using UnityEditor.SceneManagement;
@@ -13,7 +14,9 @@ namespace ElementalDef.Gameplay.StageMaps.Testing.Editor
     public sealed class StageMapGeneratorTesterEditor : UnityEditor.Editor
     {
         private const float CellOverlayHeight = 0.56f;
+        private const float DecorationOverlayHeight = 0.5f;
         private const float RouteOverlayHeight = 0.64f;
+        private const int DecorationCircleSegmentCount = 96;
 
         private static readonly Color BoundsColor =
             new(0.65f, 0.65f, 0.65f, 0.9f);
@@ -21,12 +24,14 @@ namespace ElementalDef.Gameplay.StageMaps.Testing.Editor
             new(0.28f, 0.32f, 0.35f, 0.42f);
         private static readonly Color RoadOutlineColor =
             new(0.62f, 0.72f, 0.76f, 0.9f);
+        private static readonly Color NeutralColor =
+            new(0.18f, 0.78f, 0.3f, 1f);
         private static readonly Color WaterColor =
             new(0.12f, 0.55f, 1f, 1f);
         private static readonly Color FireColor =
             new(1f, 0.24f, 0.08f, 1f);
         private static readonly Color EarthColor =
-            new(0.18f, 0.78f, 0.3f, 1f);
+            new(1f, 0.82f, 0.08f, 1f);
         private static readonly Color HeadquartersColor =
             new(1f, 0.1f, 0.8f, 1f);
         private static readonly Color FullPathColor =
@@ -37,6 +42,14 @@ namespace ElementalDef.Gameplay.StageMaps.Testing.Editor
             new(1f, 0.9f, 0.1f, 1f);
         private static readonly Color BlockedMarkColor =
             new(0.03f, 0.03f, 0.03f, 1f);
+        private static readonly Color DecorationBoundaryColor =
+            new(0.72f, 0.72f, 0.78f, 0.9f);
+        private static readonly Color BoundaryWallFillColor =
+            new(0.16f, 0.12f, 0.22f, 0.58f);
+        private static readonly Color BoundaryWallOutlineColor =
+            new(0.92f, 0.8f, 1f, 0.96f);
+        private static readonly Color BoundaryWallOuterBoundaryColor =
+            new(0.8f, 0.52f, 0.96f, 0.95f);
 
         private StageMapGeneratorTester EditTarget =>
             (StageMapGeneratorTester)target;
@@ -78,12 +91,19 @@ namespace ElementalDef.Gameplay.StageMaps.Testing.Editor
             EditorGUILayout.Space();
             using (new EditorGUI.DisabledScope(!EditTarget.HasPreview))
             {
-                if (GUILayout.Button("Apply Preview To Tilemap"))
+                if (GUILayout.Button("Apply Preview To Tilemaps"))
                 {
-                    RegisterTilemapUndo("Apply Stage Map Preview");
-                    if (EditTarget.ApplyPreviewToTilemap())
+                    RegisterTilemapsUndo("Apply Stage Map Preview");
+                    try
                     {
-                        MarkTilemapDirty();
+                        EditTarget.ApplyPreviewToTilemaps();
+                    }
+                    finally
+                    {
+                        if (EditTarget.LastTilemapOperationReachedRenderer)
+                        {
+                            MarkTilemapsDirty();
+                        }
                     }
 
                     Repaint();
@@ -92,14 +112,22 @@ namespace ElementalDef.Gameplay.StageMaps.Testing.Editor
             }
 
             using (new EditorGUI.DisabledScope(
-                       EditTarget.GroundTilemap == null))
+                       EditTarget.GroundTilemap == null ||
+                       EditTarget.DecorationTilemap == null))
             {
-                if (GUILayout.Button("Clear Rendered Tilemap"))
+                if (GUILayout.Button("Clear Rendered Tilemaps"))
                 {
-                    RegisterTilemapUndo("Clear Rendered Stage Map");
-                    if (EditTarget.ClearRenderedTilemap())
+                    RegisterTilemapsUndo("Clear Rendered Stage Map");
+                    try
                     {
-                        MarkTilemapDirty();
+                        EditTarget.ClearRenderedTilemaps();
+                    }
+                    finally
+                    {
+                        if (EditTarget.LastTilemapOperationReachedRenderer)
+                        {
+                            MarkTilemapsDirty();
+                        }
                     }
 
                     Repaint();
@@ -108,6 +136,7 @@ namespace ElementalDef.Gameplay.StageMaps.Testing.Editor
             }
 
             DrawGenerationStatus();
+            DrawDecorationStatus();
             DrawTilemapStatus();
         }
 
@@ -123,6 +152,10 @@ namespace ElementalDef.Gameplay.StageMaps.Testing.Editor
             Tilemap tilemap = EditTarget.GroundTilemap;
             GridGeometry geometry = GridGeometry.Create(tilemap);
 
+            DrawDecoration(
+                tilemap,
+                EditTarget.PreviewDecoration,
+                geometry);
             DrawBounds(tilemap, map.Bounds, geometry);
             DrawCells(tilemap, map, geometry);
             DrawOrderedPath(tilemap, route, geometry);
@@ -178,12 +211,14 @@ namespace ElementalDef.Gameplay.StageMaps.Testing.Editor
                 $"{statistics.Road} / {result.GroundCellCount}");
             summary.AppendLine(
                 $"Deployable: {statistics.Deployable} " +
-                $"(Water {statistics.WaterDeployable}, " +
+                $"(Neutral {statistics.NeutralDeployable}, " +
+                $"Water {statistics.WaterDeployable}, " +
                 $"Fire {statistics.FireDeployable}, " +
                 $"Earth {statistics.EarthDeployable})");
             summary.AppendLine(
                 $"Blocked: {statistics.Blocked} " +
-                $"(Water {statistics.WaterBlocked}, " +
+                $"(Neutral {statistics.NeutralBlocked}, " +
+                $"Water {statistics.WaterBlocked}, " +
                 $"Fire {statistics.FireBlocked}, " +
                 $"Earth {statistics.EarthBlocked})");
             summary.AppendLine(
@@ -201,10 +236,87 @@ namespace ElementalDef.Gameplay.StageMaps.Testing.Editor
                 summary.ToString().TrimEnd(),
                 MessageType.Info);
             EditorGUILayout.HelpBox(
-                "Scene overlay: blue/red/green cells are deployable Water/Fire/Earth. " +
+                "Scene overlay: green/blue/red/yellow cells are deployable " +
+                "Neutral/Water/Fire/Earth ground. " +
                 "Darker cells with an X keep their element but are blocked. " +
-                "Gray is Road; magenta is Headquarters.",
+                "Gray is Road; magenta is Headquarters. Translucent exterior " +
+                "cells show decoration ground; dark purple exterior " +
+                "cells show the decoration boundary wall.",
                 MessageType.None);
+        }
+
+        private void DrawDecorationStatus()
+        {
+            if (string.IsNullOrEmpty(EditTarget.LastDecorationMessage))
+            {
+                return;
+            }
+
+            if (!EditTarget.HasDecorationPreview)
+            {
+                StringBuilder failure = new();
+                failure.AppendLine("Stage decoration preview was not generated.");
+                failure.AppendLine(EditTarget.LastDecorationMessage);
+                if (EditTarget.HasDecorationGenerationTiming)
+                {
+                    failure.AppendLine(
+                        $"Elapsed: " +
+                        $"{EditTarget.LastDecorationGenerationElapsedMilliseconds:F2} ms");
+                }
+
+                EditorGUILayout.HelpBox(
+                    failure.ToString().TrimEnd(),
+                    MessageType.Warning);
+                return;
+            }
+
+            GeneratedStageDecoration decoration =
+                EditTarget.PreviewDecoration;
+            bool groundDecorationEnabled =
+                decoration.BoundaryShape ==
+                StageDecorationBoundaryShape.CircularDisk;
+            StringBuilder summary = new();
+            summary.AppendLine(EditTarget.LastDecorationMessage);
+            summary.AppendLine($"Generator: {decoration.GeneratorVersion}");
+            summary.AppendLine($"Center cell: {decoration.CenterCell}");
+            summary.AppendLine(
+                $"Boundary shape: {decoration.BoundaryShape}");
+            if (decoration.BoundaryShape ==
+                StageDecorationBoundaryShape.CircularDisk)
+            {
+                summary.AppendLine($"Radius: {decoration.Radius}");
+                summary.AppendLine(
+                    $"Outer padding: {EditTarget.DecorationOuterPadding}");
+            }
+            else
+            {
+                summary.AppendLine("Radius: Not applied");
+                summary.AppendLine("Outer padding: Not applied");
+            }
+
+            summary.AppendLine(
+                $"Ground decoration: " +
+                $"{(groundDecorationEnabled ? "Enabled" : "Disabled")}");
+            summary.AppendLine(
+                $"Boundary wall thickness: " +
+                $"{decoration.BoundaryWallThickness}");
+            summary.AppendLine(
+                $"Decoration ground / Boundary wall / Total: " +
+                $"{decoration.ElementalGroundCellCount} / " +
+                $"{decoration.BoundaryWallCellCount} / " +
+                $"{decoration.CellCount}");
+            summary.AppendLine(
+                $"Wall-inclusive bounds: {decoration.Bounds}");
+            if (EditTarget.HasDecorationGenerationTiming)
+            {
+                summary.AppendLine(
+                    $"Elapsed: " +
+                    $"{EditTarget.LastDecorationGenerationElapsedMilliseconds:F2} ms");
+            }
+
+            EditorGUILayout.HelpBox(
+                summary.ToString().TrimEnd(),
+                MessageType.Info);
         }
 
         private void DrawTilemapStatus()
@@ -221,30 +333,180 @@ namespace ElementalDef.Gameplay.StageMaps.Testing.Editor
                     : MessageType.Error);
         }
 
-        private void RegisterTilemapUndo(string label)
+        private static void DrawDecoration(
+            Tilemap tilemap,
+            GeneratedStageDecoration decoration,
+            GridGeometry geometry)
         {
-            if (Application.isPlaying || EditTarget.GroundTilemap == null)
+            if (decoration == null)
             {
                 return;
             }
 
-            Undo.RegisterCompleteObjectUndo(
-                EditTarget.GroundTilemap,
-                label);
+            DrawDecorationBoundary(
+                tilemap,
+                decoration,
+                geometry);
+
+            foreach (StageDecorationCellEntry entry in
+                     decoration.EnumerateCells())
+            {
+                Vector3[] corners = geometry.GetCellCorners(
+                    tilemap,
+                    entry.Coordinates,
+                    DecorationOverlayHeight,
+                    inset: 0.08f);
+
+                if (entry.Kind == StageDecorationCellKind.BoundaryWall)
+                {
+                    Handles.DrawSolidRectangleWithOutline(
+                        corners,
+                        BoundaryWallFillColor,
+                        BoundaryWallOutlineColor);
+                }
+                else
+                {
+                    Color elementColor = GetElementColor(entry.Element);
+                    Handles.DrawSolidRectangleWithOutline(
+                        corners,
+                        WithAlpha(elementColor, 0.2f),
+                        WithAlpha(elementColor, 0.62f));
+                }
+            }
         }
 
-        private void MarkTilemapDirty()
+        private static void DrawDecorationBoundary(
+            Tilemap tilemap,
+            GeneratedStageDecoration decoration,
+            GridGeometry geometry)
         {
-            if (Application.isPlaying || EditTarget.GroundTilemap == null)
+            switch (decoration.BoundaryShape)
+            {
+                case StageDecorationBoundaryShape.CircularDisk:
+                {
+                    Vector3 center = geometry.GetCellCenter(
+                        tilemap,
+                        decoration.CenterCell,
+                        DecorationOverlayHeight + 0.01f);
+                    float elementalRadius = decoration.Radius + 0.5f;
+                    DrawDecorationCircle(
+                        center,
+                        elementalRadius,
+                        geometry,
+                        DecorationBoundaryColor);
+
+                    float wallOuterRadius = elementalRadius +
+                                            decoration.BoundaryWallThickness;
+                    DrawDecorationCircle(
+                        center,
+                        wallOuterRadius,
+                        geometry,
+                        BoundaryWallOuterBoundaryColor);
+                    Handles.Label(
+                        center + geometry.CellY * wallOuterRadius,
+                        $"Decoration Radius {decoration.Radius} + " +
+                        $"Wall {decoration.BoundaryWallThickness}");
+                    return;
+                }
+                case StageDecorationBoundaryShape.MapBoundsRectangle:
+                {
+                    Vector3[] corners = geometry.GetBoundsCorners(
+                        tilemap,
+                        decoration.Bounds,
+                        DecorationOverlayHeight + 0.01f);
+                    Vector3[] closedCorners =
+                    {
+                        corners[0],
+                        corners[1],
+                        corners[2],
+                        corners[3],
+                        corners[0],
+                    };
+
+                    Handles.color = BoundaryWallOuterBoundaryColor;
+                    Handles.DrawAAPolyLine(2f, closedCorners);
+                    Handles.Label(
+                        corners[3],
+                        $"Decoration Bounds {decoration.Bounds} " +
+                        $"(Wall {decoration.BoundaryWallThickness})");
+                    return;
+                }
+                default:
+                    throw new System.ArgumentOutOfRangeException(
+                        nameof(decoration.BoundaryShape),
+                        decoration.BoundaryShape,
+                        "Unsupported decoration boundary shape.");
+            }
+        }
+
+        private static void DrawDecorationCircle(
+            Vector3 center,
+            float radius,
+            GridGeometry geometry,
+            Color color)
+        {
+            Vector3[] points =
+                new Vector3[DecorationCircleSegmentCount + 1];
+            for (int index = 0;
+                 index <= DecorationCircleSegmentCount;
+                 index++)
+            {
+                float angle =
+                    Mathf.PI * 2f * index / DecorationCircleSegmentCount;
+                points[index] = center +
+                                geometry.CellX * (Mathf.Cos(angle) * radius) +
+                                geometry.CellY * (Mathf.Sin(angle) * radius);
+            }
+
+            Handles.color = color;
+            Handles.DrawAAPolyLine(2f, points);
+        }
+
+        private void RegisterTilemapsUndo(string label)
+        {
+            if (Application.isPlaying)
             {
                 return;
             }
 
-            EditorUtility.SetDirty(EditTarget.GroundTilemap);
-            if (EditTarget.GroundTilemap.gameObject.scene.IsValid())
+            if (EditTarget.GroundTilemap != null)
+            {
+                Undo.RegisterCompleteObjectUndo(
+                    EditTarget.GroundTilemap,
+                    label);
+            }
+
+            if (EditTarget.DecorationTilemap != null)
+            {
+                Undo.RegisterCompleteObjectUndo(
+                    EditTarget.DecorationTilemap,
+                    label);
+            }
+        }
+
+        private void MarkTilemapsDirty()
+        {
+            if (Application.isPlaying)
+            {
+                return;
+            }
+
+            MarkTilemapDirty(EditTarget.GroundTilemap);
+            MarkTilemapDirty(EditTarget.DecorationTilemap);
+        }
+
+        private static void MarkTilemapDirty(Tilemap tilemap)
+        {
+            if (tilemap == null)
+            {
+                return;
+            }
+
+            EditorUtility.SetDirty(tilemap);
+            if (tilemap.gameObject.scene.IsValid())
             {
                 EditorSceneManager.MarkSceneDirty(
-                    EditTarget.GroundTilemap.gameObject.scene);
+                    tilemap.gameObject.scene);
             }
         }
 
@@ -356,6 +618,8 @@ namespace ElementalDef.Gameplay.StageMaps.Testing.Editor
         {
             switch (element)
             {
+                case ElementType.Neutral:
+                    return NeutralColor;
                 case ElementType.Water:
                     return WaterColor;
                 case ElementType.Fire:
@@ -830,9 +1094,11 @@ namespace ElementalDef.Gameplay.StageMaps.Testing.Editor
             public int Road { get; }
             public int Deployable { get; }
             public int Blocked { get; }
+            public int NeutralDeployable { get; }
             public int WaterDeployable { get; }
             public int FireDeployable { get; }
             public int EarthDeployable { get; }
+            public int NeutralBlocked { get; }
             public int WaterBlocked { get; }
             public int FireBlocked { get; }
             public int EarthBlocked { get; }
@@ -841,9 +1107,11 @@ namespace ElementalDef.Gameplay.StageMaps.Testing.Editor
                 int road,
                 int deployable,
                 int blocked,
+                int neutralDeployable,
                 int waterDeployable,
                 int fireDeployable,
                 int earthDeployable,
+                int neutralBlocked,
                 int waterBlocked,
                 int fireBlocked,
                 int earthBlocked)
@@ -851,9 +1119,11 @@ namespace ElementalDef.Gameplay.StageMaps.Testing.Editor
                 Road = road;
                 Deployable = deployable;
                 Blocked = blocked;
+                NeutralDeployable = neutralDeployable;
                 WaterDeployable = waterDeployable;
                 FireDeployable = fireDeployable;
                 EarthDeployable = earthDeployable;
+                NeutralBlocked = neutralBlocked;
                 WaterBlocked = waterBlocked;
                 FireBlocked = fireBlocked;
                 EarthBlocked = earthBlocked;
@@ -864,9 +1134,11 @@ namespace ElementalDef.Gameplay.StageMaps.Testing.Editor
                 int road = 0;
                 int deployable = 0;
                 int blocked = 0;
+                int neutralDeployable = 0;
                 int waterDeployable = 0;
                 int fireDeployable = 0;
                 int earthDeployable = 0;
+                int neutralBlocked = 0;
                 int waterBlocked = 0;
                 int fireBlocked = 0;
                 int earthBlocked = 0;
@@ -893,6 +1165,9 @@ namespace ElementalDef.Gameplay.StageMaps.Testing.Editor
 
                     switch (cell.Element)
                     {
+                        case ElementType.Neutral when isDeployable:
+                            neutralDeployable++;
+                            break;
                         case ElementType.Water when isDeployable:
                             waterDeployable++;
                             break;
@@ -901,6 +1176,9 @@ namespace ElementalDef.Gameplay.StageMaps.Testing.Editor
                             break;
                         case ElementType.Earth when isDeployable:
                             earthDeployable++;
+                            break;
+                        case ElementType.Neutral when isBlocked:
+                            neutralBlocked++;
                             break;
                         case ElementType.Water when isBlocked:
                             waterBlocked++;
@@ -918,9 +1196,11 @@ namespace ElementalDef.Gameplay.StageMaps.Testing.Editor
                     road,
                     deployable,
                     blocked,
+                    neutralDeployable,
                     waterDeployable,
                     fireDeployable,
                     earthDeployable,
+                    neutralBlocked,
                     waterBlocked,
                     fireBlocked,
                     earthBlocked);

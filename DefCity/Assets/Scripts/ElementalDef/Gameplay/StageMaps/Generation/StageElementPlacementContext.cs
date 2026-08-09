@@ -45,13 +45,13 @@ namespace ElementalDef.Gameplay.StageMaps.Generation
                     throw new ArgumentOutOfRangeException(
                         nameof(sourceCandidateCells),
                         cell,
-                        $"Element candidate {cell} is outside bounds {bounds}.");
+                        $"Ground candidate {cell} is outside bounds {bounds}.");
                 }
 
                 if (!uniqueCells.Add(cell))
                 {
                     throw new ArgumentException(
-                        $"Element candidate {cell} is duplicated.",
+                        $"Ground candidate {cell} is duplicated.",
                         nameof(sourceCandidateCells));
                 }
 

@@ -14,6 +14,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::ElementalDef.Gameplay.StageMaps.Rendering.StageMapTileCatalog
   roadTile: {fileID: 11400000, guid: 79d026f7a0ed344afbb04fb23f7ac88a, type: 2}
   headquartersTile: {fileID: 11400000, guid: 188dc074a6ea4a51bd6930f368cb13ce, type: 2}
+  neutralDeployableTiles:
+  - {fileID: 11400000, guid: 04b122d4bbc0d41308e4180a9f969280, type: 2}
+  - {fileID: 11400000, guid: fcc54ef2435ca41b39039d8b5c428a0f, type: 2}
+  - {fileID: 11400000, guid: 637b8593b73b44978a81b902ab218a25, type: 2}
+  - {fileID: 11400000, guid: e48d0000b91c04856881c2ae1448b441, type: 2}
   waterDeployableTiles:
   - {fileID: 11400000, guid: 6f8006b59349745c99c3260608ee43f8, type: 2}
   - {fileID: 11400000, guid: de845b698b3d74aaca40ae5a5d9907f2, type: 2}
@@ -25,10 +30,15 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 98780be7e3b874846ba23c7c75a27808, type: 2}
   - {fileID: 11400000, guid: a89b19c83da094ddfa9f7fb26dddd04a, type: 2}
   earthDeployableTiles:
-  - {fileID: 11400000, guid: 04b122d4bbc0d41308e4180a9f969280, type: 2}
-  - {fileID: 11400000, guid: fcc54ef2435ca41b39039d8b5c428a0f, type: 2}
-  - {fileID: 11400000, guid: 637b8593b73b44978a81b902ab218a25, type: 2}
-  - {fileID: 11400000, guid: e48d0000b91c04856881c2ae1448b441, type: 2}
+  - {fileID: 11400000, guid: aec7a9fc307648ec8e614fd620c1ce17, type: 2}
+  - {fileID: 11400000, guid: 34e2d0e8399b49abad847b64f5ac637b, type: 2}
+  - {fileID: 11400000, guid: 79ed9ea6c3c5430ea7bad83604ed9aed, type: 2}
+  - {fileID: 11400000, guid: 6a2d5ea606c244e1a444a32621b0ae52, type: 2}
+  neutralBlockedTiles:
+  - {fileID: 11400000, guid: 3a8d142ee14e341d18e21185334884c4, type: 2}
+  - {fileID: 11400000, guid: db7a17468a88c4f299ce81878d399f27, type: 2}
+  - {fileID: 11400000, guid: c03fee4ca965f46098ea755d4373ef88, type: 2}
+  - {fileID: 11400000, guid: 5c7a55b315d9e4570ab79fde82c6c3d4, type: 2}
   waterBlockedTiles:
   - {fileID: 11400000, guid: 442668937ab574d2abdbce93eb2c3911, type: 2}
   - {fileID: 11400000, guid: 6ac9e66ebac91454ea3b3ec574295f24, type: 2}
@@ -40,7 +50,7 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 9719284a953ed4414b7514a94d9db75a, type: 2}
   - {fileID: 11400000, guid: f0305b4b84c38449aab11ceb3edd3b17, type: 2}
   earthBlockedTiles:
-  - {fileID: 11400000, guid: 3a8d142ee14e341d18e21185334884c4, type: 2}
-  - {fileID: 11400000, guid: db7a17468a88c4f299ce81878d399f27, type: 2}
-  - {fileID: 11400000, guid: c03fee4ca965f46098ea755d4373ef88, type: 2}
-  - {fileID: 11400000, guid: 5c7a55b315d9e4570ab79fde82c6c3d4, type: 2}
+  - {fileID: 11400000, guid: 29eb74f7670143889517bcb1caf038f0, type: 2}
+  - {fileID: 11400000, guid: 890fe12daffe4d1cba1bd314c51889aa, type: 2}
+  - {fileID: 11400000, guid: fdf1764e118d465bb43ed857e585e44a, type: 2}
+  - {fileID: 11400000, guid: 712713acc9334e1abd1948b6ce659783, type: 2}

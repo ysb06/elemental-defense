@@ -18,6 +18,8 @@ namespace ElementalDef.Runtime
 
         public StageLaunchService StageLaunch { get; private set; }
         public IElementalDefRunStore RunStore { get; private set; }
+        public PlayerProgressService PlayerProgress { get; private set; }
+        public StageDifficultyService StageDifficulty { get; private set; }
         public string DatabasePath { get; private set; }
         public Exception InitializationException { get; private set; }
 
@@ -60,6 +62,8 @@ namespace ElementalDef.Runtime
             }
 
             RunStore = null;
+            PlayerProgress = null;
+            StageDifficulty = null;
             StageLaunch = null;
             instance = null;
         }
@@ -75,12 +79,17 @@ namespace ElementalDef.Runtime
                 var dataStore = new EDataStore(DatabasePath);
                 RunStore = dataStore;
                 dataStore.Initialize();
+                PlayerProgress = new PlayerProgressService(dataStore);
+                StageDifficulty = new StageDifficultyService(dataStore);
+                StageLaunch.ConfigureDifficultyService(StageDifficulty);
             }
             catch (Exception exception)
             {
                 InitializationException = exception;
                 RunStore?.Dispose();
                 RunStore = null;
+                PlayerProgress = null;
+                StageDifficulty = null;
                 Debug.LogException(new InvalidOperationException(
                     "ElementalDef application services could not be initialized.",
                     exception), this);

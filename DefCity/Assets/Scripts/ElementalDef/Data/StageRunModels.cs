@@ -28,35 +28,56 @@ namespace ElementalDef.Data
     {
         public string RunId { get; }
         public string StageId { get; }
+        public int StageDisplayOrder { get; }
         public long PlayDurationMilliseconds { get; }
         public double HeadquartersRemainingHealth { get; }
+        public double HeadquartersMaxHealth { get; }
         public long DefeatedEnemyCount { get; }
         public long AttackCount { get; }
+        public long EarnedCredits { get; }
+        public long EarnedExperience { get; }
         public StageRunOutcome Outcome { get; }
         public DateTimeOffset CompletedAtUtc { get; }
 
         public CompletedStageRunSnapshot(
             string runId,
             string stageId,
+            int stageDisplayOrder,
             long playDurationMilliseconds,
             double headquartersRemainingHealth,
+            double headquartersMaxHealth,
             long defeatedEnemyCount,
             long attackCount,
+            long earnedCredits,
+            long earnedExperience,
             StageRunOutcome outcome,
             DateTimeOffset completedAtUtc)
         {
             RunId = PersistenceValidation.NormalizeGuidN(runId, nameof(runId));
             StageId = PersistenceValidation.RequireId(stageId, nameof(stageId));
+            PersistenceValidation.RequireStageDisplayOrder(stageDisplayOrder, nameof(stageDisplayOrder));
             PersistenceValidation.RequireNonNegative(playDurationMilliseconds, nameof(playDurationMilliseconds));
             PersistenceValidation.RequireNonNegativeFinite(headquartersRemainingHealth, nameof(headquartersRemainingHealth));
+            PersistenceValidation.RequirePositiveFinite(headquartersMaxHealth, nameof(headquartersMaxHealth));
+            PersistenceValidation.RequireNotGreaterThan(
+                headquartersRemainingHealth,
+                headquartersMaxHealth,
+                nameof(headquartersRemainingHealth));
             PersistenceValidation.RequireNonNegative(defeatedEnemyCount, nameof(defeatedEnemyCount));
             PersistenceValidation.RequireNonNegative(attackCount, nameof(attackCount));
+            PersistenceValidation.RequireNonNegative(earnedCredits, nameof(earnedCredits));
+            PersistenceValidation.RequireNonNegative(earnedExperience, nameof(earnedExperience));
             PersistenceValidation.RequireOutcome(outcome, nameof(outcome));
+            PersistenceValidation.RequireNoDefeatRewards(outcome, earnedCredits, earnedExperience);
 
+            StageDisplayOrder = stageDisplayOrder;
             PlayDurationMilliseconds = playDurationMilliseconds;
             HeadquartersRemainingHealth = headquartersRemainingHealth;
+            HeadquartersMaxHealth = headquartersMaxHealth;
             DefeatedEnemyCount = defeatedEnemyCount;
             AttackCount = attackCount;
+            EarnedCredits = earnedCredits;
+            EarnedExperience = earnedExperience;
             Outcome = outcome;
             CompletedAtUtc = completedAtUtc.ToUniversalTime();
         }
@@ -67,10 +88,14 @@ namespace ElementalDef.Data
         public long CompletionSequence { get; }
         public string RunId { get; }
         public string StageId { get; }
+        public int StageDisplayOrder { get; }
         public long PlayDurationMilliseconds { get; }
         public double HeadquartersRemainingHealth { get; }
+        public double? HeadquartersMaxHealth { get; }
         public long DefeatedEnemyCount { get; }
         public long AttackCount { get; }
+        public long EarnedCredits { get; }
+        public long EarnedExperience { get; }
         public StageRunOutcome Outcome { get; }
         public DateTimeOffset CompletedAtUtc { get; }
 
@@ -78,10 +103,14 @@ namespace ElementalDef.Data
             long completionSequence,
             string runId,
             string stageId,
+            int stageDisplayOrder,
             long playDurationMilliseconds,
             double headquartersRemainingHealth,
+            double? headquartersMaxHealth,
             long defeatedEnemyCount,
             long attackCount,
+            long earnedCredits,
+            long earnedExperience,
             StageRunOutcome outcome,
             DateTimeOffset completedAtUtc)
         {
@@ -93,16 +122,35 @@ namespace ElementalDef.Data
             CompletionSequence = completionSequence;
             RunId = PersistenceValidation.NormalizeGuidN(runId, nameof(runId));
             StageId = PersistenceValidation.RequireId(stageId, nameof(stageId));
+            PersistenceValidation.RequireStageDisplayOrder(stageDisplayOrder, nameof(stageDisplayOrder));
             PersistenceValidation.RequireNonNegative(playDurationMilliseconds, nameof(playDurationMilliseconds));
             PersistenceValidation.RequireNonNegativeFinite(headquartersRemainingHealth, nameof(headquartersRemainingHealth));
+            if (headquartersMaxHealth.HasValue)
+            {
+                PersistenceValidation.RequirePositiveFinite(
+                    headquartersMaxHealth.Value,
+                    nameof(headquartersMaxHealth));
+                PersistenceValidation.RequireNotGreaterThan(
+                    headquartersRemainingHealth,
+                    headquartersMaxHealth.Value,
+                    nameof(headquartersRemainingHealth));
+            }
+
             PersistenceValidation.RequireNonNegative(defeatedEnemyCount, nameof(defeatedEnemyCount));
             PersistenceValidation.RequireNonNegative(attackCount, nameof(attackCount));
+            PersistenceValidation.RequireNonNegative(earnedCredits, nameof(earnedCredits));
+            PersistenceValidation.RequireNonNegative(earnedExperience, nameof(earnedExperience));
             PersistenceValidation.RequireOutcome(outcome, nameof(outcome));
+            PersistenceValidation.RequireNoDefeatRewards(outcome, earnedCredits, earnedExperience);
 
+            StageDisplayOrder = stageDisplayOrder;
             PlayDurationMilliseconds = playDurationMilliseconds;
             HeadquartersRemainingHealth = headquartersRemainingHealth;
+            HeadquartersMaxHealth = headquartersMaxHealth;
             DefeatedEnemyCount = defeatedEnemyCount;
             AttackCount = attackCount;
+            EarnedCredits = earnedCredits;
+            EarnedExperience = earnedExperience;
             Outcome = outcome;
             CompletedAtUtc = completedAtUtc.ToUniversalTime();
         }
@@ -123,6 +171,53 @@ namespace ElementalDef.Data
         }
     }
 
+    public sealed class PlayerProgressSnapshot
+    {
+        public long TotalCredits { get; }
+        public long TotalExperience { get; }
+        public int MaxStageProgress { get; }
+        public long Loop { get; }
+        public long TotalDefeatCount { get; }
+        public DateTimeOffset UpdatedAtUtc { get; }
+
+        internal PlayerProgressSnapshot(
+            long totalCredits,
+            long totalExperience,
+            int maxStageProgress,
+            long loop,
+            long totalDefeatCount,
+            DateTimeOffset updatedAtUtc)
+        {
+            PersistenceValidation.RequireNonNegative(totalCredits, nameof(totalCredits));
+            PersistenceValidation.RequireNonNegative(totalExperience, nameof(totalExperience));
+            PersistenceValidation.RequireMaxStageProgress(maxStageProgress, nameof(maxStageProgress));
+            PersistenceValidation.RequireNonNegative(loop, nameof(loop));
+            PersistenceValidation.RequireNonNegative(totalDefeatCount, nameof(totalDefeatCount));
+
+            TotalCredits = totalCredits;
+            TotalExperience = totalExperience;
+            MaxStageProgress = maxStageProgress;
+            Loop = loop;
+            TotalDefeatCount = totalDefeatCount;
+            UpdatedAtUtc = updatedAtUtc.ToUniversalTime();
+        }
+    }
+
+    public sealed class PlayerProgressService
+    {
+        private readonly IElementalDefRunStore runStore;
+
+        public PlayerProgressService(IElementalDefRunStore runStore)
+        {
+            this.runStore = runStore ?? throw new ArgumentNullException(nameof(runStore));
+        }
+
+        public PlayerProgressSnapshot GetProgress()
+        {
+            return runStore.GetPlayerProgress();
+        }
+    }
+
     public interface IElementalDefRunStore : IDisposable
     {
         DataStoreState State { get; }
@@ -131,6 +226,7 @@ namespace ElementalDef.Data
 
         void Initialize();
         CompletedStageRunCommitResult Commit(CompletedStageRunSnapshot snapshot);
+        PlayerProgressSnapshot GetPlayerProgress();
         IReadOnlyList<CompletedStageRunRecord> GetRecentRuns(int limit);
         IReadOnlyList<CompletedStageRunRecord> GetRecentRunsForStage(string stageId, int limit);
         bool TryGetRun(string runId, out CompletedStageRunRecord record);
@@ -166,9 +262,44 @@ namespace ElementalDef.Data
             }
         }
 
+        public static void RequireStageDisplayOrder(int value, string parameterName)
+        {
+            if (value < 1 || value > 10)
+            {
+                throw new ArgumentOutOfRangeException(parameterName);
+            }
+        }
+
+        public static void RequireMaxStageProgress(int value, string parameterName)
+        {
+            if (value < 0 || value > 9)
+            {
+                throw new ArgumentOutOfRangeException(parameterName);
+            }
+        }
+
         public static void RequireNonNegativeFinite(double value, string parameterName)
         {
             if (double.IsNaN(value) || double.IsInfinity(value) || value < 0d)
+            {
+                throw new ArgumentOutOfRangeException(parameterName);
+            }
+        }
+
+        public static void RequirePositiveFinite(double value, string parameterName)
+        {
+            if (double.IsNaN(value) || double.IsInfinity(value) || value <= 0d)
+            {
+                throw new ArgumentOutOfRangeException(parameterName);
+            }
+        }
+
+        public static void RequireNotGreaterThan(
+            double value,
+            double maximum,
+            string parameterName)
+        {
+            if (value > maximum)
             {
                 throw new ArgumentOutOfRangeException(parameterName);
             }
@@ -179,6 +310,19 @@ namespace ElementalDef.Data
             if (value != StageRunOutcome.Victory && value != StageRunOutcome.Defeat)
             {
                 throw new ArgumentOutOfRangeException(parameterName);
+            }
+        }
+
+        public static void RequireNoDefeatRewards(
+            StageRunOutcome outcome,
+            long earnedCredits,
+            long earnedExperience)
+        {
+            if (outcome == StageRunOutcome.Defeat &&
+                (earnedCredits != 0 || earnedExperience != 0))
+            {
+                throw new ArgumentException(
+                    "A defeated stage run cannot award credits or experience.");
             }
         }
     }

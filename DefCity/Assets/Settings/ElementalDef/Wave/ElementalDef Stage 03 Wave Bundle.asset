@@ -15,8 +15,9 @@ MonoBehaviour:
   stageId: stage_03
   displayOrder: 3
   mapSeed: 1003
+  timeLimitSeconds: 600
   baseCreditReward: 200
-  baseExperienceReward: 200
+  baseExperienceReward: 180
   usesPlaceholderTuning: 1
   waves:
   - {fileID: 11400000, guid: 36787f5db231e403cb9cef1ff62a3aa1, type: 2}

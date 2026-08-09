@@ -1,5 +1,6 @@
 using System;
 using System.Diagnostics;
+using ElementalDef.Gameplay.StageMaps.Decoration;
 using ElementalDef.Gameplay.StageMaps.Generation;
 using ElementalDef.Gameplay.StageMaps.Rendering;
 using UnityEngine;
@@ -19,6 +20,9 @@ namespace ElementalDef.Gameplay.StageMaps.Testing
         private Tilemap groundTilemap;
 
         [SerializeField]
+        private Tilemap decorationTilemap;
+
+        [SerializeField]
         private Vector2Int mapOrigin = Vector2Int.zero;
 
         [SerializeField, Min(1)]
@@ -30,6 +34,21 @@ namespace ElementalDef.Gameplay.StageMaps.Testing
         [Header("Tilemap Rendering")]
         [SerializeField]
         private StageMapTileCatalog tileCatalog;
+
+        [SerializeField]
+        private StageMapDecorationTileCatalog decorationTileCatalog;
+
+        [Header("Decoration")]
+        [SerializeField, Min(0)]
+        [Tooltip(
+            "Extra radius outside the play map. Applied only when Ground " +
+            "Decoration is enabled.")]
+        private int decorationOuterPadding =
+            StageDecorationGenerationSettings.DefaultOuterPadding;
+
+        [SerializeField]
+        private bool generateGroundDecoration =
+            StageDecorationGenerationSettings.DefaultGenerateGroundDecoration;
 
         [Header("Route Generation")]
         [SerializeField]
@@ -92,7 +111,7 @@ namespace ElementalDef.Gameplay.StageMaps.Testing
         [SerializeField]
         private Vector2Int headquartersSize = Vector2Int.one;
 
-        [Header("Elemental Ground And Blocking")]
+        [Header("Ground Types And Blocking")]
         [SerializeField, Range(0f, 1f)]
         private float blockedCellRatio =
             (float)StageMapGenerationSettings.DefaultBlockedCellRatio;
@@ -102,6 +121,9 @@ namespace ElementalDef.Gameplay.StageMaps.Testing
             StageMapGenerationSettings.DefaultMinimumDeployableCellCount;
 
         [SerializeField, Min(0)]
+        [InspectorName("Minimum Deployable Cell Count Per Ground Type")]
+        [Tooltip(
+            "Minimum deployable cells retained for each of Neutral, Water, Fire, and Earth.")]
         private int minimumDeployableCellCountPerElement =
             StageMapGenerationSettings
                 .DefaultMinimumDeployableCellCountPerElement;
@@ -144,8 +166,29 @@ namespace ElementalDef.Gameplay.StageMaps.Testing
         [NonSerialized]
         private bool lastTilemapOperationSucceeded;
 
+        [NonSerialized]
+        private bool lastTilemapOperationReachedRenderer;
+
+        [NonSerialized]
+        private GeneratedStageDecoration previewDecoration;
+
+        [NonSerialized]
+        private StageDecorationGenerationResult lastDecorationResult;
+
+        [NonSerialized]
+        private string lastDecorationMessage = string.Empty;
+
+        [NonSerialized]
+        private bool hasDecorationGenerationTiming;
+
+        [NonSerialized]
+        private double lastDecorationGenerationElapsedMilliseconds;
+
         public Tilemap GroundTilemap => groundTilemap;
+        public Tilemap DecorationTilemap => decorationTilemap;
         public StageMapTileCatalog TileCatalog => tileCatalog;
+        public StageMapDecorationTileCatalog DecorationTileCatalog =>
+            decorationTileCatalog;
         public RectInt Bounds => new(
             mapOrigin,
             new Vector2Int(width, height));
@@ -164,6 +207,20 @@ namespace ElementalDef.Gameplay.StageMaps.Testing
         public string LastTilemapMessage => lastTilemapMessage;
         public bool LastTilemapOperationSucceeded =>
             lastTilemapOperationSucceeded;
+        public bool LastTilemapOperationReachedRenderer =>
+            lastTilemapOperationReachedRenderer;
+        public int DecorationOuterPadding => decorationOuterPadding;
+        public bool GenerateGroundDecoration => generateGroundDecoration;
+        public bool HasDecorationPreview => previewDecoration != null;
+        public GeneratedStageDecoration PreviewDecoration =>
+            previewDecoration;
+        public StageDecorationGenerationResult LastDecorationResult =>
+            lastDecorationResult;
+        public string LastDecorationMessage => lastDecorationMessage;
+        public bool HasDecorationGenerationTiming =>
+            hasDecorationGenerationTiming;
+        public double LastDecorationGenerationElapsedMilliseconds =>
+            lastDecorationGenerationElapsedMilliseconds;
 
         public bool GeneratePreview()
         {
@@ -237,10 +294,11 @@ namespace ElementalDef.Gameplay.StageMaps.Testing
 
             previewMap = lastResult.Map;
             lastMessage = lastResult.Message;
+            GenerateDecorationPreview();
             return true;
         }
 
-        public bool ApplyPreviewToTilemap()
+        public bool ApplyPreviewToTilemaps()
         {
             ClearTilemapOperationStatus();
 
@@ -258,6 +316,13 @@ namespace ElementalDef.Gameplay.StageMaps.Testing
                 return false;
             }
 
+            if (decorationTilemap == null)
+            {
+                lastTilemapMessage =
+                    "Decoration Tilemap must be assigned before applying a stage map preview.";
+                return false;
+            }
+
             if (tileCatalog == null)
             {
                 lastTilemapMessage =
@@ -265,11 +330,43 @@ namespace ElementalDef.Gameplay.StageMaps.Testing
                 return false;
             }
 
+            if (previewDecoration != null &&
+                decorationTileCatalog == null)
+            {
+                lastTilemapMessage =
+                    "Stage Map Decoration Tile Catalog must be assigned before applying a decoration preview.";
+                return false;
+            }
+
             try
             {
-                StageMapTilemapRenderer renderer =
+                StageMapTilemapRenderer mapRenderer =
                     new(groundTilemap, tileCatalog);
-                renderer.Render(previewMap);
+                StageMapDecorationTilemapRenderer decorationRenderer =
+                    previewDecoration == null
+                        ? null
+                        : new StageMapDecorationTilemapRenderer(
+                            decorationTilemap,
+                            decorationTileCatalog);
+
+                // Resolve both datasets before either Tilemap is mutated so a
+                // catalog or cell-contract failure cannot leave mixed output.
+                mapRenderer.ValidateRender(previewMap);
+                if (previewDecoration != null)
+                {
+                    decorationRenderer.ValidateRender(previewDecoration);
+                }
+
+                lastTilemapOperationReachedRenderer = true;
+                mapRenderer.Render(previewMap);
+                if (previewDecoration == null)
+                {
+                    ClearTilemapDirectly(decorationTilemap);
+                }
+                else
+                {
+                    decorationRenderer.Render(previewDecoration);
+                }
             }
             catch (Exception exception) when (
                 exception is ArgumentException ||
@@ -281,35 +378,61 @@ namespace ElementalDef.Gameplay.StageMaps.Testing
             }
 
             lastTilemapOperationSucceeded = true;
-            lastTilemapMessage =
-                $"Rendered {previewMap.CellCount} stage map cells to " +
-                $"'{groundTilemap.name}' with seed {previewMap.Seed}.";
+            lastTilemapMessage = previewDecoration == null
+                ? $"Rendered {previewMap.CellCount} stage map cells to " +
+                  $"'{groundTilemap.name}' and cleared " +
+                  $"'{decorationTilemap.name}' because no decoration preview " +
+                  "is available."
+                : $"Rendered {previewMap.CellCount} stage map cells and " +
+                  $"{previewDecoration.ElementalGroundCellCount} decoration " +
+                  $"ground cells plus " +
+                  $"{previewDecoration.BoundaryWallCellCount} boundary wall " +
+                  $"cells to " +
+                  $"'{groundTilemap.name}' and '{decorationTilemap.name}' " +
+                  $"with seed {previewMap.Seed}.";
             return true;
         }
 
-        public bool ClearRenderedTilemap()
+        public bool ApplyPreviewToTilemap()
+        {
+            return ApplyPreviewToTilemaps();
+        }
+
+        public bool ClearRenderedTilemaps()
         {
             ClearTilemapOperationStatus();
 
             if (groundTilemap == null)
             {
                 lastTilemapMessage =
-                    "Ground Tilemap must be assigned before clearing the rendered stage map.";
+                    "Ground Tilemap must be assigned before clearing rendered stage tiles.";
                 return false;
             }
 
-            if (tileCatalog == null)
+            if (decorationTilemap == null)
             {
                 lastTilemapMessage =
-                    "Stage Map Tile Catalog must be assigned before clearing the rendered stage map.";
+                    "Decoration Tilemap must be assigned before clearing rendered stage tiles.";
                 return false;
             }
 
             try
             {
-                StageMapTilemapRenderer renderer =
-                    new(groundTilemap, tileCatalog);
-                renderer.Clear();
+                lastTilemapOperationReachedRenderer = true;
+                ClearTilemap(
+                    groundTilemap,
+                    tileCatalog == null
+                        ? null
+                        : new StageMapTilemapRenderer(
+                            groundTilemap,
+                            tileCatalog));
+                ClearTilemap(
+                    decorationTilemap,
+                    decorationTileCatalog == null
+                        ? null
+                        : new StageMapDecorationTilemapRenderer(
+                            decorationTilemap,
+                            decorationTileCatalog));
             }
             catch (Exception exception) when (
                 exception is ArgumentException ||
@@ -322,8 +445,48 @@ namespace ElementalDef.Gameplay.StageMaps.Testing
 
             lastTilemapOperationSucceeded = true;
             lastTilemapMessage =
-                $"Cleared all stage map tiles from '{groundTilemap.name}'.";
+                $"Cleared all stage map, decoration ground, and boundary " +
+                $"wall tiles from " +
+                $"'{groundTilemap.name}' and '{decorationTilemap.name}'.";
             return true;
+        }
+
+        private static void ClearTilemap(
+            Tilemap tilemap,
+            StageMapTilemapRenderer renderer)
+        {
+            if (renderer != null)
+            {
+                renderer.Clear();
+                return;
+            }
+
+            ClearTilemapDirectly(tilemap);
+        }
+
+        private static void ClearTilemap(
+            Tilemap tilemap,
+            StageMapDecorationTilemapRenderer renderer)
+        {
+            if (renderer != null)
+            {
+                renderer.Clear();
+                return;
+            }
+
+            ClearTilemapDirectly(tilemap);
+        }
+
+        private static void ClearTilemapDirectly(Tilemap tilemap)
+        {
+            tilemap.ClearAllTiles();
+            tilemap.RefreshAllTiles();
+            tilemap.CompressBounds();
+        }
+
+        public bool ClearRenderedTilemap()
+        {
+            return ClearRenderedTilemaps();
         }
 
         public void ClearPreview()
@@ -333,6 +496,7 @@ namespace ElementalDef.Gameplay.StageMaps.Testing
             lastMessage = string.Empty;
             hasGenerationTiming = false;
             lastGenerationElapsedMilliseconds = 0d;
+            ClearDecorationPreview();
             ClearTilemapOperationStatus();
         }
 
@@ -345,6 +509,63 @@ namespace ElementalDef.Gameplay.StageMaps.Testing
         {
             lastTilemapMessage = string.Empty;
             lastTilemapOperationSucceeded = false;
+            lastTilemapOperationReachedRenderer = false;
+        }
+
+        private bool GenerateDecorationPreview()
+        {
+            ClearDecorationPreview();
+
+            StageDecorationGenerationSettings settings;
+            try
+            {
+                settings = new StageDecorationGenerationSettings(
+                    decorationOuterPadding,
+                    generateGroundDecoration);
+            }
+            catch (ArgumentException exception)
+            {
+                lastDecorationMessage =
+                    $"Invalid decoration settings: {exception.Message}";
+                return false;
+            }
+
+            DeterministicStageDecorationGenerator generator = new();
+            Stopwatch stopwatch = Stopwatch.StartNew();
+            try
+            {
+                lastDecorationResult = generator.Generate(
+                    previewMap,
+                    settings);
+            }
+            finally
+            {
+                stopwatch.Stop();
+                hasDecorationGenerationTiming = true;
+                lastDecorationGenerationElapsedMilliseconds =
+                    stopwatch.Elapsed.TotalMilliseconds;
+            }
+
+            if (!lastDecorationResult.Succeeded)
+            {
+                lastDecorationMessage =
+                    $"{lastDecorationResult.FailureReason}: " +
+                    lastDecorationResult.Message;
+                return false;
+            }
+
+            previewDecoration = lastDecorationResult.Decoration;
+            lastDecorationMessage = lastDecorationResult.Message;
+            return true;
+        }
+
+        private void ClearDecorationPreview()
+        {
+            previewDecoration = null;
+            lastDecorationResult = null;
+            lastDecorationMessage = string.Empty;
+            hasDecorationGenerationTiming = false;
+            lastDecorationGenerationElapsedMilliseconds = 0d;
         }
     }
 }

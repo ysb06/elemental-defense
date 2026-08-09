@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using ElementalDef.Gameplay.Combat;
 
 namespace ElementalDef.Gameplay.StageMaps
@@ -68,12 +69,10 @@ namespace ElementalDef.Gameplay.StageMaps
                     break;
 
                 case StageTerrainKind.Deployable:
-                    if (element != ElementType.Water &&
-                        element != ElementType.Fire &&
-                        element != ElementType.Earth)
+                    if (!StageGroundElementTypes.IsSupported(element))
                     {
                         throw new ArgumentException(
-                            "Deployable cells require Water, Fire, or Earth.",
+                            "Deployable cells require Neutral, Water, Fire, or Earth.",
                             nameof(element));
                     }
 
@@ -104,10 +103,7 @@ namespace ElementalDef.Gameplay.StageMaps
                     }
 
                     if (marker == StageCellMarker.None &&
-                        element != ElementType.Neutral &&
-                        element != ElementType.Water &&
-                        element != ElementType.Fire &&
-                        element != ElementType.Earth)
+                        !StageGroundElementTypes.IsSupported(element))
                     {
                         throw new ArgumentException(
                             "Object cells require Neutral, Water, Fire, or Earth.",
@@ -162,6 +158,36 @@ namespace ElementalDef.Gameplay.StageMaps
                     value,
                     $"{typeof(TEnum).Name} must be a defined value.");
             }
+        }
+    }
+
+    internal static class StageGroundElementTypes
+    {
+        private static readonly ElementType[] Values =
+        {
+            ElementType.Neutral,
+            ElementType.Water,
+            ElementType.Fire,
+            ElementType.Earth,
+        };
+
+        private static readonly IReadOnlyList<ElementType> OrderedValues =
+            Array.AsReadOnly(Values);
+
+        public static IReadOnlyList<ElementType> Ordered => OrderedValues;
+        public static int Count => Values.Length;
+
+        public static bool IsSupported(ElementType element)
+        {
+            return element == ElementType.Neutral ||
+                   element == ElementType.Water ||
+                   element == ElementType.Fire ||
+                   element == ElementType.Earth;
+        }
+
+        public static ElementType[] CreateOrderedCopy()
+        {
+            return (ElementType[])Values.Clone();
         }
     }
 }

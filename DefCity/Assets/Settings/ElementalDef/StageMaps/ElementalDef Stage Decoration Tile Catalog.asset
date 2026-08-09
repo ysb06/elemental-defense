@@ -1,0 +1,35 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b1d0e08f3dd74856b28bcdb54444c8a1, type: 3}
+  m_Name: ElementalDef Stage Decoration Tile Catalog
+  m_EditorClassIdentifier: Assembly-CSharp::ElementalDef.Gameplay.StageMaps.Rendering.StageMapDecorationTileCatalog
+  neutralDecorationTiles:
+  - {fileID: 11400000, guid: bf3687e4f18b469c94721e6cb78bf2e1, type: 2}
+  - {fileID: 11400000, guid: c1e451a139f94a8dbe6f939aa5182c00, type: 2}
+  - {fileID: 11400000, guid: 221c3cecf64b49bd8c12508783a82d70, type: 2}
+  - {fileID: 11400000, guid: 837804d20fbb4099886b19af3dcf37d7, type: 2}
+  waterDecorationTiles:
+  - {fileID: 11400000, guid: 4637370c4be84a2a965285690d0870ef, type: 2}
+  - {fileID: 11400000, guid: 20c64141e27a47009086394e39904ce1, type: 2}
+  - {fileID: 11400000, guid: 0883dd34aeff43e49dfe6d7c7b6c84dc, type: 2}
+  - {fileID: 11400000, guid: 59bfcc85fd504e2ab5aa1b2d8cc70362, type: 2}
+  fireDecorationTiles:
+  - {fileID: 11400000, guid: f69c58e8b87d4fe48d5b1520005f3b4b, type: 2}
+  - {fileID: 11400000, guid: 2654da6202ca465eb9595b604fe20856, type: 2}
+  - {fileID: 11400000, guid: 0522f52ff21042fdba03c44e1e5eba37, type: 2}
+  - {fileID: 11400000, guid: 517d1bc335054070af21973ce257d991, type: 2}
+  earthDecorationTiles:
+  - {fileID: 11400000, guid: 635c69fac2974cdeb0a9ea10072529e3, type: 2}
+  - {fileID: 11400000, guid: 5b828d0ae6f044b89cbb5194bb6a3585, type: 2}
+  - {fileID: 11400000, guid: 68b3705b2bac40c2a7dad49f958cb023, type: 2}
+  - {fileID: 11400000, guid: e62e2c0f89e64ea28db4a16793a9f15a, type: 2}
+  boundaryWallTile: {fileID: 11400000, guid: f3a2e9cbad584345b357208737435d8f, type: 2}

@@ -6,6 +6,7 @@ using ElementalDef.Gameplay.Combat;
 using ElementalDef.Gameplay.Combat.Weapons;
 using ElementalDef.Gameplay.Economy;
 using ElementalDef.Gameplay.Entities;
+using ElementalDef.Presentation.Effect;
 using ElementalDef.Presentation.UI;
 using UnityEngine;
 using UnityEngine.InputSystem;
@@ -23,6 +24,17 @@ namespace ElementalDef.Gameplay.Placement
             Stopped,
         }
 
+        private enum SelectedTowerValidationFailure
+        {
+            None,
+            InteractionBusy,
+            ControllerInactive,
+            EntityUnavailable,
+            NotAllied,
+            NotTower,
+            NotRegistered,
+        }
+
         [SerializeField] private TowerUnit towerPrefab;
         [SerializeField] private Team playerTeam;
         [SerializeField] private TowerRegistry towerRegistry;
@@ -31,6 +43,8 @@ namespace ElementalDef.Gameplay.Placement
         [SerializeField] private CellSpaceMouseEventManager cellSpaceMouseEventManager;
         [SerializeField] private EntitySelectionManager entitySelectionManager;
         [SerializeField] private CellCursor cellCursor;
+        [SerializeField] private GameObject towerMoveButton;
+        [SerializeField] private GameObject towerDemolishButton;
 
         private TowerInteractionState currentState = TowerInteractionState.Idle;
         private InputAction cancelAction;
@@ -45,6 +59,7 @@ namespace ElementalDef.Gameplay.Placement
         private void Awake()
         {
             EnsureConfigured();
+            SetTowerActionButtonsVisible(false);
             cellCursor.Hide();
         }
 
@@ -58,11 +73,13 @@ namespace ElementalDef.Gameplay.Placement
 
             Subscribe();
             cellCursor.Hide();
+            RefreshTowerActionButtons();
         }
 
         private void OnDisable()
         {
             Unsubscribe();
+            SetTowerActionButtonsVisible(false);
 
             if (currentState == TowerInteractionState.Stopped)
             {
@@ -201,6 +218,7 @@ namespace ElementalDef.Gameplay.Placement
             }
 
             currentState = TowerInteractionState.Stopped;
+            SetTowerActionButtonsVisible(false);
             Unsubscribe();
             ClearInteraction(false);
             enabled = false;
@@ -245,11 +263,11 @@ namespace ElementalDef.Gameplay.Placement
                 switch (currentState)
                 {
                     case TowerInteractionState.PlacingNew:
-                        interactionCompleted = TryPlaceNewTower(result.Pose);
+                        interactionCompleted = TryPlaceNewTower(result);
                         break;
 
                     case TowerInteractionState.Relocating:
-                        RelocateTower(result.Pose);
+                        RelocateTower(result);
                         interactionCompleted = true;
                         break;
 
@@ -280,14 +298,19 @@ namespace ElementalDef.Gameplay.Placement
             GameObject sender,
             EntitySelectionChangedEventArgs eventArgs)
         {
-            if (currentState != TowerInteractionState.Relocating ||
-                sender != entitySelectionManager.gameObject ||
-                eventArgs.CurrentEntity == relocationTargetEntity)
+            if (sender != entitySelectionManager.gameObject)
             {
                 return;
             }
 
-            Cancel();
+            if (currentState == TowerInteractionState.Relocating &&
+                eventArgs.CurrentEntity != relocationTargetEntity)
+            {
+                Cancel();
+                return;
+            }
+
+            RefreshTowerActionButtons();
         }
 
         private void HandleRelocationTargetStateChanged(
@@ -349,6 +372,7 @@ namespace ElementalDef.Gameplay.Placement
             modeEnteredFrame = Time.frameCount;
             activePlacementPrefab = nextState == TowerInteractionState.PlacingNew ? requestedTowerPrefab : null;
             currentState = nextState;
+            RefreshTowerActionButtons();
             return true;
         }
 
@@ -358,61 +382,78 @@ namespace ElementalDef.Gameplay.Placement
             out TowerUnit selectedTower,
             out Entity validatedEntity)
         {
+            SelectedTowerValidationFailure failure = ValidateSelectedTower(
+                selectedEntity,
+                out selectedTower,
+                out validatedEntity);
+            if (failure == SelectedTowerValidationFailure.None)
+            {
+                return true;
+            }
+
+            string message = failure switch
+            {
+                SelectedTowerValidationFailure.InteractionBusy =>
+                    $"[{name}] Cannot begin {operationName} while {currentState} is active.",
+                SelectedTowerValidationFailure.ControllerInactive =>
+                    $"[{name}] Cannot begin {operationName} while the controller is inactive.",
+                SelectedTowerValidationFailure.EntityUnavailable =>
+                    $"[{name}] {operationName} requires an operational selected Entity.",
+                SelectedTowerValidationFailure.NotAllied =>
+                    $"[{name}] Only an allied tower can be used for {operationName}.",
+                SelectedTowerValidationFailure.NotTower =>
+                    $"[{name}] The selected Entity is not a {nameof(TowerUnit)}.",
+                SelectedTowerValidationFailure.NotRegistered =>
+                    $"[{name}] The selected tower is not registered.",
+                _ => throw new ArgumentOutOfRangeException(nameof(failure), failure, null),
+            };
+
+            Debug.LogWarning(message, this);
+            return false;
+        }
+
+        private SelectedTowerValidationFailure ValidateSelectedTower(
+            Entity selectedEntity,
+            out TowerUnit selectedTower,
+            out Entity validatedEntity)
+        {
             selectedTower = null;
             validatedEntity = null;
 
             if (currentState != TowerInteractionState.Idle)
             {
-                Debug.LogWarning(
-                    $"[{name}] Cannot begin {operationName} while {currentState} is active.",
-                    this);
-                return false;
+                return SelectedTowerValidationFailure.InteractionBusy;
             }
 
             if (!isActiveAndEnabled)
             {
-                Debug.LogWarning(
-                    $"[{name}] Cannot begin {operationName} while the controller is inactive.",
-                    this);
-                return false;
+                return SelectedTowerValidationFailure.ControllerInactive;
             }
 
             if (selectedEntity == null || !selectedEntity.IsOperational)
             {
-                Debug.LogWarning(
-                    $"[{name}] {operationName} requires an operational selected Entity.",
-                    this);
-                return false;
+                return SelectedTowerValidationFailure.EntityUnavailable;
             }
 
             if (selectedEntity.Team == null ||
                 !selectedEntity.Team.IsAlliedWith(playerTeam))
             {
-                Debug.LogWarning(
-                    $"[{name}] Only an allied tower can be used for {operationName}.",
-                    this);
-                return false;
+                return SelectedTowerValidationFailure.NotAllied;
             }
 
             if (!selectedEntity.TryGetComponent(out selectedTower))
             {
-                Debug.LogWarning(
-                    $"[{name}] The selected Entity is not a {nameof(TowerUnit)}.",
-                    this);
-                return false;
+                return SelectedTowerValidationFailure.NotTower;
             }
 
             if (!IsRegistered(selectedTower))
             {
-                Debug.LogWarning(
-                    $"[{name}] The selected tower is not registered.",
-                    this);
                 selectedTower = null;
-                return false;
+                return SelectedTowerValidationFailure.NotRegistered;
             }
 
             validatedEntity = selectedEntity;
-            return true;
+            return SelectedTowerValidationFailure.None;
         }
 
         private TowerPlacementResult EvaluatePlacement(CellRef cell)
@@ -432,7 +473,7 @@ namespace ElementalDef.Gameplay.Placement
             };
         }
 
-        private bool TryPlaceNewTower(Pose pose)
+        private bool TryPlaceNewTower(TowerPlacementResult placementResult)
         {
             if (activePlacementCost == null)
             {
@@ -447,8 +488,8 @@ namespace ElementalDef.Gameplay.Placement
 
             TowerUnit createdTower = Instantiate(
                 activePlacementPrefab,
-                pose.position,
-                pose.rotation);
+                placementResult.Pose.position,
+                placementResult.Pose.rotation);
             bool isRegistered = false;
 
             try
@@ -476,6 +517,7 @@ namespace ElementalDef.Gameplay.Placement
                 towerEnergyManager.TryConsumeEnergy(activePlacementCost);
             if (energyResult.Result == TowerEnergyResult.Success)
             {
+                RefreshTerrainEffect(createdTower, placementResult.Cell);
                 return true;
             }
 
@@ -512,10 +554,27 @@ namespace ElementalDef.Gameplay.Placement
             }
         }
 
-        private void RelocateTower(Pose pose)
+        private void RelocateTower(TowerPlacementResult placementResult)
         {
-            relocationTarget.transform.SetPositionAndRotation(pose.position, pose.rotation);
+            relocationTarget.transform.SetPositionAndRotation(
+                placementResult.Pose.position,
+                placementResult.Pose.rotation);
             Physics.SyncTransforms();
+            RefreshTerrainEffect(relocationTarget, placementResult.Cell);
+        }
+
+        private void RefreshTerrainEffect(TowerUnit tower, CellRef cell)
+        {
+            if (tower.TryGetComponent(out TowerTerrainEffectPresenter presenter))
+            {
+                presenter.Refresh(cell);
+                return;
+            }
+
+            Debug.LogWarning(
+                $"[{name}] {tower.name} has no {nameof(TowerTerrainEffectPresenter)}; " +
+                "terrain relationship effects cannot be updated.",
+                tower);
         }
 
         private bool IsRelocationTargetValid()
@@ -551,6 +610,23 @@ namespace ElementalDef.Gameplay.Placement
         {
             currentState = TowerInteractionState.Idle;
             ClearInteraction(true);
+            RefreshTowerActionButtons();
+        }
+
+        private void RefreshTowerActionButtons()
+        {
+            bool shouldShow = ValidateSelectedTower(
+                    entitySelectionManager.CurrentEntity,
+                    out _,
+                    out _) ==
+                SelectedTowerValidationFailure.None;
+            SetTowerActionButtonsVisible(shouldShow);
+        }
+
+        private void SetTowerActionButtonsVisible(bool visible)
+        {
+            towerMoveButton.SetActive(visible);
+            towerDemolishButton.SetActive(visible);
         }
 
         private void ClearInteraction(bool restorePointerSelection)
@@ -665,6 +741,24 @@ namespace ElementalDef.Gameplay.Placement
             {
                 throw new InvalidOperationException(
                     $"{nameof(TowerInteractionController)} requires a {nameof(CellCursor)} reference.");
+            }
+
+            if (towerMoveButton == null)
+            {
+                throw new InvalidOperationException(
+                    $"{nameof(TowerInteractionController)} requires a tower move button reference.");
+            }
+
+            if (towerDemolishButton == null)
+            {
+                throw new InvalidOperationException(
+                    $"{nameof(TowerInteractionController)} requires a tower demolish button reference.");
+            }
+
+            if (towerMoveButton == towerDemolishButton)
+            {
+                throw new InvalidOperationException(
+                    $"{nameof(TowerInteractionController)} requires distinct tower action buttons.");
             }
         }
 

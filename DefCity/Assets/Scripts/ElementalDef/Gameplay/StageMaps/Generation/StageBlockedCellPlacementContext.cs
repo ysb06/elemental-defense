@@ -146,16 +146,14 @@ namespace ElementalDef.Gameplay.StageMaps.Generation
                         out ElementType element))
                 {
                     throw new ArgumentException(
-                        $"Element placement is missing candidate cell {cell}.",
+                        $"Ground-type placement is missing candidate cell {cell}.",
                         nameof(sourceElementsByCell));
                 }
 
-                if (element != ElementType.Water &&
-                    element != ElementType.Fire &&
-                    element != ElementType.Earth)
+                if (!StageGroundElementTypes.IsSupported(element))
                 {
                     throw new ArgumentException(
-                        $"Candidate cell {cell} has unsupported element {element}.",
+                        $"Candidate cell {cell} has unsupported ground type {element}.",
                         nameof(sourceElementsByCell));
                 }
 
@@ -165,7 +163,7 @@ namespace ElementalDef.Gameplay.StageMaps.Generation
             if (sourceElementsByCell.Count != candidateCopies.Length)
             {
                 throw new ArgumentException(
-                    "Element placement contains cells outside the candidate set.",
+                    "Ground-type placement contains cells outside the candidate set.",
                     nameof(sourceElementsByCell));
             }
 

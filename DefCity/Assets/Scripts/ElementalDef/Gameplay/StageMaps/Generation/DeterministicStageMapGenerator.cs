@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using ElementalDef.Gameplay.Combat;
 using UnityEngine;
 
@@ -8,14 +7,7 @@ namespace ElementalDef.Gameplay.StageMaps.Generation
 {
     public sealed class DeterministicStageMapGenerator
     {
-        public const string GeneratorVersion = "deterministic-stage-map-v2";
-
-        private static readonly ElementType[] SupportedElements =
-        {
-            ElementType.Water,
-            ElementType.Fire,
-            ElementType.Earth,
-        };
+        public const string GeneratorVersion = "deterministic-stage-map-v3";
 
         private readonly DeterministicStageRouteGenerator routeGenerator;
         private readonly IStageElementPlacementStrategy elementPlacementStrategy;
@@ -89,13 +81,13 @@ namespace ElementalDef.Gameplay.StageMaps.Generation
             long minimumRequiredGroundCellCount = Math.Max(
                 (long)settings.MinimumDeployableCellCount,
                 (long)settings.MinimumDeployableCellCountPerElement *
-                SupportedElements.Length);
+                StageGroundElementTypes.Count);
             if (groundCells.Count < minimumRequiredGroundCellCount)
             {
                 return StageMapGenerationResult.Failure(
                     routeResult,
                     StageMapGenerationFailureReason.InsufficientGroundCells,
-                    $"Route leaves {groundCells.Count} elemental ground cells, but " +
+                    $"Route leaves {groundCells.Count} ground cells, but " +
                     $"at least {minimumRequiredGroundCellCount} deployable cells are required.",
                     groundCellCount: groundCells.Count);
             }
@@ -343,32 +335,35 @@ namespace ElementalDef.Gameplay.StageMaps.Generation
             error = null;
             if (elementsByCell == null)
             {
-                error = "The element placement strategy returned null.";
+                error = "The ground-type placement strategy returned null.";
                 return false;
             }
 
             if (elementsByCell.Count != expectedCells.Count)
             {
-                error = $"Element placement returned {elementsByCell.Count} cells; " +
+                error = $"Ground-type placement returned {elementsByCell.Count} cells; " +
                         $"{expectedCells.Count} were expected.";
                 return false;
             }
 
             HashSet<Vector2Int> expected = new(expectedCells);
-            Dictionary<ElementType, int> counts = SupportedElements.ToDictionary(
-                element => element,
-                _ => 0);
+            Dictionary<ElementType, int> counts = new(
+                StageGroundElementTypes.Count);
+            foreach (ElementType element in StageGroundElementTypes.Ordered)
+            {
+                counts.Add(element, 0);
+            }
             foreach (KeyValuePair<Vector2Int, ElementType> entry in elementsByCell)
             {
                 if (!expected.Contains(entry.Key))
                 {
-                    error = $"Element placement contains unexpected cell {entry.Key}.";
+                    error = $"Ground-type placement contains unexpected cell {entry.Key}.";
                     return false;
                 }
 
                 if (!counts.ContainsKey(entry.Value))
                 {
-                    error = $"Element placement uses unsupported element " +
+                    error = $"Ground-type placement uses unsupported type " +
                             $"{entry.Value} at {entry.Key}.";
                     return false;
                 }
@@ -376,11 +371,11 @@ namespace ElementalDef.Gameplay.StageMaps.Generation
                 counts[entry.Value]++;
             }
 
-            foreach (ElementType element in SupportedElements)
+            foreach (ElementType element in StageGroundElementTypes.Ordered)
             {
                 if (counts[element] < minimumCountPerElement)
                 {
-                    error = $"Element placement contains {counts[element]} {element} " +
+                    error = $"Ground-type placement contains {counts[element]} {element} " +
                             $"cells; {minimumCountPerElement} are required.";
                     return false;
                 }
@@ -443,7 +438,7 @@ namespace ElementalDef.Gameplay.StageMaps.Generation
                 return false;
             }
 
-            foreach (ElementType element in SupportedElements)
+            foreach (ElementType element in StageGroundElementTypes.Ordered)
             {
                 int count = 0;
                 foreach (Vector2Int cell in context.CandidateCells)

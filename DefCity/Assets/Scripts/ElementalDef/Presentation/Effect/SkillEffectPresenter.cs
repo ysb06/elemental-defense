@@ -1,5 +1,4 @@
-using System;
-using ElementalDef.Gameplay.Combat.Skills;
+using System.Collections;
 using UnityEngine;
 
 namespace ElementalDef.Presentation.Effect
@@ -7,83 +6,98 @@ namespace ElementalDef.Presentation.Effect
     [DisallowMultipleComponent]
     public sealed class SkillEffectPresenter : MonoBehaviour
     {
-        [SerializeField] private TowerSkillController skillController;
-        [SerializeField] private Animator animator;
-        [SerializeField] private Transform effectAnchor;
-        [Tooltip("Zero lets the spawned effect prefab manage its own lifetime.")]
-        [SerializeField, Min(0f)] private float effectLifetimeSeconds;
+        [SerializeField] private GameObject effectRoot;
+        [SerializeField, Min(0.01f)] private float activeDurationSeconds = 1f;
 
-        private bool isSubscribed;
+        private Coroutine deactivateCoroutine;
+
+        public bool IsPlaying => effectRoot != null && effectRoot.activeSelf;
 
         private void Awake()
         {
-            skillController = skillController != null ? skillController : GetComponent<TowerSkillController>();
-
-            if (skillController == null)
+            if (!ValidateConfiguration())
             {
-                throw new InvalidOperationException($"{nameof(SkillEffectPresenter)} requires a {nameof(TowerSkillController)} reference.");
+                enabled = false;
+                return;
             }
-        }
 
-        private void OnEnable()
-        {
-            Subscribe();
+            effectRoot.SetActive(false);
         }
 
         private void OnDisable()
         {
-            Unsubscribe();
+            StopPlayback();
         }
 
-        private void HandleSkillUseStarted(
-            TowerSkillController sender,
-            SkillExecutionContext context)
+        public void Play()
         {
-            if (sender != skillController)
+            if (!isActiveAndEnabled || effectRoot == null)
             {
                 return;
             }
 
-            SkillDefinition definition = context.Definition;
-            if (animator != null && !string.IsNullOrWhiteSpace(definition.AnimatorTrigger))
+            if (deactivateCoroutine != null)
             {
-                animator.SetTrigger(definition.AnimatorTrigger);
+                StopCoroutine(deactivateCoroutine);
+                deactivateCoroutine = null;
             }
 
-            if (definition.CastVfxPrefab == null)
+            effectRoot.SetActive(false);
+            effectRoot.SetActive(true);
+            deactivateCoroutine = StartCoroutine(DeactivateAfterDuration());
+        }
+
+        private IEnumerator DeactivateAfterDuration()
+        {
+            yield return new WaitForSeconds(activeDurationSeconds);
+
+            effectRoot.SetActive(false);
+            deactivateCoroutine = null;
+        }
+
+        private void StopPlayback()
+        {
+            if (deactivateCoroutine != null)
             {
-                return;
+                StopCoroutine(deactivateCoroutine);
+                deactivateCoroutine = null;
             }
 
-            Vector3 position = effectAnchor != null ? effectAnchor.position : context.CastPosition;
-            Quaternion rotation = effectAnchor != null ? effectAnchor.rotation : sender.transform.rotation;
-            GameObject effectInstance = Instantiate(definition.CastVfxPrefab, position, rotation);
-            if (effectLifetimeSeconds > 0f)
+            if (effectRoot != null && effectRoot != gameObject)
             {
-                Destroy(effectInstance, effectLifetimeSeconds);
+                effectRoot.SetActive(false);
             }
         }
 
-        private void Subscribe()
+        private bool ValidateConfiguration()
         {
-            if (isSubscribed)
+            if (effectRoot == null)
             {
-                return;
+                Debug.LogError(
+                    $"[{name}] {nameof(SkillEffectPresenter)} requires an effect root.",
+                    this);
+                return false;
             }
 
-            skillController.OnSkillUseStarted += HandleSkillUseStarted;
-            isSubscribed = true;
-        }
-
-        private void Unsubscribe()
-        {
-            if (!isSubscribed)
+            if (effectRoot == gameObject)
             {
-                return;
+                Debug.LogError(
+                    $"[{name}] {nameof(SkillEffectPresenter)} requires an effect root other than its own GameObject.",
+                    this);
+                return false;
             }
 
-            skillController.OnSkillUseStarted -= HandleSkillUseStarted;
-            isSubscribed = false;
+            if (float.IsNaN(activeDurationSeconds) ||
+                float.IsInfinity(activeDurationSeconds) ||
+                activeDurationSeconds <= 0f)
+            {
+                Debug.LogError(
+                    $"[{name}] {nameof(SkillEffectPresenter)} requires a finite, positive active duration.",
+                    this);
+                return false;
+            }
+
+            return true;
         }
     }
 }

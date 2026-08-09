@@ -1,8 +1,14 @@
-using System;
 using UnityEngine;
 
 namespace ElementalDef.Gameplay.Combat.Settings
 {
+    public enum TerrainRelationship
+    {
+        Neutral = 0,
+        Synergy = 1,
+        Disadvantage = 2,
+    }
+
     [CreateAssetMenu(menuName = "ElementalDef/Combat/Terrain Modifier")]
     public sealed class TerrainModifier : ScriptableObject
     {
@@ -25,6 +31,31 @@ namespace ElementalDef.Gameplay.Combat.Settings
         public float NeutralDefenseMultiplier => neutralDefenseMultiplier;
         public float DisadvantageAttackMultiplier => disadvantageAttackMultiplier;
         public float DisadvantageDefenseMultiplier => disadvantageDefenseMultiplier;
+
+        public TerrainRelationship GetRelationship(
+            ElementType combatantElement,
+            ElementType terrainElement)
+        {
+            if (combatantElement == ElementType.Neutral ||
+                terrainElement == ElementType.Neutral)
+            {
+                return TerrainRelationship.Neutral;
+            }
+
+            if (combatantElement == terrainElement)
+            {
+                return TerrainRelationship.Synergy;
+            }
+
+            bool terrainHasAdvantage =
+                (terrainElement == ElementType.Water && combatantElement == ElementType.Fire) ||
+                (terrainElement == ElementType.Fire && combatantElement == ElementType.Earth) ||
+                (terrainElement == ElementType.Earth && combatantElement == ElementType.Water);
+
+            return terrainHasAdvantage
+                ? TerrainRelationship.Disadvantage
+                : TerrainRelationship.Neutral;
+        }
 
         public float GetAttackMultiplier(
             ElementType combatantElement,
@@ -57,23 +88,15 @@ namespace ElementalDef.Gameplay.Combat.Settings
             float neutralMultiplier,
             float disadvantageMultiplier)
         {
-            if (combatantElement == ElementType.Neutral ||
-                terrainElement == ElementType.Neutral)
+            switch (GetRelationship(combatantElement, terrainElement))
             {
-                return neutralMultiplier;
+                case TerrainRelationship.Synergy:
+                    return sameElementMultiplier;
+                case TerrainRelationship.Disadvantage:
+                    return disadvantageMultiplier;
+                default:
+                    return neutralMultiplier;
             }
-
-            if (combatantElement == terrainElement)
-            {
-                return sameElementMultiplier;
-            }
-
-            bool terrainHasAdvantage =
-                (terrainElement == ElementType.Water && combatantElement == ElementType.Fire) ||
-                (terrainElement == ElementType.Fire && combatantElement == ElementType.Earth) ||
-                (terrainElement == ElementType.Earth && combatantElement == ElementType.Water);
-
-            return terrainHasAdvantage ? disadvantageMultiplier : neutralMultiplier;
         }
     }
 }
