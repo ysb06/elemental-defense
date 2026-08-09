@@ -51,12 +51,28 @@ namespace ElementalDef.Gameplay.Flow
 
         public static StageRunContext Create(WaveBundle waveBundle)
         {
+            return Create(waveBundle, 1f);
+        }
+
+        public static StageRunContext Create(
+            WaveBundle waveBundle,
+            float difficultyMultiplier)
+        {
             if (waveBundle == null)
             {
                 throw new ArgumentNullException(nameof(waveBundle));
             }
 
             waveBundle.ValidateOrThrow();
+            if (float.IsNaN(difficultyMultiplier) ||
+                float.IsInfinity(difficultyMultiplier) ||
+                difficultyMultiplier < 1f)
+            {
+                throw new ArgumentOutOfRangeException(
+                    nameof(difficultyMultiplier),
+                    difficultyMultiplier,
+                    "A difficulty multiplier must be finite and at least 1.");
+            }
 
             return new StageRunContext(
                 Guid.NewGuid().ToString("N"),
@@ -67,9 +83,9 @@ namespace ElementalDef.Gameplay.Flow
                 waveBundle.BaseCreditReward,
                 waveBundle.BaseExperienceReward,
                 DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(),
-                1f,
-                1f,
-                1f,
+                difficultyMultiplier,
+                difficultyMultiplier,
+                difficultyMultiplier,
                 1f,
                 1);
         }

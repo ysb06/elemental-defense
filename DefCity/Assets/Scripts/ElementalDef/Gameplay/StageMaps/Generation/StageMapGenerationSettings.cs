@@ -58,7 +58,7 @@ namespace ElementalDef.Gameplay.StageMaps.Generation
                 throw new ArgumentOutOfRangeException(
                     nameof(minimumDeployableCellCountPerElement),
                     minimumDeployableCellCountPerElement,
-                    "The per-element deployable cell minimum cannot be negative.");
+                    "The per-ground-type deployable cell minimum cannot be negative.");
             }
 
             if (minimumDeployableNeighborsPerRoadCell < 0 ||

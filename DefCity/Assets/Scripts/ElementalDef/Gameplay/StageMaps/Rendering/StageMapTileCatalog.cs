@@ -20,7 +20,11 @@ namespace ElementalDef.Gameplay.StageMaps.Rendering
         [SerializeField]
         private RuleTile headquartersTile;
 
-        [Header("Deployable Element Tiles")]
+        [Header("Deployable Ground Tiles")]
+        [SerializeField]
+        private RuleTile[] neutralDeployableTiles =
+            new RuleTile[ElementVariantCount];
+
         [SerializeField]
         private RuleTile[] waterDeployableTiles = new RuleTile[ElementVariantCount];
 
@@ -30,7 +34,11 @@ namespace ElementalDef.Gameplay.StageMaps.Rendering
         [SerializeField]
         private RuleTile[] earthDeployableTiles = new RuleTile[ElementVariantCount];
 
-        [Header("Blocked Element Tiles")]
+        [Header("Blocked Ground Tiles")]
+        [SerializeField]
+        private RuleTile[] neutralBlockedTiles =
+            new RuleTile[ElementVariantCount];
+
         [SerializeField]
         private RuleTile[] waterBlockedTiles = new RuleTile[ElementVariantCount];
 
@@ -44,9 +52,11 @@ namespace ElementalDef.Gameplay.StageMaps.Rendering
         {
             Road,
             Headquarters,
+            NeutralDeployable,
             WaterDeployable,
             FireDeployable,
             EarthDeployable,
+            NeutralBlocked,
             WaterBlocked,
             FireBlocked,
             EarthBlocked,
@@ -111,6 +121,12 @@ namespace ElementalDef.Gameplay.StageMaps.Rendering
                 errors);
 
             ValidateVariantGroup(
+                "Neutral Deployable",
+                neutralDeployableTiles,
+                ElementType.Neutral,
+                assignedTiles,
+                errors);
+            ValidateVariantGroup(
                 "Water Deployable",
                 waterDeployableTiles,
                 ElementType.Water,
@@ -126,6 +142,12 @@ namespace ElementalDef.Gameplay.StageMaps.Rendering
                 "Earth Deployable",
                 earthDeployableTiles,
                 ElementType.Earth,
+                assignedTiles,
+                errors);
+            ValidateVariantGroup(
+                "Neutral Blocked",
+                neutralBlockedTiles,
+                ElementType.Neutral,
                 assignedTiles,
                 errors);
             ValidateVariantGroup(
@@ -173,7 +195,12 @@ namespace ElementalDef.Gameplay.StageMaps.Rendering
                 case StageTerrainKind.Road:
                     return TileGroup.Road;
                 case StageTerrainKind.Deployable:
-                    return GetElementGroup(cell, TileGroup.WaterDeployable, TileGroup.FireDeployable, TileGroup.EarthDeployable);
+                    return GetElementGroup(
+                        cell,
+                        TileGroup.NeutralDeployable,
+                        TileGroup.WaterDeployable,
+                        TileGroup.FireDeployable,
+                        TileGroup.EarthDeployable);
                 case StageTerrainKind.Object:
                     if (cell.Marker == StageCellMarker.Headquarters && cell.Element == ElementType.Neutral)
                     {
@@ -182,7 +209,12 @@ namespace ElementalDef.Gameplay.StageMaps.Rendering
 
                     if (cell.Marker == StageCellMarker.None)
                     {
-                        return GetElementGroup(cell, TileGroup.WaterBlocked, TileGroup.FireBlocked, TileGroup.EarthBlocked);
+                        return GetElementGroup(
+                            cell,
+                            TileGroup.NeutralBlocked,
+                            TileGroup.WaterBlocked,
+                            TileGroup.FireBlocked,
+                            TileGroup.EarthBlocked);
                     }
 
                     break;
@@ -193,12 +225,16 @@ namespace ElementalDef.Gameplay.StageMaps.Rendering
 
         private static TileGroup GetElementGroup(
             StageMapCell cell,
+            TileGroup neutralGroup,
             TileGroup waterGroup,
             TileGroup fireGroup,
             TileGroup earthGroup)
         {
             switch (cell.Element)
             {
+                case ElementType.Neutral:
+                    return neutralGroup;
+
                 case ElementType.Water:
                     return waterGroup;
 
@@ -218,6 +254,10 @@ namespace ElementalDef.Gameplay.StageMaps.Rendering
             RuleTile[] variants;
             switch (group)
             {
+                case TileGroup.NeutralDeployable:
+                    variants = neutralDeployableTiles;
+                    break;
+
                 case TileGroup.WaterDeployable:
                     variants = waterDeployableTiles;
                     break;
@@ -228,6 +268,10 @@ namespace ElementalDef.Gameplay.StageMaps.Rendering
 
                 case TileGroup.EarthDeployable:
                     variants = earthDeployableTiles;
+                    break;
+
+                case TileGroup.NeutralBlocked:
+                    variants = neutralBlockedTiles;
                     break;
 
                 case TileGroup.WaterBlocked:

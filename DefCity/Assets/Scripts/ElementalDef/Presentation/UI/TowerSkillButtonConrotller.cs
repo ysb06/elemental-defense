@@ -1,6 +1,7 @@
 using ElementalDef.Gameplay.Combat.Skills;
 using ElementalDef.Gameplay.Entities;
 using ElementalDef.Gameplay.Entities.Settings;
+using ElementalDef.Presentation.Effect;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -12,6 +13,7 @@ namespace ElementalDef.Presentation.UI
         [SerializeField] private Image chargeFill;
         [SerializeField] private TowerRegistry towerRegistry;
         [SerializeField] private TowerUnitSpec targetTowerSpec;
+        [SerializeField] private SkillEffectPresenter skillEffectPresenter;
 
         private void Update()
         {
@@ -24,7 +26,12 @@ namespace ElementalDef.Presentation.UI
             {
                 if (IsTargetTower(tower) && tower.SkillController.CanUse)
                 {
-                    tower.SkillController.RequestUse();
+                    SkillUseRequestResult result = tower.SkillController.RequestUse();
+                    if (result == SkillUseRequestResult.Accepted)
+                    {
+                        skillEffectPresenter?.Play();
+                    }
+
                     break;
                 }
             }

@@ -11,7 +11,7 @@ namespace ElementalDef.Gameplay.StageMaps.Generation
         private const int RandomStream = unchecked((int)0xB5297A4D);
 
         public string StrategyId => "independent-blocked-cell-noise";
-        public string Version => "1";
+        public string Version => "2";
 
         public IReadOnlyList<Vector2Int> SelectBlockedCells(
             StageBlockedCellPlacementContext context)
@@ -150,12 +150,12 @@ namespace ElementalDef.Gameplay.StageMaps.Generation
         private static Dictionary<ElementType, int> CountElements(
             StageBlockedCellPlacementContext context)
         {
-            Dictionary<ElementType, int> counts = new()
+            Dictionary<ElementType, int> counts = new(
+                StageGroundElementTypes.Count);
+            foreach (ElementType element in StageGroundElementTypes.Ordered)
             {
-                [ElementType.Water] = 0,
-                [ElementType.Fire] = 0,
-                [ElementType.Earth] = 0,
-            };
+                counts.Add(element, 0);
+            }
 
             foreach (Vector2Int cell in context.CandidateCells)
             {

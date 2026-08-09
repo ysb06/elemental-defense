@@ -50,7 +50,7 @@ namespace ElementalDef.Gameplay.StageMaps
             {
                 if (entry.Cell.Terrain == StageTerrainKind.Object &&
                     entry.Cell.Marker == StageCellMarker.None &&
-                    IsElementalGround(entry.Cell))
+                    IsGroundCell(entry.Cell))
                 {
                     blockedCells.Add(entry.Coordinates);
                     blockedCellSet.Add(entry.Coordinates);
@@ -93,7 +93,7 @@ namespace ElementalDef.Gameplay.StageMaps
                             errors,
                             StageMapValidationErrorCode
                                 .BlockedCellInsideEndpointProtectionRadius,
-                            $"Blocked elemental cell {blockedCell} is inside the " +
+                            $"Blocked ground cell {blockedCell} is inside the " +
                             $"protection radius of endpoint {endpoint}.",
                             blockedCell);
                         break;
@@ -137,7 +137,7 @@ namespace ElementalDef.Gameplay.StageMaps
                     AddError(
                         errors,
                         StageMapValidationErrorCode.BlockedCellClusterTooLarge,
-                        $"Blocked elemental cluster at {start} contains " +
+                        $"Blocked ground cluster at {start} contains " +
                         $"{clusterSize} cells; at most " +
                         $"{rules.MaximumBlockedClusterSize} are allowed.",
                         start);
@@ -162,19 +162,18 @@ namespace ElementalDef.Gameplay.StageMaps
                     continue;
                 }
 
-                int elementalGroundNeighborCount = 0;
+                int groundNeighborCount = 0;
                 int deployableNeighborCount = 0;
                 foreach (Vector2Int offset in CardinalOffsets)
                 {
                     Vector2Int neighbor = entry.Coordinates + offset;
                     if (!map.TryGetCell(neighbor, out StageMapCell neighborCell) ||
-                        neighborCell.Marker != StageCellMarker.None ||
-                        !IsElementalGround(neighborCell))
+                        !IsGroundCell(neighborCell))
                     {
                         continue;
                     }
 
-                    elementalGroundNeighborCount++;
+                    groundNeighborCount++;
                     if (neighborCell.IsDeployable)
                     {
                         deployableNeighborCount++;
@@ -183,7 +182,7 @@ namespace ElementalDef.Gameplay.StageMaps
 
                 int requiredCount = Math.Min(
                     rules.MinimumDeployableNeighborsPerRoadCell,
-                    elementalGroundNeighborCount);
+                    groundNeighborCount);
                 if (deployableNeighborCount < requiredCount)
                 {
                     AddError(
@@ -191,24 +190,23 @@ namespace ElementalDef.Gameplay.StageMaps
                         StageMapValidationErrorCode
                             .InsufficientRoadAdjacentDeployableCells,
                         $"Road cell {entry.Coordinates} has " +
-                        $"{deployableNeighborCount} deployable elemental neighbor(s); " +
+                        $"{deployableNeighborCount} deployable ground neighbor(s); " +
                         $"{requiredCount} are required.",
                         entry.Coordinates);
                 }
             }
         }
 
-        private static bool IsElementalGround(StageMapCell cell)
+        private static bool IsGroundCell(StageMapCell cell)
         {
-            if (cell.Terrain != StageTerrainKind.Deployable &&
-                cell.Terrain != StageTerrainKind.Object)
+            if (cell.Marker != StageCellMarker.None ||
+                (cell.Terrain != StageTerrainKind.Deployable &&
+                 cell.Terrain != StageTerrainKind.Object))
             {
                 return false;
             }
 
-            return cell.Element == ElementType.Water ||
-                   cell.Element == ElementType.Fire ||
-                   cell.Element == ElementType.Earth;
+            return StageGroundElementTypes.IsSupported(cell.Element);
         }
 
         private static void ValidateHeadquartersFootprint(
@@ -416,6 +414,7 @@ namespace ElementalDef.Gameplay.StageMaps
             ICollection<StageMapValidationError> errors)
         {
             int deployableCount = 0;
+            int neutralCount = 0;
             int waterCount = 0;
             int fireCount = 0;
             int earthCount = 0;
@@ -430,6 +429,9 @@ namespace ElementalDef.Gameplay.StageMaps
                 deployableCount++;
                 switch (entry.Cell.Element)
                 {
+                    case ElementType.Neutral:
+                        neutralCount++;
+                        break;
                     case ElementType.Water:
                         waterCount++;
                         break;
@@ -451,6 +453,12 @@ namespace ElementalDef.Gameplay.StageMaps
                     $"at least {rules.MinimumDeployableCellCount} are required.");
             }
 
+            AddElementCountErrorIfNeeded(
+                errors,
+                StageMapValidationErrorCode.InsufficientNeutralCells,
+                "Neutral",
+                neutralCount,
+                rules.MinimumCellCountPerElement);
             AddElementCountErrorIfNeeded(
                 errors,
                 StageMapValidationErrorCode.InsufficientWaterCells,

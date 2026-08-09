@@ -37,5 +37,7 @@ MonoBehaviour:
   endpointProtectionRadius: 1
   maximumBlockedClusterSize: 3
   maxBlockedCellPlacementAttempts: 16
+  generateGroundDecoration: 0
+  decorationOuterPadding: 3
   requireAcyclicRoutes: 1
   requireRoadAdjacencyMatchesGraph: 1

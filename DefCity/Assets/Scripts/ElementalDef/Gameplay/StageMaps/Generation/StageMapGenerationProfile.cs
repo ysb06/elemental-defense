@@ -1,4 +1,5 @@
 using System;
+using ElementalDef.Gameplay.StageMaps.Decoration;
 using UnityEngine;
 using UnityEngine.Serialization;
 
@@ -46,12 +47,15 @@ namespace ElementalDef.Gameplay.StageMaps.Generation
         [SerializeField, Min(0)]
         private int connectorDetourAllowance = StageRouteGenerationSettings.DefaultConnectorDetourAllowance;
 
-        [Header("Elemental Ground And Blocking")]
+        [Header("Ground Types And Blocking")]
         [SerializeField, Range(0f, 1f)]
         private float blockedCellRatio = (float)StageMapGenerationSettings.DefaultBlockedCellRatio;
         [SerializeField, Min(0)]
         private int minimumDeployableCellCount = StageMapGenerationSettings.DefaultMinimumDeployableCellCount;
         [SerializeField, Min(0)]
+        [InspectorName("Minimum Deployable Cell Count Per Ground Type")]
+        [Tooltip(
+            "Minimum deployable cells retained for each of Neutral, Water, Fire, and Earth.")]
         private int minimumDeployableCellCountPerElement = StageMapGenerationSettings.DefaultMinimumDeployableCellCountPerElement;
         [SerializeField, Range(0, 4)]
         private int minimumDeployableNeighborsPerRoadCell = StageMapGenerationSettings.DefaultMinimumDeployableNeighborsPerRoadCell;
@@ -61,6 +65,19 @@ namespace ElementalDef.Gameplay.StageMaps.Generation
         private int maximumBlockedClusterSize = StageMapGenerationSettings.DefaultMaximumBlockedClusterSize;
         [SerializeField, Min(1)]
         private int maxBlockedCellPlacementAttempts = StageMapGenerationSettings.DefaultMaxBlockedCellPlacementAttempts;
+
+        [Header("Decoration")]
+        [SerializeField]
+        private bool generateGroundDecoration =
+            StageDecorationGenerationSettings
+                .DefaultGenerateGroundDecoration;
+
+        [SerializeField, Min(0)]
+        [Tooltip(
+            "Extra radius outside the play map. Applied only when Ground " +
+            "Decoration is enabled.")]
+        private int decorationOuterPadding =
+            StageDecorationGenerationSettings.DefaultOuterPadding;
 
         [Header("Validation")]
         [SerializeField] private bool requireAcyclicRoutes = true;
@@ -75,6 +92,9 @@ namespace ElementalDef.Gameplay.StageMaps.Generation
         public int CenterBandRadius => centerBandRadius;
         public StageRoutePatternKinds AllowedPatternKinds => allowedPatternKinds;
         public double BlockedCellRatio => blockedCellRatio;
+        public bool GenerateGroundDecoration =>
+            generateGroundDecoration;
+        public int DecorationOuterPadding => decorationOuterPadding;
 
         public bool IsHeadquartersCell(Vector2Int cell)
         {
@@ -121,11 +141,19 @@ namespace ElementalDef.Gameplay.StageMaps.Generation
                 requireRoadAdjacencyMatchesGraph);
         }
 
+        public StageDecorationGenerationSettings CreateDecorationSettings()
+        {
+            return new StageDecorationGenerationSettings(
+                decorationOuterPadding,
+                generateGroundDecoration);
+        }
+
         public void ValidateOrThrow()
         {
             try
             {
                 _ = CreateSettings(seed: 0);
+                _ = CreateDecorationSettings();
             }
             catch (Exception exception) when (
                 exception is ArgumentException ||

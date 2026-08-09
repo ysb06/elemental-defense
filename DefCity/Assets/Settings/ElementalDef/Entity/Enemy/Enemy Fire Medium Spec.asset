@@ -30,3 +30,15 @@ MonoBehaviour:
     Acceleration: 8
     AngularSpeed: 360
     StoppingDistance: 0.1
+  difficultyScaling:
+    attackPower: 1
+    attackRange: 1
+    attackCooldown: 1
+    maxHealth: 1
+    defense: 1
+    acquisitionPadding: 1
+    scannerInterval: 1
+    movementSpeed: 1
+    movementAcceleration: 1
+    movementAngularSpeed: 1
+    stoppingDistance: 1

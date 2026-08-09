@@ -12,13 +12,11 @@ namespace ElementalDef.Gameplay.Flow
     public sealed class GameResultSceneTransitionController : MonoBehaviour
     {
         [SerializeField] private GameFlowController gameFlowController;
-        [SerializeField] private string victorySceneName = "ElementalDefVictory";
-        [SerializeField] private string defeatSceneName = "ElementalDefDefeat";
+        [SerializeField] private string resultSceneName = "ElementalDefResult";
 
         private bool isSubscribed;
         private bool isTransitionScheduled;
         private bool isLoadRequested;
-        private string scheduledSceneName;
         private int transitionRequestedFrame = -1;
 
         private void Awake()
@@ -50,7 +48,7 @@ namespace ElementalDef.Gameplay.Flow
             isLoadRequested = true;
             isTransitionScheduled = false;
             Unsubscribe();
-            SceneManager.LoadScene(scheduledSceneName, LoadSceneMode.Single);
+            SceneManager.LoadScene(resultSceneName, LoadSceneMode.Single);
         }
 
         private void OnDisable()
@@ -65,7 +63,7 @@ namespace ElementalDef.Gameplay.Flow
                 return;
             }
 
-            ScheduleTransition(victorySceneName);
+            ScheduleTransition();
         }
 
         private void HandleDefeat(GameObject sender)
@@ -75,17 +73,16 @@ namespace ElementalDef.Gameplay.Flow
                 return;
             }
 
-            ScheduleTransition(defeatSceneName);
+            ScheduleTransition();
         }
 
-        private void ScheduleTransition(string targetSceneName)
+        private void ScheduleTransition()
         {
             if (isTransitionScheduled || isLoadRequested)
             {
                 return;
             }
 
-            scheduledSceneName = targetSceneName;
             transitionRequestedFrame = Time.frameCount;
             isTransitionScheduled = true;
         }
@@ -111,8 +108,7 @@ namespace ElementalDef.Gameplay.Flow
                     $"{nameof(GameFlowController)} reference.");
             }
 
-            EnsureSceneIsLoadable(victorySceneName, nameof(victorySceneName));
-            EnsureSceneIsLoadable(defeatSceneName, nameof(defeatSceneName));
+            EnsureSceneIsLoadable(resultSceneName, nameof(resultSceneName));
         }
 
         private static void EnsureSceneIsLoadable(string sceneName, string fieldName)

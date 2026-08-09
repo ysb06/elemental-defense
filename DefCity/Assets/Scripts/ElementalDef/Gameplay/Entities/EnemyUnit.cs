@@ -9,6 +9,7 @@ using ElementalDef.Gameplay.Entities.Settings;
 using DefCore.Gameplay.Combat.Weapons;
 using ElementalDef.Gameplay.Combat.Weapons;
 using ElementalDef.Gameplay.Combat;
+using ElementalDef.Runtime;
 
 namespace ElementalDef.Gameplay.Entities
 {
@@ -35,6 +36,7 @@ namespace ElementalDef.Gameplay.Entities
         private bool isShutdown;
 
         public EnemyUnitSpec Spec => spec;
+        public float AppliedDifficultyMultiplier { get; private set; } = 1f;
 
         public EnemyUnitEvent OnDefeated = new();
 
@@ -59,18 +61,40 @@ namespace ElementalDef.Gameplay.Entities
         {
             if (spec != null)
             {
-                health.Initialize(spec.Defense.MaxHealth);
-                elementalCombatant.Initialize(spec.Defense.Element, spec.Defense.Defense);
-                weapon.Initialize(spec.Attack.Power, spec.Attack.Range, spec.Attack.Cooldown, spec.Attack.Element);
+                AppliedDifficultyMultiplier = ResolveDifficultyMultiplier();
+                AttackStats attackStats = spec.GetAttackStats(AppliedDifficultyMultiplier);
+                DefenseStats defenseStats = spec.GetDefenseStats(AppliedDifficultyMultiplier);
+                ScannerStats scannerStats = spec.GetScannerStats(AppliedDifficultyMultiplier);
+                MovementStats movementStats = spec.GetMovementStats(AppliedDifficultyMultiplier);
+
+                health.Initialize(defenseStats.MaxHealth);
+                elementalCombatant.Initialize(defenseStats.Element, defenseStats.Defense);
+                weapon.Initialize(
+                    attackStats.Power,
+                    attackStats.Range,
+                    attackStats.Cooldown,
+                    attackStats.Element);
                 scanner.Initialize(
-                    spec.Attack.Range + spec.Scanner.AcquisitionPadding,
-                    spec.Scanner.Interval);
-                movement.Initialize(spec.Movement.Speed, spec.Movement.Acceleration, spec.Movement.AngularSpeed, spec.Movement.StoppingDistance);
+                    attackStats.Range + scannerStats.AcquisitionPadding,
+                    scannerStats.Interval);
+                movement.Initialize(
+                    movementStats.Speed,
+                    movementStats.Acceleration,
+                    movementStats.AngularSpeed,
+                    movementStats.StoppingDistance);
             }
             else
             {
                 Debug.LogWarning($"[{name}] {nameof(EnemyUnit)} has no {nameof(EnemyUnitSpec)} assigned. Default values will be used.");
             }
+        }
+
+        private static float ResolveDifficultyMultiplier()
+        {
+            return ElementalDefApplicationRoot.Instance?
+                .StageLaunch?
+                .Current?
+                .DifficultyMultiplier ?? 1f;
         }
 
         private void OnDestroy()

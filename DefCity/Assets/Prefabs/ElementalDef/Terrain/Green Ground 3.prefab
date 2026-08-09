@@ -68,7 +68,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e704e47663ef247e0abaa99e464288e8, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ElementalDef.Gameplay.Combat.ElementalTile
-  elementType: 3
+  elementType: 0
 --- !u!114 &-8670617800971602112
 MonoBehaviour:
   m_ObjectHideFlags: 0

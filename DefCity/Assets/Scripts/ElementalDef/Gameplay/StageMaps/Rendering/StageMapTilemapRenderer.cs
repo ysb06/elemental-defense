@@ -40,6 +40,20 @@ namespace ElementalDef.Gameplay.StageMaps.Rendering
             targetTilemap.CompressBounds();
         }
 
+        internal void ValidateRender(GeneratedStageMap map)
+        {
+            EnsureTargetTilemapAvailable();
+
+            if (map == null)
+            {
+                throw new ArgumentNullException(nameof(map));
+            }
+
+            DeterministicStageMapTileResolver resolver =
+                new(EnsureTileCatalogAvailable());
+            _ = ResolveAllTiles(map, resolver);
+        }
+
         public void Clear()
         {
             EnsureTargetTilemapAvailable();

@@ -26,6 +26,7 @@ namespace ElementalDef.Gameplay.Flow
         private int currentWaveIndex = -1;
         private int transitionRequestedFrame = -1;
 
+        public WaveBundle ActiveBundle => activeBundle;
         public int TotalWaveCount => activeBundle.Waves.Count;
         public int CurrentWaveIndex => currentWaveIndex;
         public bool IsBattleActive => bundleState == WaveBundleRuntimeState.Running || bundleState == WaveBundleRuntimeState.WaitingForNextWave;

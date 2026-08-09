@@ -15,6 +15,7 @@ MonoBehaviour:
   stageId: stage_07
   displayOrder: 7
   mapSeed: 1007
+  timeLimitSeconds: 600
   baseCreditReward: 400
   baseExperienceReward: 400
   usesPlaceholderTuning: 1

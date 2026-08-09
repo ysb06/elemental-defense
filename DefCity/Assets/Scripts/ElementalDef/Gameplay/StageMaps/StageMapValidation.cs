@@ -42,6 +42,7 @@ namespace ElementalDef.Gameplay.StageMaps
         HeadquartersFootprintOverlapsRoad,
         HeadquartersFootprintOverlapsRouteNode,
         RouteGoalNotAdjacentToHeadquarters,
+        InsufficientNeutralCells,
     }
 
     public readonly struct StageMapValidationError
@@ -175,7 +176,7 @@ namespace ElementalDef.Gameplay.StageMaps
                 throw new ArgumentOutOfRangeException(
                     nameof(minimumCellCountPerElement),
                     minimumCellCountPerElement,
-                    "The minimum element cell count cannot be negative.");
+                    "The minimum ground-type cell count cannot be negative.");
             }
 
             if (minimumDeployableNeighborsPerRoadCell < 0 ||

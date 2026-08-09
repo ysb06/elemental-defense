@@ -2,6 +2,7 @@ using System;
 using ElementalDef.Gameplay.Entities;
 using ElementalDef.Gameplay.Flow;
 using ElementalDef.Gameplay.Placement;
+using ElementalDef.Gameplay.StageMaps.Decoration;
 using ElementalDef.Gameplay.StageMaps.Generation;
 using ElementalDef.Gameplay.StageMaps.Rendering;
 using ElementalDef.Gameplay.World;
@@ -22,7 +23,10 @@ namespace ElementalDef.Gameplay.StageMaps.Runtime
 
         [Header("Map Rendering")]
         [SerializeField] private Tilemap groundTilemap;
+        [SerializeField] private Tilemap decorationTilemap;
         [SerializeField] private StageMapTileCatalog tileCatalog;
+        [SerializeField]
+        private StageMapDecorationTileCatalog decorationTileCatalog;
 
         [Header("Runtime Bindings")]
         [SerializeField] private Tile3DCellManager tile3DCellManager;
@@ -39,6 +43,7 @@ namespace ElementalDef.Gameplay.StageMaps.Runtime
         [SerializeField] private WaveBundle directPlayFallbackStage;
 
         public GeneratedStageMap CurrentMap { get; private set; } = null;
+        public GeneratedStageDecoration CurrentDecoration { get; private set; } = null;
 
         private StageRunContext stageRunContext;
 
@@ -83,6 +88,8 @@ namespace ElementalDef.Gameplay.StageMaps.Runtime
             GeneratedStageMap generatedMap = result.Map;
             StageMapTilemapRenderer tilemapRenderer = new(groundTilemap, tileCatalog);
             tilemapRenderer.Render(generatedMap);
+            GeneratedStageDecoration generatedDecoration =
+                TryGenerateAndRenderDecoration(generatedMap);
             Physics.SyncTransforms();
 
             enemyRoute.Initialize(result.RouteResult.Route.OrderedPath);
@@ -102,6 +109,80 @@ namespace ElementalDef.Gameplay.StageMaps.Runtime
 
             // CurrentMap is assigned only after the full runtime setup succeeds.
             CurrentMap = generatedMap;
+            CurrentDecoration = generatedDecoration;
+        }
+
+        private GeneratedStageDecoration TryGenerateAndRenderDecoration(
+            GeneratedStageMap generatedMap)
+        {
+            if (decorationTilemap == null)
+            {
+                Debug.LogWarning(
+                    "No Decoration Tilemap is assigned. Continuing without stage decoration.",
+                    this);
+                return null;
+            }
+
+            try
+            {
+                StageMapDecorationTilemapRenderer renderer = new(
+                    decorationTilemap,
+                    decorationTileCatalog);
+                StageDecorationGenerationSettings settings =
+                    generationProfile.CreateDecorationSettings();
+                DeterministicStageDecorationGenerator generator = new();
+                StageDecorationGenerationResult result =
+                    generator.Generate(generatedMap, settings);
+
+                if (!result.Succeeded)
+                {
+                    renderer.Clear();
+                    Debug.LogWarning(
+                        $"Stage decoration generation failed. " +
+                        $"{result.FailureReason}: {result.Message} " +
+                        "Continuing without stage decoration.",
+                        this);
+                    return null;
+                }
+
+                renderer.Render(result.Decoration);
+                return result.Decoration;
+            }
+            catch (Exception exception)
+            {
+                ClearDecorationTilemapAfterFailure();
+
+                Debug.LogWarning(
+                    $"Stage decoration setup failed: {exception.Message} " +
+                    "Continuing without stage decoration.",
+                    this);
+                return null;
+            }
+        }
+
+        private void ClearDecorationTilemapAfterFailure()
+        {
+            if (decorationTilemap == null)
+            {
+                return;
+            }
+
+            try
+            {
+                // Clearing must not depend on a valid decoration catalog: a
+                // missing or invalid catalog is itself a setup failure that
+                // must not leave stale decoration output in the scene.
+                decorationTilemap.ClearAllTiles();
+                decorationTilemap.RefreshAllTiles();
+                decorationTilemap.CompressBounds();
+            }
+            catch (Exception clearException)
+            {
+                Debug.LogWarning(
+                    $"Failed to clear the Decoration Tilemap after a " +
+                    $"decoration error: {clearException.Message}",
+                    this);
+            }
         }
 
         public void ActivateGameplay()

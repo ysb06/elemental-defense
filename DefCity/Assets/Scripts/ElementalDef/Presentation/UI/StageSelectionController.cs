@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using ElementalDef.Data;
 using ElementalDef.Gameplay.Flow.Settings;
 using ElementalDef.Runtime;
 using UnityEngine;
@@ -14,10 +15,14 @@ namespace ElementalDef.Presentation.UI
     {
         [SerializeField] private StageCatalog stageCatalog;
         [SerializeField] private Button[] stageButtons = new Button[StageCatalog.RequiredStageCount];
-        [SerializeField] private string gameplaySceneName = "ElementalDefMain";
+        [SerializeField] private Sprite[] activeStageSprites = new Sprite[StageCatalog.RequiredStageCount];
+        [SerializeField] private Sprite[] inactiveStageSprites = new Sprite[StageCatalog.RequiredStageCount];
+        [SerializeField] private string gameplaySceneName = "ElementalDefGame";
 
         private UnityAction[] stageButtonHandlers;
+        private Image[] stageButtonImages;
         private bool isLaunchRequested;
+        private int unlockedStageCount = 1;
 
         private void Awake()
         {
@@ -29,6 +34,7 @@ namespace ElementalDef.Presentation.UI
             }
 
             BindStageButtons();
+            RefreshStageAvailability();
         }
 
         private void OnDestroy()
@@ -45,7 +51,55 @@ namespace ElementalDef.Presentation.UI
                 UnityAction handler = () => LaunchStage(capturedIndex);
                 stageButtonHandlers[index] = handler;
                 stageButtons[index].onClick.AddListener(handler);
-                stageButtons[index].interactable = true;
+            }
+        }
+
+        private void RefreshStageAvailability()
+        {
+            int maxStageProgress = 0;
+            ElementalDefApplicationRoot applicationRoot = ElementalDefApplicationRoot.Instance;
+
+            if (applicationRoot?.PlayerProgress == null)
+            {
+                Debug.LogError(
+                    $"[{name}] ElementalDef player-progress services are unavailable. " +
+                    "Stage 1 will be used as the fallback availability.",
+                    this);
+            }
+            else
+            {
+                try
+                {
+                    PlayerProgressSnapshot progress = applicationRoot.PlayerProgress.GetProgress();
+                    maxStageProgress = progress.MaxStageProgress;
+                }
+                catch (Exception exception)
+                {
+                    Debug.LogException(
+                        new InvalidOperationException(
+                            "ElementalDef stage progress could not be loaded. " +
+                            "Stage 1 will be used as the fallback availability.",
+                            exception),
+                        this);
+                }
+            }
+
+            unlockedStageCount = Mathf.Clamp(
+                maxStageProgress + 1,
+                1,
+                StageCatalog.RequiredStageCount);
+            ApplyStageAvailability();
+        }
+
+        private void ApplyStageAvailability()
+        {
+            for (int index = 0; index < stageButtons.Length; index++)
+            {
+                bool isUnlocked = index < unlockedStageCount;
+                stageButtonImages[index].sprite = isUnlocked
+                    ? activeStageSprites[index]
+                    : inactiveStageSprites[index];
+                stageButtons[index].interactable = isUnlocked && !isLaunchRequested;
             }
         }
 
@@ -82,6 +136,13 @@ namespace ElementalDef.Presentation.UI
                 return;
             }
 
+            if (stageIndex >= unlockedStageCount)
+            {
+                Debug.LogWarning($"[{name}] Stage {stageIndex + 1} is locked.", this);
+                ApplyStageAvailability();
+                return;
+            }
+
             ElementalDefApplicationRoot applicationRoot = ElementalDefApplicationRoot.Instance;
             if (applicationRoot == null || applicationRoot.StageLaunch == null)
             {
@@ -93,15 +154,15 @@ namespace ElementalDef.Presentation.UI
             WaveBundle selectedStage = stageCatalog.Stages[stageIndex];
             try
             {
-                applicationRoot.StageLaunch.Prepare(selectedStage);
                 isLaunchRequested = true;
                 SetStageButtonsInteractable(false);
+                applicationRoot.StageLaunch.Prepare(selectedStage);
                 SceneManager.LoadScene(gameplaySceneName, LoadSceneMode.Single);
             }
             catch (Exception exception)
             {
                 isLaunchRequested = false;
-                SetStageButtonsInteractable(true);
+                ApplyStageAvailability();
                 Debug.LogException(new InvalidOperationException(
                     $"Failed to launch stage '{selectedStage?.StageId ?? "<null>"}'.",
                     exception),
@@ -133,7 +194,9 @@ namespace ElementalDef.Presentation.UI
                 return false;
             }
 
+            stageButtonImages = new Image[stageButtons.Length];
             HashSet<Button> uniqueButtons = new();
+            HashSet<Image> uniqueImages = new();
             for (int index = 0; index < stageButtons.Length; index++)
             {
                 Button button = stageButtons[index];
@@ -146,6 +209,35 @@ namespace ElementalDef.Presentation.UI
                 if (!uniqueButtons.Add(button))
                 {
                     errorMessage = $"Stage button {index + 1} is assigned more than once.";
+                    return false;
+                }
+
+                if (button.targetGraphic is not Image buttonImage)
+                {
+                    errorMessage = $"Stage button {index + 1} requires an Image target graphic.";
+                    return false;
+                }
+
+                if (!uniqueImages.Add(buttonImage))
+                {
+                    errorMessage = $"Stage button image {index + 1} is assigned more than once.";
+                    return false;
+                }
+
+                stageButtonImages[index] = buttonImage;
+            }
+
+            if (!TryValidateSpriteArray(activeStageSprites, "Active", out errorMessage) ||
+                !TryValidateSpriteArray(inactiveStageSprites, "Inactive", out errorMessage))
+            {
+                return false;
+            }
+
+            for (int index = 0; index < StageCatalog.RequiredStageCount; index++)
+            {
+                if (activeStageSprites[index] == inactiveStageSprites[index])
+                {
+                    errorMessage = $"Stage {index + 1} active and inactive sprites must differ.";
                     return false;
                 }
             }
@@ -167,6 +259,39 @@ namespace ElementalDef.Presentation.UI
             {
                 errorMessage = $"Gameplay scene '{gameplaySceneName}' is not available to load.";
                 return false;
+            }
+
+            errorMessage = null;
+            return true;
+        }
+
+        private static bool TryValidateSpriteArray(
+            Sprite[] sprites,
+            string arrayName,
+            out string errorMessage)
+        {
+            if (sprites == null || sprites.Length != StageCatalog.RequiredStageCount)
+            {
+                errorMessage = $"{arrayName} stage sprites must contain exactly " +
+                               $"{StageCatalog.RequiredStageCount} entries.";
+                return false;
+            }
+
+            HashSet<Sprite> uniqueSprites = new();
+            for (int index = 0; index < sprites.Length; index++)
+            {
+                Sprite sprite = sprites[index];
+                if (sprite == null)
+                {
+                    errorMessage = $"{arrayName} stage sprite {index + 1} is not assigned.";
+                    return false;
+                }
+
+                if (!uniqueSprites.Add(sprite))
+                {
+                    errorMessage = $"{arrayName} stage sprite {index + 1} is assigned more than once.";
+                    return false;
+                }
             }
 
             errorMessage = null;
