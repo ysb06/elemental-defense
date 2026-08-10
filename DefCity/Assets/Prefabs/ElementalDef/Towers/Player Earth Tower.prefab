@@ -167,12 +167,14 @@ GameObject:
   - component: {fileID: 3428429428993746104}
   - component: {fileID: 2468135790246813579}
   - component: {fileID: 76587187693198002}
-  - component: {fileID: 1652976659139645982}
   - component: {fileID: 8063876050491935656}
   - component: {fileID: 8289364576985089032}
   - component: {fileID: 7125550855730420535}
   - component: {fileID: 7246710705820780330}
   - component: {fileID: 667802101001001001}
+  - component: {fileID: 1111000000000000001}
+  - component: {fileID: 1111000000000000002}
+  - component: {fileID: 3333000000000000001}
   m_Layer: 7
   m_Name: Player Earth Tower
   m_TagString: Untagged
@@ -180,6 +182,135 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
+--- !u!82 &1111000000000000001
+AudioSource:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7199630016847266495}
+  m_Enabled: 1
+  serializedVersion: 4
+  OutputAudioMixerGroup: {fileID: -2950580225160424371, guid: f7a8573e573e8442b89bf408eeb7a3f0, type: 2}
+  m_audioClip: {fileID: 0}
+  m_PlayOnAwake: 0
+  m_Volume: 1
+  m_Pitch: 1
+  Loop: 0
+  Mute: 0
+  Spatialize: 0
+  SpatializePostEffects: 0
+  Priority: 128
+  DopplerLevel: 0
+  MinDistance: 15
+  MaxDistance: 60
+  Pan2D: 0
+  rolloffMode: 0
+  BypassEffects: 0
+  BypassListenerEffects: 0
+  BypassReverbZones: 0
+  rolloffCustomCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 1
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    - serializedVersion: 3
+      time: 1
+      value: 0
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  panLevelCustomCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 1
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 0
+  spreadCustomCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 0
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 0
+  reverbZoneMixCustomCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 1
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 0
+--- !u!114 &1111000000000000002
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7199630016847266495}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 700e66a42b624ed695df2f857556081e, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::DefCore.Presentation.Audio.EntityAudioPresenter
+  attacker: {fileID: 1757815494118602814}
+  health: {fileID: 6796909468258608858}
+  audioSource: {fileID: 1111000000000000001}
+  attackClip: {fileID: 8300000, guid: f19b25cdb7fdc433682854f1132a86f7, type: 3}
+  deathClip: {fileID: 8300000, guid: 6d08e94c8e59240d39acb43431db6898, type: 3}
+  spawnClip: {fileID: 8300000, guid: 58079838ede864823a15107b4e575df1, type: 3}
+
+--- !u!114 &3333000000000000001
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7199630016847266495}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d8ac0b4f18fe49edaf2736f12ee7b906, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::ElementalDef.Presentation.UI.TowerPlacementPreviewSource
+  appearancePivot: {fileID: 6703911541174987989}
+  liveVisualRoot: {fileID: 1920046252129176535}
 --- !u!4 &1967076910966005957
 Transform:
   m_ObjectHideFlags: 0
@@ -380,25 +511,11 @@ MonoBehaviour:
   isShutdown: 0
   weapon: {fileID: 5037959525103639830}
   elementalCombatant: {fileID: 2468135790246813579}
-  towerCost: {fileID: 1652976659139645982}
   skillController: {fileID: 8289364576985089032}
   deathRemovalDelay: 4.5
   OnDestroyed:
     m_PersistentCalls:
       m_Calls: []
---- !u!114 &1652976659139645982
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 7199630016847266495}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: f9aa15f6b0f4c4016ab920b15ce00e23, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::ElementalDef.Gameplay.Economy.TowerCost
-  cost: 1
 --- !u!114 &8063876050491935656
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -440,7 +557,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::ElementalDef.Presentation.Effect.SimpleAttackEffect
   attacker: {fileID: 1757815494118602814}
   impactEffectPrefab: {fileID: 2438037046800514082, guid: 8388e6a1e676b1f42808a64c83920b5b, type: 3}
-  impactAudioClip: {fileID: 8300000, guid: 0baf8600b856b794b90ef46e9e7fb215, type: 3}
+  impactAudioClip: {fileID: 0}
   impactEffectLifetime: 6
   effectScale: 0.1
   yOffset: 0.5

@@ -12,6 +12,8 @@ namespace ElementalDef.Gameplay.Flow.Settings
         [SerializeField, Min(1)] private int displayOrder = 1;
         [SerializeField] private int mapSeed;
         [SerializeField, Min(0.01f)] private float timeLimitSeconds = 600f;
+        [SerializeField, Min(1f)] private float enemyDifficultyMultiplier = 1f;
+        [SerializeField, Min(1)] private int startingTowerEnergy = 1;
 
         [Header("Base Rewards")]
         [SerializeField, Min(0)] private int baseCreditReward;
@@ -25,6 +27,8 @@ namespace ElementalDef.Gameplay.Flow.Settings
         public int DisplayOrder => displayOrder;
         public int MapSeed => mapSeed;
         public float TimeLimitSeconds => timeLimitSeconds;
+        public float EnemyDifficultyMultiplier => enemyDifficultyMultiplier;
+        public int StartingTowerEnergy => startingTowerEnergy;
         public int BaseCreditReward => baseCreditReward;
         public int BaseExperienceReward => baseExperienceReward;
         public bool UsesPlaceholderTuning => usesPlaceholderTuning;
@@ -71,6 +75,22 @@ namespace ElementalDef.Gameplay.Flow.Settings
                     $"Time limit must be finite and greater than 0 seconds, but is {timeLimitSeconds}.");
             }
 
+            if (float.IsNaN(enemyDifficultyMultiplier) ||
+                float.IsInfinity(enemyDifficultyMultiplier) ||
+                enemyDifficultyMultiplier < 1f)
+            {
+                errors.Add(
+                    $"Enemy difficulty multiplier must be finite and at least 1, but is " +
+                    $"{enemyDifficultyMultiplier}.");
+            }
+
+            if (startingTowerEnergy < 1)
+            {
+                errors.Add(
+                    $"Starting tower energy must be at least 1, but is " +
+                    $"{startingTowerEnergy}.");
+            }
+
             if (baseCreditReward < 0)
             {
                 errors.Add($"Base credit reward cannot be negative, but is {baseCreditReward}.");
@@ -89,9 +109,22 @@ namespace ElementalDef.Gameplay.Flow.Settings
             {
                 for (int index = 0; index < waves.Count; index++)
                 {
-                    if (waves[index] == null)
+                    WaveSchedule wave = waves[index];
+                    if (wave == null)
                     {
                         errors.Add($"Wave entry {index + 1} is not assigned.");
+                        continue;
+                    }
+
+                    try
+                    {
+                        wave.ValidateOrThrow();
+                    }
+                    catch (InvalidOperationException exception)
+                    {
+                        errors.Add(
+                            $"Wave entry {index + 1} ('{wave.name}') is invalid: " +
+                            exception.Message);
                     }
                 }
             }

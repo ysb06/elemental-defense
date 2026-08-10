@@ -1,6 +1,7 @@
 using System;
 using System.IO;
 using ElementalDef.Data;
+using ElementalDef.Presentation.Audio;
 using UnityEngine;
 
 namespace ElementalDef.Runtime
@@ -14,12 +15,17 @@ namespace ElementalDef.Runtime
 
         private static ElementalDefApplicationRoot instance;
 
+        [SerializeField] private ElementalDefAudioService audioService;
+
         public static ElementalDefApplicationRoot Instance => instance;
 
+        public ElementalDefAudioService Audio => audioService;
         public StageLaunchService StageLaunch { get; private set; }
         public IElementalDefRunStore RunStore { get; private set; }
         public PlayerProgressService PlayerProgress { get; private set; }
+        public PlayerProgressDebugService PlayerProgressDebug { get; private set; }
         public StageDifficultyService StageDifficulty { get; private set; }
+        public DifficultyDebugRunStore DifficultyDebug { get; private set; }
         public string DatabasePath { get; private set; }
         public Exception InitializationException { get; private set; }
 
@@ -39,6 +45,7 @@ namespace ElementalDef.Runtime
 
             instance = this;
             DontDestroyOnLoad(gameObject);
+            ResolveAudioService();
             StageLaunch = new StageLaunchService();
             InitializeServices();
         }
@@ -52,6 +59,7 @@ namespace ElementalDef.Runtime
 
             try
             {
+                DifficultyDebug?.Dispose();
                 RunStore?.Dispose();
             }
             catch (Exception exception)
@@ -63,9 +71,26 @@ namespace ElementalDef.Runtime
 
             RunStore = null;
             PlayerProgress = null;
+            PlayerProgressDebug = null;
             StageDifficulty = null;
+            DifficultyDebug = null;
             StageLaunch = null;
             instance = null;
+        }
+
+        private void ResolveAudioService()
+        {
+            if (audioService == null)
+            {
+                audioService = GetComponent<ElementalDefAudioService>();
+            }
+
+            if (audioService == null)
+            {
+                Debug.LogWarning(
+                    "ElementalDef audio is unavailable because the ApplicationRoot has no audio service.",
+                    this);
+            }
         }
 
         private void InitializeServices()
@@ -80,8 +105,11 @@ namespace ElementalDef.Runtime
                 RunStore = dataStore;
                 dataStore.Initialize();
                 PlayerProgress = new PlayerProgressService(dataStore);
-                StageDifficulty = new StageDifficultyService(dataStore);
+                PlayerProgressDebug = new PlayerProgressDebugService(dataStore);
+                DifficultyDebug = new DifficultyDebugRunStore(dataStore);
+                StageDifficulty = new StageDifficultyService(DifficultyDebug);
                 StageLaunch.ConfigureDifficultyService(StageDifficulty);
+                StageLaunch.ConfigurePlayerProgressService(PlayerProgress);
             }
             catch (Exception exception)
             {
@@ -89,7 +117,9 @@ namespace ElementalDef.Runtime
                 RunStore?.Dispose();
                 RunStore = null;
                 PlayerProgress = null;
+                PlayerProgressDebug = null;
                 StageDifficulty = null;
+                DifficultyDebug = null;
                 Debug.LogException(new InvalidOperationException(
                     "ElementalDef application services could not be initialized.",
                     exception), this);

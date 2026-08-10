@@ -6,9 +6,45 @@ using ElementalDef.Gameplay.Flow.Settings;
 
 namespace ElementalDef.Runtime
 {
+    public sealed class StageLaunchPreview
+    {
+        public WaveBundle Stage { get; }
+        public long Loop { get; }
+        public long AbsoluteStageNumber { get; }
+        public int EffectiveMapSeed { get; }
+        public float StageEnemyDifficultyMultiplier { get; }
+        public float PerformanceDifficultyMultiplier { get; }
+        public float DifficultyMultiplier { get; }
+        public long VictoryCreditReward { get; }
+        public long VictoryExperienceReward { get; }
+
+        internal StageLaunchPreview(
+            WaveBundle stage,
+            long loop,
+            long absoluteStageNumber,
+            int effectiveMapSeed,
+            float stageEnemyDifficultyMultiplier,
+            float performanceDifficultyMultiplier,
+            float difficultyMultiplier,
+            long victoryCreditReward,
+            long victoryExperienceReward)
+        {
+            Stage = stage ?? throw new ArgumentNullException(nameof(stage));
+            Loop = loop;
+            AbsoluteStageNumber = absoluteStageNumber;
+            EffectiveMapSeed = effectiveMapSeed;
+            StageEnemyDifficultyMultiplier = stageEnemyDifficultyMultiplier;
+            PerformanceDifficultyMultiplier = performanceDifficultyMultiplier;
+            DifficultyMultiplier = difficultyMultiplier;
+            VictoryCreditReward = victoryCreditReward;
+            VictoryExperienceReward = victoryExperienceReward;
+        }
+    }
+
     public sealed class StageLaunchService
     {
         private StageDifficultyService difficultyService;
+        private PlayerProgressService playerProgressService;
 
         public StageRunContext Current { get; private set; }
         public bool HasCurrent => Current != null;
@@ -20,21 +56,156 @@ namespace ElementalDef.Runtime
                 throw new ArgumentNullException(nameof(configuredDifficultyService));
         }
 
+        internal void ConfigurePlayerProgressService(
+            PlayerProgressService configuredPlayerProgressService)
+        {
+            playerProgressService = configuredPlayerProgressService ??
+                throw new ArgumentNullException(nameof(configuredPlayerProgressService));
+        }
+
         public StageRunContext Prepare(WaveBundle stage)
+        {
+            StageLaunchPreview preview = CreatePreview(stage);
+            StageRunContext context = StageRunContext.Create(
+                stage,
+                preview.PerformanceDifficultyMultiplier,
+                preview.Loop,
+                preview.EffectiveMapSeed);
+            Current = context;
+            return context;
+        }
+
+        public StageLaunchPreview CreatePreview(WaveBundle stage)
         {
             if (stage == null)
             {
                 throw new ArgumentNullException(nameof(stage));
             }
 
-            float difficultyMultiplier = difficultyService?
+            stage.ValidateOrThrow();
+            if (stage.DisplayOrder > StageCatalog.RequiredStageCount)
+            {
+                throw new InvalidOperationException(
+                    $"Cannot preview stage '{stage.StageId}' with display order " +
+                    $"{stage.DisplayOrder}. Display order must be between 1 and " +
+                    $"{StageCatalog.RequiredStageCount}.");
+            }
+
+            if (playerProgressService == null)
+            {
+                throw new InvalidOperationException(
+                    "Player progress must be configured before previewing or preparing a stage.");
+            }
+
+            float performanceDifficultyMultiplier = difficultyService?
                 .GetPerformanceDifficulty()
                 .DifficultyMultiplier ?? 1f;
-            StageRunContext context = StageRunContext.Create(
-                stage,
+            long loop = playerProgressService.GetProgress().Loop;
+            long absoluteStageNumber = StageLaunchValueCalculator
+                .CalculateAbsoluteStageNumber(stage, loop);
+            int effectiveMapSeed = StageLaunchValueCalculator
+                .CalculateEffectiveMapSeed(stage, loop);
+            float difficultyMultiplier = StageDifficultyMultiplierCalculator.Calculate(
+                stage.EnemyDifficultyMultiplier,
+                performanceDifficultyMultiplier,
+                stage.StageId);
+            long victoryCreditReward = StageRewardCalculator.Calculate(
+                stage.BaseCreditReward,
                 difficultyMultiplier);
-            Current = context;
-            return context;
+            long victoryExperienceReward = StageRewardCalculator.Calculate(
+                stage.BaseExperienceReward,
+                difficultyMultiplier);
+
+            return new StageLaunchPreview(
+                stage,
+                loop,
+                absoluteStageNumber,
+                effectiveMapSeed,
+                stage.EnemyDifficultyMultiplier,
+                performanceDifficultyMultiplier,
+                difficultyMultiplier,
+                victoryCreditReward,
+                victoryExperienceReward);
+        }
+    }
+
+    internal static class StageLaunchValueCalculator
+    {
+        public static long CalculateAbsoluteStageNumber(
+            WaveBundle stage,
+            long loop)
+        {
+            RequireStageAndLoop(stage, loop);
+
+            try
+            {
+                return checked(
+                    (loop * (long)StageCatalog.RequiredStageCount) +
+                    stage.DisplayOrder);
+            }
+            catch (OverflowException exception)
+            {
+                throw new InvalidOperationException(
+                    $"Cannot preview stage '{stage.StageId}': Loop {loop} and display " +
+                    $"order {stage.DisplayOrder} produce an overall stage number outside " +
+                    "the Int64 range.",
+                    exception);
+            }
+        }
+
+        public static int CalculateEffectiveMapSeed(
+            WaveBundle stage,
+            long loop)
+        {
+            RequireStageAndLoop(stage, loop);
+
+            long effectiveMapSeed;
+            try
+            {
+                long loopOffset = checked(
+                    loop * (long)StageCatalog.RequiredStageCount);
+                effectiveMapSeed = checked(stage.MapSeed + loopOffset);
+            }
+            catch (OverflowException exception)
+            {
+                throw CreateMapSeedOutOfRangeException(stage, loop, exception);
+            }
+
+            if (effectiveMapSeed < int.MinValue || effectiveMapSeed > int.MaxValue)
+            {
+                throw CreateMapSeedOutOfRangeException(stage, loop);
+            }
+
+            return (int)effectiveMapSeed;
+        }
+
+        private static void RequireStageAndLoop(WaveBundle stage, long loop)
+        {
+            if (stage == null)
+            {
+                throw new ArgumentNullException(nameof(stage));
+            }
+
+            if (loop < 0L)
+            {
+                throw new InvalidOperationException(
+                    $"Cannot preview or prepare stage '{stage.StageId}' with a negative Loop " +
+                    $"value ({loop}).");
+            }
+        }
+
+        private static InvalidOperationException CreateMapSeedOutOfRangeException(
+            WaveBundle stage,
+            long loop,
+            Exception innerException = null)
+        {
+            string message =
+                $"Cannot preview or prepare stage '{stage.StageId}': base map seed " +
+                $"{stage.MapSeed} + Loop {loop} * " +
+                $"{StageCatalog.RequiredStageCount} is outside the Int32 map-seed range.";
+            return innerException == null
+                ? new InvalidOperationException(message)
+                : new InvalidOperationException(message, innerException);
         }
     }
 

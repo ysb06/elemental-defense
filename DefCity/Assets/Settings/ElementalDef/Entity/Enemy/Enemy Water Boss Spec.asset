@@ -32,13 +32,13 @@ MonoBehaviour:
     StoppingDistance: 0.1
   difficultyScaling:
     attackPower: 1
-    attackRange: 1
-    attackCooldown: 1
+    attackRange: 0
+    attackCooldown: 0.5
     maxHealth: 1
-    defense: 1
-    acquisitionPadding: 1
-    scannerInterval: 1
-    movementSpeed: 1
-    movementAcceleration: 1
-    movementAngularSpeed: 1
-    stoppingDistance: 1
+    defense: 0.5
+    acquisitionPadding: 0
+    scannerInterval: 0
+    movementSpeed: 0.3
+    movementAcceleration: 0
+    movementAngularSpeed: 0
+    stoppingDistance: 0

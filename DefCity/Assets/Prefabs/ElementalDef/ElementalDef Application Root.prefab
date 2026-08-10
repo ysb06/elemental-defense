@@ -10,6 +10,7 @@ GameObject:
   m_Component:
   - component: {fileID: 4192493669473971144}
   - component: {fileID: 3651426995585580361}
+  - component: {fileID: 1112000000000000001}
   m_Layer: 0
   m_Name: ElementalDef Application Root
   m_TagString: Untagged
@@ -44,3 +45,22 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e0b9244b457a4c9c920613f22377a658, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ElementalDef.Runtime.ElementalDefApplicationRoot
+  audioService: {fileID: 1112000000000000001}
+--- !u!114 &1112000000000000001
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3369004027346368900}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: feb4989d0efd4424b7d656a19ba9ea72, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::ElementalDef.Presentation.Audio.ElementalDefAudioService
+  musicOutput: {fileID: 182597281242028481, guid: f7a8573e573e8442b89bf408eeb7a3f0, type: 2}
+  sfxOutput: {fileID: -2950580225160424371, guid: f7a8573e573e8442b89bf408eeb7a3f0, type: 2}
+  uiOutput: {fileID: -794042792150047271, guid: f7a8573e573e8442b89bf408eeb7a3f0, type: 2}
+  battleMusicClip: {fileID: 8300000, guid: a1cfe31617c26426ba2caff95279e762, type: 3}
+  buttonClickClip: {fileID: 8300000, guid: 92201fe0fba324034b5269efafa84fc6, type: 3}
+  musicCrossfadeDurationSeconds: 1.75

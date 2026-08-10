@@ -54,7 +54,7 @@ namespace ElementalDef.Gameplay.Combat.Settings
 
             return terrainHasAdvantage
                 ? TerrainRelationship.Disadvantage
-                : TerrainRelationship.Neutral;
+                : TerrainRelationship.Synergy;
         }
 
         public float GetAttackMultiplier(

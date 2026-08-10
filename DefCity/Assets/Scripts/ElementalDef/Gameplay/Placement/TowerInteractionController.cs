@@ -6,6 +6,7 @@ using ElementalDef.Gameplay.Combat;
 using ElementalDef.Gameplay.Combat.Weapons;
 using ElementalDef.Gameplay.Economy;
 using ElementalDef.Gameplay.Entities;
+using ElementalDef.Gameplay.Entities.Settings;
 using ElementalDef.Presentation.Effect;
 using ElementalDef.Presentation.UI;
 using UnityEngine;
@@ -43,24 +44,27 @@ namespace ElementalDef.Gameplay.Placement
         [SerializeField] private CellSpaceMouseEventManager cellSpaceMouseEventManager;
         [SerializeField] private EntitySelectionManager entitySelectionManager;
         [SerializeField] private CellCursor cellCursor;
+        [SerializeField] private TowerPlacementGhostPreview towerPlacementGhostPreview;
         [SerializeField] private GameObject towerMoveButton;
         [SerializeField] private GameObject towerDemolishButton;
 
         private TowerInteractionState currentState = TowerInteractionState.Idle;
         private InputAction cancelAction;
         private TowerUnit activePlacementPrefab;
-        private TowerCost activePlacementCost;
+        private float activePlacementCost;
         private TowerUnit relocationTarget;
         private Entity relocationTargetEntity;
         private int modeEnteredFrame = -1;
         private bool ownsPointerSelectionGate;
         private bool isSubscribed;
 
+        public event Action<TowerUnit> OnTowerPlacementCompleted;
+
         private void Awake()
         {
             EnsureConfigured();
             SetTowerActionButtonsVisible(false);
-            cellCursor.Hide();
+            HidePlacementFeedback();
         }
 
         private void OnEnable()
@@ -72,7 +76,7 @@ namespace ElementalDef.Gameplay.Placement
             }
 
             Subscribe();
-            cellCursor.Hide();
+            HidePlacementFeedback();
             RefreshTowerActionButtons();
         }
 
@@ -108,18 +112,12 @@ namespace ElementalDef.Gameplay.Placement
             if (!cellSpaceMouseEventManager.TryGetCellSpaceEventArgs(
                     out CellSpaceMouseEventArgs eventArgs))
             {
-                cellCursor.Hide();
+                HidePlacementFeedback();
                 return;
             }
 
             TowerPlacementResult result = EvaluatePlacement(eventArgs.Cell);
-            if (!result.HasPose)
-            {
-                cellCursor.Hide();
-                return;
-            }
-
-            cellCursor.Show(result.Pose.position, result.CanPlace);
+            UpdatePlacementFeedback(result);
         }
 
         public void BeginPlacingNew()
@@ -130,8 +128,8 @@ namespace ElementalDef.Gameplay.Placement
         public void BeginPlacingNew(TowerUnit requestedTowerPrefab)
         {
             EnsureValidTowerPrefab(requestedTowerPrefab);
-            TowerCost costComponent = requestedTowerPrefab.GetComponent<TowerCost>();
-            if (!towerEnergyManager.CanAfford(costComponent))
+            float requestedCost = requestedTowerPrefab.Spec.Cost;
+            if (!towerEnergyManager.CanAfford(requestedCost))
             {
                 return;
             }
@@ -141,7 +139,17 @@ namespace ElementalDef.Gameplay.Placement
                 return;
             }
 
-            activePlacementCost = costComponent;
+            try
+            {
+                towerPlacementGhostPreview.SetTarget(requestedTowerPrefab);
+            }
+            catch
+            {
+                ExitToIdle();
+                throw;
+            }
+
+            activePlacementCost = requestedCost;
             entitySelectionManager.ClearSelection();
         }
 
@@ -164,6 +172,16 @@ namespace ElementalDef.Gameplay.Placement
             relocationTarget = selectedTower;
             relocationTargetEntity = selectedEntity;
             relocationTargetEntity.OnStateChanged.AddListener(HandleRelocationTargetStateChanged);
+
+            try
+            {
+                towerPlacementGhostPreview.SetTarget(selectedTower);
+            }
+            catch
+            {
+                ExitToIdle();
+                throw;
+            }
         }
 
         public void DemolishSelectedTower()
@@ -241,14 +259,7 @@ namespace ElementalDef.Gameplay.Placement
             TowerPlacementResult result = EvaluatePlacement(eventArgs.Cell);
             if (!result.CanPlace)
             {
-                if (result.HasPose)
-                {
-                    cellCursor.Show(result.Pose.position, false);
-                }
-                else
-                {
-                    cellCursor.Hide();
-                }
+                UpdatePlacementFeedback(result);
 
                 Debug.LogWarning(
                     $"Cannot place tower on cell {eventArgs.Cell.RefCoordinates}: " +
@@ -475,12 +486,6 @@ namespace ElementalDef.Gameplay.Placement
 
         private bool TryPlaceNewTower(TowerPlacementResult placementResult)
         {
-            if (activePlacementCost == null)
-            {
-                throw new InvalidOperationException(
-                    $"[{name}] Active tower placement has no {nameof(TowerCost)}.");
-            }
-
             if (!towerEnergyManager.CanAfford(activePlacementCost))
             {
                 return false;
@@ -514,10 +519,13 @@ namespace ElementalDef.Gameplay.Placement
             }
 
             TowerEnergyEventArgs energyResult =
-                towerEnergyManager.TryConsumeEnergy(activePlacementCost);
+                towerEnergyManager.TryConsumeEnergy(
+                    createdTower.gameObject,
+                    activePlacementCost);
             if (energyResult.Result == TowerEnergyResult.Success)
             {
                 RefreshTerrainEffect(createdTower, placementResult.Cell);
+                NotifyTowerPlacementCompleted(createdTower);
                 return true;
             }
 
@@ -577,6 +585,30 @@ namespace ElementalDef.Gameplay.Placement
                 tower);
         }
 
+        private void NotifyTowerPlacementCompleted(TowerUnit tower)
+        {
+            Delegate[] subscribers = OnTowerPlacementCompleted?.GetInvocationList();
+            if (subscribers == null)
+            {
+                return;
+            }
+
+            foreach (Delegate subscriber in subscribers)
+            {
+                try
+                {
+                    ((Action<TowerUnit>)subscriber).Invoke(tower);
+                }
+                catch (Exception exception)
+                {
+                    Debug.LogException(new InvalidOperationException(
+                        $"[{name}] A tower-placement completion subscriber failed for " +
+                        $"'{tower.name}'. The completed placement will be preserved.",
+                        exception), this);
+                }
+            }
+        }
+
         private bool IsRelocationTargetValid()
         {
             return relocationTarget != null &&
@@ -604,6 +636,24 @@ namespace ElementalDef.Gameplay.Placement
             return currentState is
                 TowerInteractionState.PlacingNew or
                 TowerInteractionState.Relocating;
+        }
+
+        private void UpdatePlacementFeedback(TowerPlacementResult result)
+        {
+            if (!result.HasPose)
+            {
+                HidePlacementFeedback();
+                return;
+            }
+
+            cellCursor.Show(result.Pose.position, result.CanPlace);
+            towerPlacementGhostPreview.Show(result.Pose, result.CanPlace);
+        }
+
+        private void HidePlacementFeedback()
+        {
+            cellCursor.Hide();
+            towerPlacementGhostPreview.Hide();
         }
 
         private void ExitToIdle()
@@ -640,9 +690,10 @@ namespace ElementalDef.Gameplay.Placement
             relocationTarget = null;
             relocationTargetEntity = null;
             activePlacementPrefab = null;
-            activePlacementCost = null;
+            activePlacementCost = 0f;
             modeEnteredFrame = -1;
             cellCursor.Hide();
+            towerPlacementGhostPreview.Clear();
 
             bool shouldRestorePointerSelection =
                 restorePointerSelection && ownsPointerSelectionGate;
@@ -743,6 +794,12 @@ namespace ElementalDef.Gameplay.Placement
                     $"{nameof(TowerInteractionController)} requires a {nameof(CellCursor)} reference.");
             }
 
+            if (towerPlacementGhostPreview == null)
+            {
+                throw new InvalidOperationException(
+                    $"{nameof(TowerInteractionController)} requires a {nameof(TowerPlacementGhostPreview)} reference.");
+            }
+
             if (towerMoveButton == null)
             {
                 throw new InvalidOperationException(
@@ -806,10 +863,18 @@ namespace ElementalDef.Gameplay.Placement
                     $"{candidate.name} requires an {nameof(ElementalWeaponBase)} component.");
             }
 
-            if (!candidate.TryGetComponent(out TowerCost _))
+            TowerUnitSpec towerSpec = candidate.Spec;
+            if (towerSpec == null)
             {
                 throw new InvalidOperationException(
-                    $"{candidate.name} requires a {nameof(TowerCost)} component.");
+                    $"{candidate.name} requires a {nameof(TowerUnitSpec)} reference.");
+            }
+
+            if (towerSpec.Cost < 0)
+            {
+                throw new InvalidOperationException(
+                    $"{candidate.name} has an invalid tower cost of {towerSpec.Cost}. " +
+                    "Tower costs must be non-negative.");
             }
         }
     }

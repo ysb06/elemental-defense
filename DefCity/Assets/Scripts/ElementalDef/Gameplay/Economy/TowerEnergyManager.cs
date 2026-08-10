@@ -55,20 +55,14 @@ namespace ElementalDef.Gameplay.Economy
             AddEnergy(energyPerSecondDuringWave * Time.deltaTime);
         }
 
-        public bool CanAfford(TowerCost towerCost)
+        public bool CanAfford(float amount)
         {
-            if (towerCost == null)
-            {
-                return false;
-            }
-
-            float amount = towerCost.Cost;
-            return currentEnergy >= amount;
+            return IsValidCost(amount) && currentEnergy >= amount;
         }
 
-        public TowerEnergyEventArgs TryConsumeEnergy(TowerCost towerCost)
+        public TowerEnergyEventArgs TryConsumeEnergy(GameObject tower, float amount)
         {
-            if (towerCost == null)
+            if (tower == null)
             {
                 TowerEnergyEventArgs undefinedCostResult = new(
                     null,
@@ -80,12 +74,22 @@ namespace ElementalDef.Gameplay.Economy
                 return undefinedCostResult;
             }
 
-            float amount = towerCost.Cost;
+            if (!IsValidCost(amount))
+            {
+                TowerEnergyEventArgs invalidCostResult = new(
+                    tower,
+                    currentEnergy,
+                    0f,
+                    currentEnergy,
+                    TowerEnergyResult.InvalidCost);
+                OnTowerEnergyConsumed?.Invoke(gameObject, invalidCostResult);
+                return invalidCostResult;
+            }
 
             if (currentEnergy < amount)
             {
                 TowerEnergyEventArgs insufficientEnergyResult = new(
-                    towerCost.gameObject,
+                    tower,
                     currentEnergy,
                     0f,
                     currentEnergy,
@@ -99,7 +103,7 @@ namespace ElementalDef.Gameplay.Economy
             EnergyChanged?.Invoke(currentEnergy);
 
             TowerEnergyEventArgs successResult = new(
-                towerCost.gameObject,
+                tower,
                 previousEnergy,
                 amount,
                 currentEnergy,
@@ -127,6 +131,13 @@ namespace ElementalDef.Gameplay.Economy
             }
 
             AddEnergy(energyOnWaveCompleted);
+        }
+
+        private static bool IsValidCost(float amount)
+        {
+            return !float.IsNaN(amount) &&
+                   !float.IsInfinity(amount) &&
+                   amount >= 0f;
         }
     }
 

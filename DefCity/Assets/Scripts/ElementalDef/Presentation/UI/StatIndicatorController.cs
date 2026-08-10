@@ -22,6 +22,12 @@ namespace ElementalDef.Presentation.UI
         [SerializeField] private TowerUnitSpec fireTowerSpec;
         [SerializeField] private TowerUnitSpec earthTowerSpec;
 
+        [Header("Character Icon")]
+        [SerializeField] private Image characterIconImage;
+        [SerializeField] private Sprite waterCharacterIcon;
+        [SerializeField] private Sprite fireCharacterIcon;
+        [SerializeField] private Sprite earthCharacterIcon;
+
         [Header("Profile Text")]
         [SerializeField] private TMP_Text nameText;
         [SerializeField] private TMP_Text storyText;
@@ -48,7 +54,7 @@ namespace ElementalDef.Presentation.UI
 
             BindButtonListeners();
             SetButtonsInteractable(true);
-            DisplayTower(waterTowerSpec);
+            DisplayTower(waterTowerSpec, waterCharacterIcon);
         }
 
         private void OnDisable()
@@ -96,21 +102,22 @@ namespace ElementalDef.Presentation.UI
 
         private void ShowWaterTower()
         {
-            DisplayTower(waterTowerSpec);
+            DisplayTower(waterTowerSpec, waterCharacterIcon);
         }
 
         private void ShowFireTower()
         {
-            DisplayTower(fireTowerSpec);
+            DisplayTower(fireTowerSpec, fireCharacterIcon);
         }
 
         private void ShowEarthTower()
         {
-            DisplayTower(earthTowerSpec);
+            DisplayTower(earthTowerSpec, earthCharacterIcon);
         }
 
-        private void DisplayTower(TowerUnitSpec towerSpec)
+        private void DisplayTower(TowerUnitSpec towerSpec, Sprite characterIcon)
         {
+            SetCharacterIcon(characterIcon);
             nameText.text = towerSpec.DisplayName;
             storyText.text = towerSpec.Story;
             healthText.text = FormatStat(towerSpec.Defense.MaxHealth);
@@ -147,6 +154,12 @@ namespace ElementalDef.Presentation.UI
                 fireTowerSpec == earthTowerSpec)
             {
                 errorMessage = "Water, fire, and earth tower specs must be unique.";
+                return false;
+            }
+
+            if (characterIconImage == null)
+            {
+                errorMessage = "A character icon image reference is required.";
                 return false;
             }
 
@@ -201,6 +214,7 @@ namespace ElementalDef.Presentation.UI
 
         private void ClearDisplay()
         {
+            SetCharacterIcon(null);
             SetText(nameText, string.Empty);
             SetText(storyText, string.Empty);
             SetText(healthText, string.Empty);
@@ -208,6 +222,17 @@ namespace ElementalDef.Presentation.UI
             SetText(defenseText, string.Empty);
             SetText(attackSpeedText, string.Empty);
             SetText(attackRangeText, string.Empty);
+        }
+
+        private void SetCharacterIcon(Sprite characterIcon)
+        {
+            if (characterIconImage == null)
+            {
+                return;
+            }
+
+            characterIconImage.sprite = characterIcon;
+            characterIconImage.enabled = characterIcon != null;
         }
 
         private static void SetText(TMP_Text target, string value)

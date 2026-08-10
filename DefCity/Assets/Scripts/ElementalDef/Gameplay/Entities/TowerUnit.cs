@@ -8,7 +8,6 @@ using ElementalDef.Gameplay.Entities.Settings;
 using DefCore.Gameplay.Combat.Weapons;
 using ElementalDef.Gameplay.Combat.Weapons;
 using ElementalDef.Gameplay.Combat;
-using ElementalDef.Gameplay.Economy;
 using ElementalDef.Gameplay.Combat.Skills;
 
 namespace ElementalDef.Gameplay.Entities
@@ -28,7 +27,6 @@ namespace ElementalDef.Gameplay.Entities
         [SerializeField] private bool isShutdown;
         [SerializeField] private ElementalWeaponBase weapon;
         [SerializeField] private ElementalCombatant elementalCombatant;
-        [SerializeField] private TowerCost towerCost;
         [SerializeField] private TowerSkillController skillController;
         [SerializeField, Min(0f)] private float deathRemovalDelay = 5.5f;
 
@@ -49,7 +47,6 @@ namespace ElementalDef.Gameplay.Entities
             attacker = attacker != null ? attacker : GetComponent<Attacker>();
             weapon = weapon != null ? weapon : GetComponentInChildren<ElementalWeaponBase>();
             elementalCombatant = elementalCombatant != null ? elementalCombatant : GetComponent<ElementalCombatant>();
-            towerCost = towerCost != null ? towerCost : GetComponent<TowerCost>();
             skillController = skillController != null ? skillController : GetComponent<TowerSkillController>();
 
             health.OnDeath.AddListener(HandleDeath);
@@ -70,7 +67,6 @@ namespace ElementalDef.Gameplay.Entities
                 scanner.Initialize(
                     spec.Attack.Range + spec.Scanner.AcquisitionPadding,
                     spec.Scanner.Interval);
-                towerCost.Initialize(spec.Cost);
             }
             else
             {

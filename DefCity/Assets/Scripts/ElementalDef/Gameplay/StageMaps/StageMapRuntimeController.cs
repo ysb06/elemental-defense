@@ -1,5 +1,6 @@
 using System;
 using ElementalDef.Gameplay.Entities;
+using ElementalDef.Gameplay.Economy;
 using ElementalDef.Gameplay.Flow;
 using ElementalDef.Gameplay.Placement;
 using ElementalDef.Gameplay.StageMaps.Decoration;
@@ -36,6 +37,7 @@ namespace ElementalDef.Gameplay.StageMaps.Runtime
         [SerializeField] private NavMeshSurface navMeshSurface;
 
         [Header("Gameplay Gate")]
+        [SerializeField] private StageTowerEnergyInitializer towerEnergyInitializer;
         [SerializeField] private WaveBundleController waveBundleController;
         [SerializeField] private TowerInteractionController towerInteractionController;
 
@@ -55,6 +57,13 @@ namespace ElementalDef.Gameplay.StageMaps.Runtime
 
         private void Initialize()
         {
+            if (towerEnergyInitializer == null)
+            {
+                throw new InvalidOperationException(
+                    $"{nameof(StageMapRuntimeController)} requires a " +
+                    $"{nameof(StageTowerEnergyInitializer)} reference.");
+            }
+
             ElementalDefApplicationRoot applicationRoot = ElementalDefApplicationRoot.Instance;
             stageRunContext = applicationRoot?.StageLaunch?.Current;
 
@@ -71,7 +80,7 @@ namespace ElementalDef.Gameplay.StageMaps.Runtime
             }
             else
             {
-                mapSeed = stageRunContext.SelectedStage.MapSeed;
+                mapSeed = stageRunContext.MapSeed;
             }
 
             StageMapGenerationSettings settings = generationProfile.CreateSettings(mapSeed);
@@ -80,8 +89,8 @@ namespace ElementalDef.Gameplay.StageMaps.Runtime
             if (!result.Succeeded)
             {
                 throw new InvalidOperationException(
-                    $"Stage map generation failed for stage '{stageRunContext.SelectedStage.StageId}' " +
-                    $"with seed {stageRunContext.SelectedStage.MapSeed}. " +
+                    $"Stage map generation failed for stage '{stageRunContext.StageId}' " +
+                    $"with seed {stageRunContext.MapSeed}. " +
                     $"{result.FailureReason}: {result.Message}");
             }
 
@@ -106,6 +115,7 @@ namespace ElementalDef.Gameplay.StageMaps.Runtime
 
             towerPlacementValidator.Initialize(generatedMap);
             navMeshSurface.BuildNavMesh();
+            towerEnergyInitializer.Initialize(stageRunContext);
 
             // CurrentMap is assigned only after the full runtime setup succeeds.
             CurrentMap = generatedMap;

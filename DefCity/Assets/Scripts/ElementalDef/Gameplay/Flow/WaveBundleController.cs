@@ -31,6 +31,8 @@ namespace ElementalDef.Gameplay.Flow
         public int CurrentWaveIndex => currentWaveIndex;
         public bool IsBattleActive => bundleState == WaveBundleRuntimeState.Running || bundleState == WaveBundleRuntimeState.WaitingForNextWave;
 
+        public event Action<int, int> WaveProgressChanged;
+
         public WaveBundleControllerEvent OnBundleStarted = new();
         public WaveBundleControllerEvent OnBundleCompleted = new();
 
@@ -139,9 +141,29 @@ namespace ElementalDef.Gameplay.Flow
             transitionRequestedFrame = -1;
             bundleState = WaveBundleRuntimeState.Running;
             turnManager.IsRunning = true;
+            PublishWaveProgressChangedSafely(waveIndex + 1, activeBundle.Waves.Count);
         }
 
+        private void PublishWaveProgressChangedSafely(int currentWaveNumber, int totalWaveCount)
+        {
+            Action<int, int> handlers = WaveProgressChanged;
+            if (handlers == null)
+            {
+                return;
+            }
 
+            foreach (Action<int, int> handler in handlers.GetInvocationList())
+            {
+                try
+                {
+                    handler(currentWaveNumber, totalWaveCount);
+                }
+                catch (Exception exception)
+                {
+                    Debug.LogException(exception, this);
+                }
+            }
+        }
     }
 
     [Serializable]

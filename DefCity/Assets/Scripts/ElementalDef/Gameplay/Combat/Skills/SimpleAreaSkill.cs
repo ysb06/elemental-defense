@@ -10,6 +10,18 @@ namespace ElementalDef.Gameplay.Combat.Skills
     [DisallowMultipleComponent]
     public sealed class SimpleAreaSkill : SkillExecutorBase
     {
+        private readonly struct PendingTargetDamage
+        {
+            public Health Health { get; }
+            public float RequestedDamage { get; }
+
+            public PendingTargetDamage(Health health, float requestedDamage)
+            {
+                Health = health;
+                RequestedDamage = requestedDamage;
+            }
+        }
+
         [SerializeField] private EnemySpawner enemySpawner;
         [SerializeField, Min(0f)] private float damageMultiplier = 3f;
 
@@ -25,19 +37,71 @@ namespace ElementalDef.Gameplay.Combat.Skills
 
         public override void BeginExecute(SkillExecutionContext context, Action<SkillExecutionResult> onResolved)
         {
-            float requestedDamage = InitializationContext.DamageCalculator.CalculateDamage(context.AttackPower, damageMultiplier, context.AttackElement, context.CastPosition);
-            float totalDamage = 0;
-            int defeatedTargetCount = 0;
             IReadOnlyList<EnemyUnit> activeEnemies = enemySpawner.ActiveEnemies;
-            foreach (var enemy in activeEnemies)
+            List<PendingTargetDamage> pendingTargetDamages = new(activeEnemies.Count);
+            foreach (EnemyUnit enemy in activeEnemies)
             {
-                Health enemyHealth = enemy.GetComponent<Health>();
-                DamageEventArgs result = enemyHealth.TakeDamage(context.CasterRoot, requestedDamage);
+                if (enemy == null || !enemy.gameObject.activeInHierarchy)
+                {
+                    continue;
+                }
+
+                if (!enemy.TryGetComponent(out Health enemyHealth))
+                {
+                    throw new InvalidOperationException(
+                        $"[{enemy.name}] An active area-skill target requires a {nameof(Health)} component.");
+                }
+
+                if (!enemyHealth.IsAlive)
+                {
+                    continue;
+                }
+
+                if (!enemy.TryGetComponent(out ElementalCombatant enemyCombatant))
+                {
+                    throw new InvalidOperationException(
+                        $"[{enemy.name}] An active area-skill target requires an {nameof(ElementalCombatant)} component.");
+                }
+
+                float requestedDamage = InitializationContext.DamageCalculator.CalculateDamage(
+                    context.AttackPower,
+                    damageMultiplier,
+                    context.AttackElement,
+                    context.CastPosition,
+                    enemyCombatant);
+                pendingTargetDamages.Add(new PendingTargetDamage(enemyHealth, requestedDamage));
+            }
+
+            float totalDamage = 0f;
+            int affectedTargetCount = 0;
+            int defeatedTargetCount = 0;
+            foreach (PendingTargetDamage pendingTargetDamage in pendingTargetDamages)
+            {
+                Health enemyHealth = pendingTargetDamage.Health;
+                if (enemyHealth == null ||
+                    !enemyHealth.gameObject.activeInHierarchy ||
+                    !enemyHealth.IsAlive)
+                {
+                    continue;
+                }
+
+                DamageEventArgs result = enemyHealth.TakeDamage(
+                    context.CasterRoot,
+                    pendingTargetDamage.RequestedDamage);
+                affectedTargetCount++;
                 totalDamage += result.DamageAmount;
                 defeatedTargetCount += result.IsFatal ? 1 : 0;
             }
 
-            SkillExecutionResult args = new(context, SkillExecutionStatus.Succeeded, activeEnemies.Count, totalDamage, defeatedTargetCount);
+            SkillExecutionStatus status = affectedTargetCount > 0
+                ? SkillExecutionStatus.Succeeded
+                : SkillExecutionStatus.NoTargets;
+            SkillExecutionResult args = new(
+                context,
+                status,
+                affectedTargetCount,
+                totalDamage,
+                defeatedTargetCount);
             if (onResolved != null)
             {
                 onResolved(args);

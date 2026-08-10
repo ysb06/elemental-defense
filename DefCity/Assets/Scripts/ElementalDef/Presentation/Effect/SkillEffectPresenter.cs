@@ -1,4 +1,6 @@
 using System.Collections;
+using ElementalDef.Presentation.Audio;
+using ElementalDef.Runtime;
 using UnityEngine;
 
 namespace ElementalDef.Presentation.Effect
@@ -7,7 +9,9 @@ namespace ElementalDef.Presentation.Effect
     public sealed class SkillEffectPresenter : MonoBehaviour
     {
         [SerializeField] private GameObject effectRoot;
-        [SerializeField, Min(0.01f)] private float activeDurationSeconds = 1f;
+        [SerializeField, Min(0.01f)] private float activeDurationSeconds = 2f;
+        [SerializeField] private AudioClip audioClip;
+        [SerializeField] private string audioKey;
 
         private Coroutine deactivateCoroutine;
 
@@ -44,6 +48,7 @@ namespace ElementalDef.Presentation.Effect
 
             effectRoot.SetActive(false);
             effectRoot.SetActive(true);
+            PlayAudio();
             deactivateCoroutine = StartCoroutine(DeactivateAfterDuration());
         }
 
@@ -67,6 +72,56 @@ namespace ElementalDef.Presentation.Effect
             {
                 effectRoot.SetActive(false);
             }
+
+            StopAudio();
+        }
+
+        private void PlayAudio()
+        {
+            if (audioClip == null)
+            {
+                Debug.LogError(
+                    $"[{name}] {nameof(SkillEffectPresenter)} has no ultimate audio clip.",
+                    this);
+                return;
+            }
+
+            if (string.IsNullOrWhiteSpace(audioKey))
+            {
+                Debug.LogError(
+                    $"[{name}] {nameof(SkillEffectPresenter)} requires an audio key.",
+                    this);
+                return;
+            }
+
+            ElementalDefAudioService audioService =
+                ElementalDefApplicationRoot.Instance?.Audio;
+            if (audioService == null)
+            {
+                Debug.LogError(
+                    $"[{name}] {nameof(ElementalDefAudioService)} is unavailable; " +
+                    "the skill effect will continue without audio.",
+                    this);
+                return;
+            }
+
+            if (!audioService.PlayExclusive2D(audioKey, audioClip))
+            {
+                Debug.LogError(
+                    $"[{name}] Ultimate audio '{audioKey}' could not be played; " +
+                    "the skill effect will continue without audio.",
+                    this);
+            }
+        }
+
+        private void StopAudio()
+        {
+            if (string.IsNullOrWhiteSpace(audioKey))
+            {
+                return;
+            }
+
+            ElementalDefApplicationRoot.Instance?.Audio?.StopExclusive2D(audioKey);
         }
 
         private bool ValidateConfiguration()

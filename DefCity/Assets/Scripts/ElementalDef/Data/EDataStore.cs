@@ -13,6 +13,8 @@ namespace ElementalDef.Data
         private const int MigratableSchemaVersion = 3;
         private const long PlayerId = 1;
         private const int FinalStageDisplayOrder = 10;
+        private const long MaximumSafeLoop =
+            (long.MaxValue - FinalStageDisplayOrder) / FinalStageDisplayOrder;
         private const string StageRunsTableName = "stage_runs";
         private const string PlayerProgressTableName = "player_progress";
         private const string SelectRunColumns =
@@ -251,6 +253,66 @@ namespace ElementalDef.Data
             }
 
             return ToProgressSnapshot(row);
+        }
+
+        internal PlayerProgressSnapshot SetPlayerProgressForDebug(
+            int maxStageProgress,
+            long loop)
+        {
+            PersistenceValidation.RequireMaxStageProgress(
+                maxStageProgress,
+                nameof(maxStageProgress));
+            PersistenceValidation.RequireNonNegative(loop, nameof(loop));
+            if (loop > MaximumSafeLoop)
+            {
+                throw new ArgumentOutOfRangeException(
+                    nameof(loop),
+                    $"Loop must be at most {MaximumSafeLoop} so every stage in the loop " +
+                    "has a representable overall stage number.");
+            }
+
+            EnsureReady();
+            PlayerProgressSnapshot result = null;
+            long requestedUpdatedAtUtcMilliseconds =
+                DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+
+            connection.RunInTransaction(() =>
+            {
+                PlayerProgressRow progress = FindPlayerProgressRow();
+                if (progress == null)
+                {
+                    throw new InvalidOperationException(
+                        "The singleton player-progress row is missing.");
+                }
+
+                long updatedAtUtcMilliseconds = Math.Max(
+                    progress.UpdatedAtUtcMilliseconds,
+                    requestedUpdatedAtUtcMilliseconds);
+                int updatedRows = connection.Execute(
+                    "UPDATE player_progress SET max_stage_progress = ?, loop = ?, " +
+                    "updated_at_utc_ms = ? WHERE player_id = ?",
+                    maxStageProgress,
+                    loop,
+                    updatedAtUtcMilliseconds,
+                    PlayerId);
+                if (updatedRows != 1)
+                {
+                    throw new InvalidOperationException(
+                        $"Expected to update one player-progress row, but updated {updatedRows}.");
+                }
+
+                PlayerProgressRow updatedProgress = FindPlayerProgressRow();
+                if (updatedProgress == null)
+                {
+                    throw new InvalidOperationException(
+                        "The singleton player-progress row is missing after the update.");
+                }
+
+                result = ToProgressSnapshot(updatedProgress);
+            });
+
+            return result ?? throw new InvalidOperationException(
+                "The player-progress debug transaction produced no result.");
         }
 
         public IReadOnlyList<CompletedStageRunRecord> GetRecentRuns(int limit)

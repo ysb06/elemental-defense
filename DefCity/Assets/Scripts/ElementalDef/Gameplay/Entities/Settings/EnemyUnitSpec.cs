@@ -43,6 +43,19 @@ namespace ElementalDef.Gameplay.Entities.Settings
             1f,
             1f);
 
+        public static EnemyDifficultyStatApplication StandardStageScaling => new(
+            1f,
+            0f,
+            0.5f,
+            1f,
+            0.5f,
+            0f,
+            0f,
+            0.3f,
+            0f,
+            0f,
+            0f);
+
         public EnemyDifficultyStatApplication(
             float attackPower,
             float attackRange,
@@ -72,7 +85,11 @@ namespace ElementalDef.Gameplay.Entities.Settings
         internal AttackStats Apply(AttackStats baseStats, float difficultyMultiplier)
         {
             AttackStats scaled = baseStats;
-            scaled.Power *= GetStrengthMultiplier(difficultyMultiplier, attackPower, nameof(attackPower));
+            scaled.Power = GetRoundedScaledStat(
+                baseStats.Power,
+                difficultyMultiplier,
+                attackPower,
+                nameof(attackPower));
             scaled.Range *= GetStrengthMultiplier(difficultyMultiplier, attackRange, nameof(attackRange));
             scaled.Cooldown /= GetStrengthMultiplier(difficultyMultiplier, attackCooldown, nameof(attackCooldown));
             return scaled;
@@ -81,8 +98,16 @@ namespace ElementalDef.Gameplay.Entities.Settings
         internal DefenseStats Apply(DefenseStats baseStats, float difficultyMultiplier)
         {
             DefenseStats scaled = baseStats;
-            scaled.MaxHealth *= GetStrengthMultiplier(difficultyMultiplier, maxHealth, nameof(maxHealth));
-            scaled.Defense *= GetStrengthMultiplier(difficultyMultiplier, defense, nameof(defense));
+            scaled.MaxHealth = GetRoundedScaledStat(
+                baseStats.MaxHealth,
+                difficultyMultiplier,
+                maxHealth,
+                nameof(maxHealth));
+            scaled.Defense = GetRoundedScaledStat(
+                baseStats.Defense,
+                difficultyMultiplier,
+                defense,
+                nameof(defense));
             return scaled;
         }
 
@@ -148,6 +173,29 @@ namespace ElementalDef.Gameplay.Entities.Settings
 
             return multiplier;
         }
+
+        private static float GetRoundedScaledStat(
+            float baseValue,
+            float difficultyMultiplier,
+            float application,
+            string applicationName)
+        {
+            GetStrengthMultiplier(difficultyMultiplier, application, applicationName);
+
+            double multiplier =
+                1d + (((double)difficultyMultiplier - 1d) * application);
+            double scaledValue = baseValue * multiplier;
+            if (double.IsNaN(scaledValue) ||
+                double.IsInfinity(scaledValue) ||
+                scaledValue > float.MaxValue ||
+                scaledValue < float.MinValue)
+            {
+                throw new OverflowException(
+                    $"Difficulty application '{applicationName}' produced an invalid scaled stat.");
+            }
+
+            return Mathf.Round((float)scaledValue);
+        }
     }
 
     [CreateAssetMenu(menuName = "ElementalDef/Units/Enemy Spec")]
@@ -155,7 +203,7 @@ namespace ElementalDef.Gameplay.Entities.Settings
     {
         [SerializeField] private MovementStats movement;
         [SerializeField] private EnemyDifficultyStatApplication difficultyScaling =
-            EnemyDifficultyStatApplication.Full;
+            EnemyDifficultyStatApplication.StandardStageScaling;
 
         public MovementStats Movement => movement;
         public EnemyDifficultyStatApplication DifficultyScaling => difficultyScaling;

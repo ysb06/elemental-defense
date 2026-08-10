@@ -9,7 +9,7 @@ namespace ElementalDef.Gameplay.Entities.Settings
     {
         [SerializeField] private string displayName = string.Empty;
         [SerializeField, TextArea] private string story = string.Empty;
-        [SerializeField] private int cost = 1;
+        [SerializeField, Min(0)] private int cost = 1;
         [SerializeField] private SkillDefinition skill;
 
         public string DisplayName => displayName ?? string.Empty;

@@ -240,6 +240,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 132100889}
+  - component: {fileID: 2147000500}
   m_Layer: 5
   m_Name: Wave Indicator
   m_TagString: Untagged
@@ -269,6 +270,21 @@ RectTransform:
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 163, y: 107}
   m_Pivot: {x: 0, y: 1}
+--- !u!114 &2147000500
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 132100888}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c61452bd0bba4949925484fead2a7149, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::ElementalDef.Presentation.UI.WaveIndicatorController
+  waveBundleController: {fileID: 1471740577}
+  currentWaveText: {fileID: 1754979266}
+  totalWaveText: {fileID: 389411993}
 --- !u!1 &173751407
 GameObject:
   m_ObjectHideFlags: 0
@@ -2459,7 +2475,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: 99
+  m_text:
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
@@ -3965,7 +3981,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ElementalDef.Presentation.Effect.SkillEffectPresenter
   effectRoot: {fileID: 324875035}
-  activeDurationSeconds: 1
+  activeDurationSeconds: 2
+  audioClip: {fileID: 8300000, guid: dd02f07cfade146199eded671d678013, type: 3}
+  audioKey: ultimate-earth
 --- !u!1 &910500001
 GameObject:
   m_ObjectHideFlags: 0
@@ -4145,11 +4163,11 @@ MonoBehaviour:
   appearanceEntries:
   - maximumHealthPercent: 100
     appearanceRoot: {fileID: 910500003}
-  - maximumHealthPercent: 75
+  - maximumHealthPercent: 70
     appearanceRoot: {fileID: 910500005}
-  - maximumHealthPercent: 50
+  - maximumHealthPercent: 40
     appearanceRoot: {fileID: 910500007}
-  - maximumHealthPercent: 25
+  - maximumHealthPercent: 10
     appearanceRoot: {fileID: 910500009}
 --- !u!1001 &910500012
 PrefabInstance:
@@ -6026,7 +6044,9 @@ GameObject:
   - component: {fileID: 1471740577}
   - component: {fileID: 1471740576}
   - component: {fileID: 1471740580}
+  - component: {fileID: 1471740581}
   - component: {fileID: 2112000121}
+  - component: {fileID: 1113000000000000001}
   m_Layer: 0
   m_Name: Stage Manager
   m_TagString: Untagged
@@ -6034,6 +6054,23 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
+--- !u!114 &1113000000000000001
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1471740574}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bb930225714d4cfcbfb398394c41f405, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::ElementalDef.Presentation.Audio.BattleAudioPresenter
+  waveBundleController: {fileID: 1471740577}
+  gameFlowController: {fileID: 1471740578}
+  towerInteractionController: {fileID: 1703385600}
+  headquartersBuilding: {fileID: 388476382}
+  headquartersCollapseClip: {fileID: 8300000, guid: 2cf7d148956324619ac97889e09f52cc, type: 3}
 --- !u!4 &1471740575
 Transform:
   m_ObjectHideFlags: 0
@@ -6141,9 +6178,23 @@ MonoBehaviour:
   headquartersBuilding: {fileID: 388476382}
   towerPlacementValidator: {fileID: 1703385601}
   navMeshSurface: {fileID: 1455628524}
+  towerEnergyInitializer: {fileID: 1471740581}
   waveBundleController: {fileID: 1471740577}
   towerInteractionController: {fileID: 1703385600}
   directPlayFallbackStage: {fileID: 11400000, guid: 19011ee0473c440098a9e5db3451788b, type: 2}
+--- !u!114 &1471740581
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1471740574}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 83b3ee84419b45bb853010dc08f2b317, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::ElementalDef.Gameplay.Economy.StageTowerEnergyInitializer
+  towerEnergyManager: {fileID: 1703385599}
 --- !u!114 &1471740580
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -6541,8 +6592,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 0, y: 0}
+  m_AnchoredPosition: {x: 0, y: 5}
+  m_SizeDelta: {x: 0, y: -10}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1558674957
 MonoBehaviour:
@@ -6573,8 +6624,8 @@ MonoBehaviour:
   m_fontMaterials: []
   m_fontColor32:
     serializedVersion: 2
-    rgba: 4281479730
-  m_fontColor: {r: 0.19607843, g: 0.19607843, b: 0.19607843, a: 1}
+    rgba: 4278190080
+  m_fontColor: {r: 0, g: 0, b: 0, a: 1}
   m_enableVertexGradient: 0
   m_colorMode: 3
   m_fontColorGradient:
@@ -6591,13 +6642,13 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 24
-  m_fontSizeBase: 24
+  m_fontSize: 52
+  m_fontSizeBase: 52
   m_fontWeight: 400
   m_enableAutoSizing: 0
   m_fontSizeMin: 18
   m_fontSizeMax: 72
-  m_fontStyle: 0
+  m_fontStyle: 1
   m_HorizontalAlignment: 2
   m_VerticalAlignment: 512
   m_textAlignment: 65535
@@ -7223,8 +7274,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 240, y: 160}
+  m_AnchoredPosition: {x: 0, y: -250}
+  m_SizeDelta: {x: 480, y: 180}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1631909241
 MonoBehaviour:
@@ -7303,7 +7354,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 10905, guid: 0000000000000000f000000000000000, type: 0}
+  m_Sprite: {fileID: 776006666, guid: 50f39b2e23ee4446bb58476e71441df9, type: 3}
   m_Type: 1
   m_PreserveAspect: 0
   m_FillCenter: 1
@@ -7640,6 +7691,7 @@ GameObject:
   - component: {fileID: 1703385601}
   - component: {fileID: 1703385600}
   - component: {fileID: 1703385599}
+  - component: {fileID: 1703385603}
   m_Layer: 0
   m_Name: Tower Manager
   m_TagString: Untagged
@@ -7675,7 +7727,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ElementalDef.Gameplay.Economy.TowerEnergyManager
   maxEnergy: 100
-  currentEnergy: 1
+  currentEnergy: 0
   enemySpawner: {fileID: 1471740576}
   energyPerSecondDuringWave: 0
   energyOnWaveCompleted: 1
@@ -7702,6 +7754,7 @@ MonoBehaviour:
   cellSpaceMouseEventManager: {fileID: 1302226122}
   entitySelectionManager: {fileID: 1302226123}
   cellCursor: {fileID: 416906285}
+  towerPlacementGhostPreview: {fileID: 1703385603}
   towerMoveButton: {fileID: 1433128384}
   towerDemolishButton: {fileID: 620772330}
 --- !u!114 &1703385601
@@ -7738,6 +7791,21 @@ MonoBehaviour:
   OnTowerUnregistered:
     m_PersistentCalls:
       m_Calls: []
+--- !u!114 &1703385603
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1703385597}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 89e16c4130b84e35a3aae160b956e829, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::ElementalDef.Presentation.UI.TowerPlacementGhostPreview
+  validPreviewMaterial: {fileID: 2100000, guid: d755378bf5a241b9a8dfcb30d92ba334, type: 2}
+  invalidPreviewMaterial: {fileID: 2100000, guid: de34393f9f71439bb6ea5f459635b632, type: 2}
+  outlineMaterial: {fileID: 2100000, guid: 5cce259f9ffeabb439e946bfe1b97a5c, type: 2}
 --- !u!1 &1728050268
 GameObject:
   m_ObjectHideFlags: 0
@@ -7911,7 +7979,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: 99
+  m_text:
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
@@ -8642,7 +8710,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ElementalDef.Presentation.Effect.SkillEffectPresenter
   effectRoot: {fileID: 944262251}
-  activeDurationSeconds: 1
+  activeDurationSeconds: 2
+  audioClip: {fileID: 8300000, guid: e8cc5bbd4324b4a76990cb14b9ea4492, type: 3}
+  audioKey: ultimate-water
 --- !u!1 &1920825425
 GameObject:
   m_ObjectHideFlags: 0
@@ -9118,7 +9188,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ElementalDef.Presentation.Effect.SkillEffectPresenter
   effectRoot: {fileID: 1923117935}
-  activeDurationSeconds: 1
+  activeDurationSeconds: 2
+  audioClip: {fileID: 8300000, guid: a2e337ac16f2a4636a5fe844748e473a, type: 3}
+  audioKey: ultimate-fire
 --- !u!1 &2072783902
 GameObject:
   m_ObjectHideFlags: 0

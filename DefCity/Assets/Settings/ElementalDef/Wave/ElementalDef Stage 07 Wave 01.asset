@@ -14,10 +14,12 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::ElementalDef.Gameplay.Flow.Settings.WaveSchedule
   entries:
   - turn: 5
-    entity: {fileID: 8900581486461593881, guid: 9290cbe2a1b154048a81d167bef12adc, type: 3}
+    entity: {fileID: 4950721011308204896, guid: 7f0983ebc35a642d9bbabfd9cb6f5fc9, type: 3}
   - turn: 8
-    entity: {fileID: 4950721011308204896, guid: 526479db6b2164f88858eb9b4c16bbff, type: 3}
+    entity: {fileID: 7655338829751029028, guid: ddfa603aa45b34bb2876cc0841144e27, type: 3}
   - turn: 11
     entity: {fileID: 8900581486461593881, guid: e2ef64d7dc4b84b12bc45bc9b1c99b0e, type: 3}
   - turn: 14
     entity: {fileID: 4950721011308204896, guid: 7f0983ebc35a642d9bbabfd9cb6f5fc9, type: 3}
+  - turn: 17
+    entity: {fileID: 7655338829751029028, guid: ddfa603aa45b34bb2876cc0841144e27, type: 3}

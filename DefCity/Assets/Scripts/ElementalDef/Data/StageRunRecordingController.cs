@@ -105,14 +105,12 @@ namespace ElementalDef.Data
 
             if (outcome == StageRunOutcome.Victory)
             {
-                earnedCredits = CalculateReward(
+                earnedCredits = StageRewardCalculator.Calculate(
                     stageRunContext.BaseCreditReward,
-                    stageRunContext.CreditRewardMultiplier,
-                    nameof(stageRunContext.CreditRewardMultiplier));
-                earnedExperience = CalculateReward(
+                    stageRunContext.CreditRewardMultiplier);
+                earnedExperience = StageRewardCalculator.Calculate(
                     stageRunContext.BaseExperienceReward,
-                    stageRunContext.ExperienceRewardMultiplier,
-                    nameof(stageRunContext.ExperienceRewardMultiplier));
+                    stageRunContext.ExperienceRewardMultiplier);
             }
 
             var snapshot = new CompletedStageRunSnapshot(
@@ -130,41 +128,6 @@ namespace ElementalDef.Data
                 DateTimeOffset.UtcNow);
 
             applicationRoot.RunStore.Commit(snapshot);
-        }
-
-        private static long CalculateReward(
-            int baseReward,
-            float rewardMultiplier,
-            string multiplierName)
-        {
-            if (baseReward < 0)
-            {
-                throw new ArgumentOutOfRangeException(
-                    nameof(baseReward),
-                    baseReward,
-                    "A base reward cannot be negative.");
-            }
-
-            if (float.IsNaN(rewardMultiplier) ||
-                float.IsInfinity(rewardMultiplier) ||
-                rewardMultiplier < 0f)
-            {
-                throw new ArgumentOutOfRangeException(
-                    multiplierName,
-                    rewardMultiplier,
-                    "A reward multiplier must be finite and non-negative.");
-            }
-
-            double scaledReward = baseReward * (double)rewardMultiplier;
-            if (scaledReward > long.MaxValue)
-            {
-                throw new OverflowException(
-                    $"The calculated reward {scaledReward} exceeds {long.MaxValue}.");
-            }
-
-            return (long)Math.Round(
-                scaledReward,
-                MidpointRounding.AwayFromZero);
         }
     }
 }

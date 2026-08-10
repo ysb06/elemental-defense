@@ -1,8 +1,13 @@
 using System;
 using System.IO;
+using System.Reflection;
 using ElementalDef.Data;
+using ElementalDef.Gameplay.Flow;
+using ElementalDef.Gameplay.Flow.Settings;
+using ElementalDef.Runtime;
 using NUnit.Framework;
 using SQLite;
+using UnityEditor;
 using UnityEngine;
 
 namespace ElementalDef.Tests.Editor
@@ -640,6 +645,193 @@ namespace ElementalDef.Tests.Editor
                 headquartersRemainingHealth,
                 (int)outcome,
                 TestEpoch.AddMinutes(stageDisplayOrder).ToUnixTimeMilliseconds());
+        }
+    }
+
+    public sealed class StageLaunchPreviewTests
+    {
+        private const string StageThreeAssetPath =
+            "Assets/Settings/ElementalDef/Wave/ElementalDef Stage 03 Wave Bundle.asset";
+        private const float FloatTolerance = 0.000001f;
+
+        private string testDirectory;
+        private EDataStore store;
+        private DifficultyDebugRunStore difficultyRunStore;
+        private PlayerProgressDebugService progressDebugService;
+        private StageDifficultyService difficultyService;
+        private StageLaunchService launchService;
+        private WaveBundle stageThree;
+
+        [SetUp]
+        public void SetUp()
+        {
+            testDirectory = Path.Combine(
+                Application.temporaryCachePath,
+                "ElementalDefStageLaunchPreviewTests",
+                Guid.NewGuid().ToString("N"));
+            Directory.CreateDirectory(testDirectory);
+
+            store = new EDataStore(
+                Path.Combine(testDirectory, "elementaldef-test.sqlite3"));
+            store.Initialize();
+            progressDebugService = new PlayerProgressDebugService(store);
+            difficultyRunStore = new DifficultyDebugRunStore(store);
+            difficultyService = new StageDifficultyService(difficultyRunStore);
+            launchService = new StageLaunchService();
+            ConfigureService(
+                launchService,
+                "ConfigurePlayerProgressService",
+                new PlayerProgressService(store));
+            ConfigureService(
+                launchService,
+                "ConfigureDifficultyService",
+                difficultyService);
+
+            stageThree = AssetDatabase.LoadAssetAtPath<WaveBundle>(
+                StageThreeAssetPath);
+            Assert.That(
+                stageThree,
+                Is.Not.Null,
+                $"Missing test stage at {StageThreeAssetPath}.");
+        }
+
+        [TearDown]
+        public void TearDown()
+        {
+            stageThree = null;
+            launchService = null;
+            difficultyService = null;
+            progressDebugService = null;
+            difficultyRunStore?.Dispose();
+            difficultyRunStore = null;
+            store?.Dispose();
+            store = null;
+
+            if (Directory.Exists(testDirectory))
+            {
+                Directory.Delete(testDirectory, true);
+            }
+        }
+
+        [Test]
+        public void CreatePreview_UsesCurrentLoopDifficultySeedAndRewardsWithoutChangingCurrent()
+        {
+            progressDebugService.SetProgress(maxStageProgress: 2, loop: 2L);
+            difficultyRunStore.Inject(
+                new DifficultyDebugRunInput(
+                    StageRunOutcome.Victory,
+                    playDurationSeconds: 10d,
+                    headquartersRemainingHealth: 100d,
+                    headquartersMaxHealth: 100d,
+                    defeatedEnemyCount: 10L));
+            float expectedPerformanceDifficulty = difficultyService
+                .GetPerformanceDifficulty()
+                .DifficultyMultiplier;
+            float expectedDifficulty =
+                stageThree.EnemyDifficultyMultiplier * expectedPerformanceDifficulty;
+
+            StageLaunchPreview preview = launchService.CreatePreview(stageThree);
+
+            Assert.That(launchService.HasCurrent, Is.False);
+            Assert.That(preview.Stage, Is.SameAs(stageThree));
+            Assert.That(preview.Loop, Is.EqualTo(2L));
+            Assert.That(preview.AbsoluteStageNumber, Is.EqualTo(23L));
+            Assert.That(preview.EffectiveMapSeed, Is.EqualTo(stageThree.MapSeed + 20));
+            Assert.That(
+                preview.StageEnemyDifficultyMultiplier,
+                Is.EqualTo(stageThree.EnemyDifficultyMultiplier));
+            Assert.That(
+                preview.PerformanceDifficultyMultiplier,
+                Is.EqualTo(expectedPerformanceDifficulty).Within(FloatTolerance));
+            Assert.That(
+                preview.DifficultyMultiplier,
+                Is.EqualTo(expectedDifficulty).Within(FloatTolerance));
+            Assert.That(
+                preview.VictoryCreditReward,
+                Is.EqualTo(StageRewardCalculator.Calculate(
+                    stageThree.BaseCreditReward,
+                    expectedDifficulty)));
+            Assert.That(
+                preview.VictoryExperienceReward,
+                Is.EqualTo(StageRewardCalculator.Calculate(
+                    stageThree.BaseExperienceReward,
+                    expectedDifficulty)));
+
+            StageRunContext preparedContext = launchService.Prepare(stageThree);
+            string preparedRunId = preparedContext.RunId;
+            long preparedStartedAt = preparedContext.StartedAtUtcMilliseconds;
+
+            Assert.That(preparedContext.LoopAtLaunch, Is.EqualTo(preview.Loop));
+            Assert.That(preparedContext.MapSeed, Is.EqualTo(preview.EffectiveMapSeed));
+            Assert.That(
+                preparedContext.DifficultyMultiplier,
+                Is.EqualTo(preview.DifficultyMultiplier).Within(FloatTolerance));
+            Assert.That(
+                StageRewardCalculator.Calculate(
+                    preparedContext.BaseCreditReward,
+                    preparedContext.CreditRewardMultiplier),
+                Is.EqualTo(preview.VictoryCreditReward));
+            Assert.That(
+                StageRewardCalculator.Calculate(
+                    preparedContext.BaseExperienceReward,
+                    preparedContext.ExperienceRewardMultiplier),
+                Is.EqualTo(preview.VictoryExperienceReward));
+
+            StageLaunchPreview repeatedPreview = launchService.CreatePreview(stageThree);
+
+            Assert.That(repeatedPreview.AbsoluteStageNumber, Is.EqualTo(23L));
+            Assert.That(launchService.Current, Is.SameAs(preparedContext));
+            Assert.That(launchService.Current.RunId, Is.EqualTo(preparedRunId));
+            Assert.That(
+                launchService.Current.StartedAtUtcMilliseconds,
+                Is.EqualTo(preparedStartedAt));
+        }
+
+        [Test]
+        public void CreatePreview_EffectiveSeedOverflowDoesNotCreateOrReplaceCurrent()
+        {
+            long firstOverflowingLoop =
+                (((long)int.MaxValue - stageThree.MapSeed) /
+                 StageCatalog.RequiredStageCount) + 1L;
+            progressDebugService.SetProgress(
+                maxStageProgress: 0,
+                loop: firstOverflowingLoop);
+
+            InvalidOperationException exception =
+                Assert.Throws<InvalidOperationException>(() =>
+                    launchService.CreatePreview(stageThree));
+
+            Assert.That(exception.Message, Does.Contain(stageThree.StageId));
+            Assert.That(exception.Message, Does.Contain("Int32"));
+            Assert.That(launchService.HasCurrent, Is.False);
+        }
+
+        [Test]
+        public void StageRewardCalculator_UsesAwayFromZeroAndRejectsInvalidInputs()
+        {
+            Assert.That(StageRewardCalculator.Calculate(1, 1.5f), Is.EqualTo(2L));
+            Assert.That(StageRewardCalculator.Calculate(3, 1.5f), Is.EqualTo(5L));
+            Assert.That(StageRewardCalculator.Calculate(0, 3f), Is.Zero);
+            Assert.Throws<ArgumentOutOfRangeException>(() =>
+                StageRewardCalculator.Calculate(-1, 1f));
+            Assert.Throws<ArgumentOutOfRangeException>(() =>
+                StageRewardCalculator.Calculate(1, float.NaN));
+            Assert.Throws<OverflowException>(() =>
+                StageRewardCalculator.Calculate(1 << 30, 8589934592f));
+            Assert.Throws<OverflowException>(() =>
+                StageRewardCalculator.Calculate(int.MaxValue, float.MaxValue));
+        }
+
+        private static void ConfigureService(
+            StageLaunchService target,
+            string methodName,
+            object service)
+        {
+            MethodInfo configureMethod = typeof(StageLaunchService).GetMethod(
+                methodName,
+                BindingFlags.Instance | BindingFlags.NonPublic);
+            Assert.That(configureMethod, Is.Not.Null);
+            configureMethod.Invoke(target, new[] { service });
         }
     }
 }

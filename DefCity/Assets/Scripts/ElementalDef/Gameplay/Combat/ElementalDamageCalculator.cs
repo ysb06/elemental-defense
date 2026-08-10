@@ -37,22 +37,22 @@ namespace ElementalDef.Gameplay.Combat
                     "Attack element must be a defined ElementType value.");
             }
 
-            EnsureNonNegativeFinite(defender?.Defense ?? 0f, $"{nameof(defender)}.{nameof(ElementalCombatant.Defense)}");
-
             ElementType attackerTerrainElement = ResolveTerrainElement(attackerWorldPosition, "attacker");
-            ElementType defenderTerrainElement = ResolveTerrainElement(defender?.transform.position ?? Vector3.zero, "defender");
-
             ElementType defenderElement = ElementType.Neutral;
-            float defenderDefense = 0;
+            float defenderDefense = 0f;
+            float defenseTerrainMultiplier = 1f;
             if (defender != null)
             {
+                EnsureNonNegativeFinite(defender.Defense, $"{nameof(defender)}.{nameof(ElementalCombatant.Defense)}");
+
                 defenderElement = defender.DefenseElement;
                 defenderDefense = defender.Defense;
+                ElementType defenderTerrainElement = ResolveTerrainElement(defender.transform.position, "defender");
+                defenseTerrainMultiplier = terrainModifier.GetDefenseMultiplier(defenderElement, defenderTerrainElement);
             }
 
             float affinityMultiplier = elementalAffinitySettings.GetCombatMultiplier(attackElement, defenderElement);
             float attackTerrainMultiplier = terrainModifier.GetAttackMultiplier(attackElement, attackerTerrainElement);
-            float defenseTerrainMultiplier = terrainModifier.GetDefenseMultiplier(defenderElement, defenderTerrainElement);
 
             EnsureNonNegativeFinite(affinityMultiplier, nameof(affinityMultiplier));
             EnsureNonNegativeFinite(attackTerrainMultiplier, nameof(attackTerrainMultiplier));

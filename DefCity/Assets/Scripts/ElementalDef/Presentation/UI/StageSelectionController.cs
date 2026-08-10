@@ -17,29 +17,65 @@ namespace ElementalDef.Presentation.UI
         [SerializeField] private Button[] stageButtons = new Button[StageCatalog.RequiredStageCount];
         [SerializeField] private Sprite[] activeStageSprites = new Sprite[StageCatalog.RequiredStageCount];
         [SerializeField] private Sprite[] inactiveStageSprites = new Sprite[StageCatalog.RequiredStageCount];
+        [SerializeField] private StagePreviewIndicatorController stagePreviewIndicator;
+        [SerializeField] private Button battleStartButton;
         [SerializeField] private string gameplaySceneName = "ElementalDefGame";
 
         private UnityAction[] stageButtonHandlers;
         private Image[] stageButtonImages;
+        private bool isConfigured;
         private bool isLaunchRequested;
+        private bool hasReadyProgress;
+        private bool hasValidPreview;
         private int unlockedStageCount = 1;
+        private int selectedStageIndex = -1;
+        private WaveBundle selectedStage;
+
+        public int SelectedStageIndex => selectedStageIndex;
+        public WaveBundle SelectedStage => selectedStage;
 
         private void Awake()
         {
             if (!TryValidateConfiguration(out string errorMessage))
             {
                 Debug.LogError($"[{name}] {errorMessage}", this);
-                SetStageButtonsInteractable(false);
+                DisableStageSelection();
                 return;
             }
 
             BindStageButtons();
-            RefreshStageAvailability();
+            battleStartButton.onClick.AddListener(HandleBattleStartClicked);
+            SetBattleStartButtonInteractable(false);
+            isConfigured = true;
+        }
+
+        private void Start()
+        {
+            if (!isConfigured)
+            {
+                return;
+            }
+
+            if (!stagePreviewIndicator.IsReady)
+            {
+                Debug.LogError(
+                    $"[{name}] The stage-preview indicator is not ready. " +
+                    "Stage selection has been disabled.",
+                    this);
+                DisableStageSelection();
+                return;
+            }
+
+            RefreshStageAvailabilityAndSelection();
         }
 
         private void OnDestroy()
         {
             UnbindStageButtons();
+            if (battleStartButton != null)
+            {
+                battleStartButton.onClick.RemoveListener(HandleBattleStartClicked);
+            }
         }
 
         private void BindStageButtons()
@@ -48,15 +84,22 @@ namespace ElementalDef.Presentation.UI
             for (int index = 0; index < stageButtons.Length; index++)
             {
                 int capturedIndex = index;
-                UnityAction handler = () => LaunchStage(capturedIndex);
+                UnityAction handler = () => SelectStage(capturedIndex);
                 stageButtonHandlers[index] = handler;
                 stageButtons[index].onClick.AddListener(handler);
             }
         }
 
-        private void RefreshStageAvailability()
+        private void RefreshStageAvailabilityAndSelection()
         {
             int maxStageProgress = 0;
+            hasReadyProgress = false;
+            hasValidPreview = false;
+            selectedStageIndex = -1;
+            selectedStage = null;
+            stagePreviewIndicator.Clear();
+            SetBattleStartButtonInteractable(false);
+
             ElementalDefApplicationRoot applicationRoot = ElementalDefApplicationRoot.Instance;
 
             if (applicationRoot?.PlayerProgress == null)
@@ -72,6 +115,7 @@ namespace ElementalDef.Presentation.UI
                 {
                     PlayerProgressSnapshot progress = applicationRoot.PlayerProgress.GetProgress();
                     maxStageProgress = progress.MaxStageProgress;
+                    hasReadyProgress = true;
                 }
                 catch (Exception exception)
                 {
@@ -89,6 +133,11 @@ namespace ElementalDef.Presentation.UI
                 1,
                 StageCatalog.RequiredStageCount);
             ApplyStageAvailability();
+
+            if (hasReadyProgress)
+            {
+                SelectStage(maxStageProgress);
+            }
         }
 
         private void ApplyStageAvailability()
@@ -122,7 +171,7 @@ namespace ElementalDef.Presentation.UI
             stageButtonHandlers = null;
         }
 
-        private void LaunchStage(int stageIndex)
+        private void SelectStage(int stageIndex)
         {
             if (isLaunchRequested)
             {
@@ -132,7 +181,7 @@ namespace ElementalDef.Presentation.UI
             if (stageIndex < 0 || stageIndex >= stageCatalog.Stages.Count)
             {
                 Debug.LogError($"[{name}] Stage index {stageIndex} is outside the catalog.", this);
-                SetStageButtonsInteractable(false);
+                DisableStageSelection();
                 return;
             }
 
@@ -143,29 +192,81 @@ namespace ElementalDef.Presentation.UI
                 return;
             }
 
+            selectedStageIndex = stageIndex;
+            selectedStage = stageCatalog.Stages[stageIndex];
+            RefreshSelectedStagePreview();
+        }
+
+        private void RefreshSelectedStagePreview()
+        {
+            hasValidPreview = false;
+            SetBattleStartButtonInteractable(false);
+
+            if (!hasReadyProgress || selectedStage == null)
+            {
+                stagePreviewIndicator.Clear();
+                return;
+            }
+
             ElementalDefApplicationRoot applicationRoot = ElementalDefApplicationRoot.Instance;
             if (applicationRoot == null || applicationRoot.StageLaunch == null)
             {
                 Debug.LogError($"[{name}] ElementalDef application services are unavailable.", this);
-                SetStageButtonsInteractable(false);
+                stagePreviewIndicator.Clear();
                 return;
             }
 
-            WaveBundle selectedStage = stageCatalog.Stages[stageIndex];
+            try
+            {
+                StageLaunchPreview preview =
+                    applicationRoot.StageLaunch.CreatePreview(selectedStage);
+                hasValidPreview = stagePreviewIndicator.TryDisplay(preview);
+                SetBattleStartButtonInteractable(hasValidPreview);
+            }
+            catch (Exception exception)
+            {
+                stagePreviewIndicator.Clear();
+                Debug.LogException(
+                    new InvalidOperationException(
+                        $"Failed to preview stage '{selectedStage.StageId}'.",
+                        exception),
+                    this);
+            }
+        }
+
+        private void HandleBattleStartClicked()
+        {
+            if (isLaunchRequested || !hasValidPreview || selectedStage == null)
+            {
+                return;
+            }
+
+            ElementalDefApplicationRoot applicationRoot = ElementalDefApplicationRoot.Instance;
+            if (applicationRoot == null || applicationRoot.StageLaunch == null)
+            {
+                Debug.LogError($"[{name}] ElementalDef application services are unavailable.", this);
+                RefreshSelectedStagePreview();
+                return;
+            }
+
+            WaveBundle stageToLaunch = selectedStage;
             try
             {
                 isLaunchRequested = true;
                 SetStageButtonsInteractable(false);
-                applicationRoot.StageLaunch.Prepare(selectedStage);
+                SetBattleStartButtonInteractable(false);
+                applicationRoot.StageLaunch.Prepare(stageToLaunch);
                 SceneManager.LoadScene(gameplaySceneName, LoadSceneMode.Single);
             }
             catch (Exception exception)
             {
                 isLaunchRequested = false;
                 ApplyStageAvailability();
-                Debug.LogException(new InvalidOperationException(
-                    $"Failed to launch stage '{selectedStage?.StageId ?? "<null>"}'.",
-                    exception),
+                RefreshSelectedStagePreview();
+                Debug.LogException(
+                    new InvalidOperationException(
+                        $"Failed to launch stage '{stageToLaunch.StageId}'.",
+                        exception),
                     this);
             }
         }
@@ -242,6 +343,24 @@ namespace ElementalDef.Presentation.UI
                 }
             }
 
+            if (stagePreviewIndicator == null)
+            {
+                errorMessage = "A StagePreviewIndicatorController reference is required.";
+                return false;
+            }
+
+            if (battleStartButton == null)
+            {
+                errorMessage = "A battle-start button reference is required.";
+                return false;
+            }
+
+            if (uniqueButtons.Contains(battleStartButton))
+            {
+                errorMessage = "The battle-start button cannot also be a stage button.";
+                return false;
+            }
+
             if (ElementalDefApplicationRoot.Instance == null ||
                 ElementalDefApplicationRoot.Instance.StageLaunch == null)
             {
@@ -312,6 +431,21 @@ namespace ElementalDef.Presentation.UI
                     button.interactable = interactable;
                 }
             }
+        }
+
+        private void SetBattleStartButtonInteractable(bool interactable)
+        {
+            if (battleStartButton != null)
+            {
+                battleStartButton.interactable = interactable && !isLaunchRequested;
+            }
+        }
+
+        private void DisableStageSelection()
+        {
+            SetStageButtonsInteractable(false);
+            SetBattleStartButtonInteractable(false);
+            stagePreviewIndicator?.Clear();
         }
     }
 }
