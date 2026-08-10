@@ -12,7 +12,6 @@ namespace ElementalDef.Presentation.Cameras
     public sealed class OrthographicCameraController : MonoBehaviour
     {
         private const float MaxContinuousInputDeltaTime = 0.05f;
-        private const float DefaultZoomInputScale = 0.01f;
 
         [Header("References")]
         [SerializeField] private Camera targetCamera;
@@ -22,15 +21,9 @@ namespace ElementalDef.Presentation.Cameras
         [SerializeField, Min(0f)] private float moveSpeed = 8f;
         [SerializeField, Min(0f)] private float panBoundsPadding = 1f;
 
-        [Header("Zoom")]
-        [SerializeField, Min(0f)] private float zoomSpeed = 1f;
-        [SerializeField, Min(0f)] private float minOrthographicSize = 3f;
-        [SerializeField, Min(0f)] private float maxOrthographicSize = 8f;
-
         private readonly List<RaycastResult> uiRaycastResults = new();
 
         private InputAction cameraMoveAction;
-        private InputAction cameraZoomAction;
         private InputAction cameraDragAction;
         private InputAction cameraResetAction;
         private InputAction pointerPositionAction;
@@ -38,7 +31,6 @@ namespace ElementalDef.Presentation.Cameras
 
         private Transform movementPlane;
         private Vector2 moveInput;
-        private float pendingZoomInput;
         private float minimumFocusX;
         private float maximumFocusX;
         private float minimumFocusZ;
@@ -77,7 +69,6 @@ namespace ElementalDef.Presentation.Cameras
             }
 
             cameraMoveAction = actions.FindAction("CameraMove", true);
-            cameraZoomAction = actions.FindAction("CameraZoom", true);
             cameraDragAction = actions.FindAction("CameraDrag", true);
             cameraResetAction = actions.FindAction("CameraReset", true);
             pointerPositionAction = actions.FindAction("PointerPosition", true);
@@ -85,7 +76,6 @@ namespace ElementalDef.Presentation.Cameras
 
             cameraMoveAction.performed += HandleCameraMoveChanged;
             cameraMoveAction.canceled += HandleCameraMoveChanged;
-            cameraZoomAction.performed += HandleCameraZoomPerformed;
             cameraResetAction.performed += HandleCameraResetPerformed;
         }
 
@@ -103,7 +93,6 @@ namespace ElementalDef.Presentation.Cameras
 
             MoveByKeyboard(deltaTime);
             DragPan();
-            ApplyPendingZoom();
             ClampViewFocusToMapBounds();
         }
 
@@ -132,11 +121,6 @@ namespace ElementalDef.Presentation.Cameras
         private void HandleCameraMoveChanged(InputAction.CallbackContext context)
         {
             moveInput = context.ReadValue<Vector2>();
-        }
-
-        private void HandleCameraZoomPerformed(InputAction.CallbackContext context)
-        {
-            pendingZoomInput += context.ReadValue<Vector2>().y;
         }
 
         private void HandleCameraResetPerformed(InputAction.CallbackContext context)
@@ -190,29 +174,6 @@ namespace ElementalDef.Presentation.Cameras
             }
 
             transform.position += previousWorldPoint - currentWorldPoint;
-        }
-
-        private void ApplyPendingZoom()
-        {
-            float scrollY = pendingZoomInput;
-            pendingZoomInput = 0f;
-
-            if (Mathf.Approximately(scrollY, 0f))
-            {
-                return;
-            }
-
-            Vector2 pointerPosition = pointerPositionAction.ReadValue<Vector2>();
-            if (IsPointerOverUi(pointerPosition))
-            {
-                return;
-            }
-
-            targetCamera.orthographicSize = Mathf.Clamp(
-                targetCamera.orthographicSize -
-                scrollY * zoomSpeed * DefaultZoomInputScale,
-                minOrthographicSize,
-                maxOrthographicSize);
         }
 
         private void GetMovementBasis(out Vector3 forward, out Vector3 right)
@@ -354,18 +315,12 @@ namespace ElementalDef.Presentation.Cameras
                 cameraMoveAction.canceled -= HandleCameraMoveChanged;
             }
 
-            if (cameraZoomAction != null)
-            {
-                cameraZoomAction.performed -= HandleCameraZoomPerformed;
-            }
-
             if (cameraResetAction != null)
             {
                 cameraResetAction.performed -= HandleCameraResetPerformed;
             }
 
             cameraMoveAction = null;
-            cameraZoomAction = null;
             cameraDragAction = null;
             cameraResetAction = null;
             pointerPositionAction = null;
@@ -375,7 +330,6 @@ namespace ElementalDef.Presentation.Cameras
         private void ClearTransientInput()
         {
             moveInput = Vector2.zero;
-            pendingZoomInput = 0f;
         }
 
         private void EnsureConfigured()
@@ -400,31 +354,16 @@ namespace ElementalDef.Presentation.Cameras
                 throw new InvalidOperationException("Camera move speed must be finite and greater than zero.");
             }
 
-            if (!IsFiniteAndPositive(zoomSpeed))
-            {
-                throw new InvalidOperationException("Camera zoom speed must be finite and greater than zero.");
-            }
-
             if (!IsFiniteAndNonNegative(panBoundsPadding))
             {
                 throw new InvalidOperationException(
                     "Camera pan bounds padding must be finite and non-negative.");
             }
 
-            if (!IsFiniteAndPositive(minOrthographicSize) ||
-                !IsFiniteAndPositive(maxOrthographicSize) ||
-                maxOrthographicSize < minOrthographicSize)
+            if (!IsFiniteAndPositive(targetCamera.orthographicSize))
             {
                 throw new InvalidOperationException(
-                    "Orthographic size limits must satisfy 0 < minimum <= maximum.");
-            }
-
-            if (!IsFiniteAndPositive(targetCamera.orthographicSize) ||
-                targetCamera.orthographicSize < minOrthographicSize ||
-                targetCamera.orthographicSize > maxOrthographicSize)
-            {
-                throw new InvalidOperationException(
-                    "The initial orthographic size must be finite and within its configured limits.");
+                    "The fixed orthographic size must be finite and greater than zero.");
             }
         }
 

@@ -242,10 +242,10 @@ namespace ElementalDef.Runtime
     public sealed class StageDifficultyService
     {
         public const int RecentRunLimit = 10;
-        public const double AverageClearTimeCoefficient = -0.0005d;
-        public const double AverageRemainingHealthCoefficient = 0.002d;
-        public const double AverageDefeatedEnemyCoefficient = 0.001d;
-        public const double VictoryRateCoefficient = 0.5d;
+        public const double AverageClearTimeCoefficient = -0.00036d;
+        public const double AverageRemainingHealthCoefficient = 0.0124d;
+        public const double AverageDefeatedEnemyCoefficient = 0.0184d;
+        public const double VictoryRateCoefficient = 0.62d;
         public const double MinimumDifficultyMultiplier = 1d;
         public const double MaximumDifficultyMultiplier = 2d;
 
@@ -258,8 +258,7 @@ namespace ElementalDef.Runtime
 
         public StageDifficultySnapshot GetCurrentDifficulty()
         {
-            IReadOnlyList<CompletedStageRunRecord> recentRuns =
-                runStore.GetRecentRuns(RecentRunLimit);
+            IReadOnlyList<CompletedStageRunRecord> recentRuns = runStore.GetRecentRuns(RecentRunLimit);
             int victoryCount = 0;
             foreach (CompletedStageRunRecord run in recentRuns)
             {

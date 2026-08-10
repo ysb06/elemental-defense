@@ -153,7 +153,6 @@ MonoBehaviour:
   moveSpeed: 8
   rotateSpeed: 90
   dragPanSpeed: 0.03
-  zoomSpeed: 4
   minZoomDistance: 6
   maxZoomDistance: 40
   enableEdgeScroll: 1
@@ -2160,8 +2159,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 0, y: 0}
-  m_AnchoredPosition: {x: 495, y: 140}
-  m_SizeDelta: {x: 50, y: 50}
+  m_AnchoredPosition: {x: 675, y: 211}
+  m_SizeDelta: {x: 75, y: 75}
   m_Pivot: {x: 0, y: 0}
 --- !u!114 &357475349
 MonoBehaviour:
@@ -4436,9 +4435,6 @@ MonoBehaviour:
   groundTilemap: {fileID: 215170291}
   moveSpeed: 8
   panBoundsPadding: 1
-  zoomSpeed: 1
-  minOrthographicSize: 3
-  maxOrthographicSize: 8
 --- !u!4 &925554371
 Transform:
   m_ObjectHideFlags: 0
@@ -5653,7 +5649,7 @@ RectTransform:
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 0, y: 0}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 160, y: 165}
+  m_SizeDelta: {x: 240, y: 248}
   m_Pivot: {x: 0, y: 0}
 --- !u!114 &1409296828
 MonoBehaviour:
@@ -6777,8 +6773,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 0, y: 0}
-  m_AnchoredPosition: {x: 125, y: 140}
-  m_SizeDelta: {x: 50, y: 50}
+  m_AnchoredPosition: {x: 175, y: 211}
+  m_SizeDelta: {x: 75, y: 75}
   m_Pivot: {x: 0, y: 0}
 --- !u!114 &1568822555
 MonoBehaviour:
@@ -7242,7 +7238,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 0, y: -250}
+  m_AnchoredPosition: {x: 0, y: -50}
   m_SizeDelta: {x: 480, y: 180}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1631909241
@@ -7392,8 +7388,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 0, y: 0}
-  m_AnchoredPosition: {x: 310, y: 140}
-  m_SizeDelta: {x: 50, y: 50}
+  m_AnchoredPosition: {x: 425, y: 211}
+  m_SizeDelta: {x: 75, y: 75}
   m_Pivot: {x: 0, y: 0}
 --- !u!114 &1667046171
 MonoBehaviour:
@@ -7698,7 +7694,7 @@ MonoBehaviour:
   currentEnergy: 0
   enemySpawner: {fileID: 1471740576}
   energyPerSecondDuringWave: 0
-  energyOnWaveCompleted: 3
+  energyOnWaveCompleted: 2
   OnTowerEnergyConsumed:
     m_PersistentCalls:
       m_Calls: []
@@ -8699,7 +8695,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &1920825426
 RectTransform:
   m_ObjectHideFlags: 0
@@ -9459,8 +9455,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 0, y: 0}
-  m_AnchoredPosition: {x: 180, y: 0}
-  m_SizeDelta: {x: 160, y: 165}
+  m_AnchoredPosition: {x: 250, y: 0}
+  m_SizeDelta: {x: 240, y: 248}
   m_Pivot: {x: 0, y: 0}
 --- !u!114 &2100000003
 MonoBehaviour:
@@ -9731,8 +9727,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 0, y: 0}
-  m_AnchoredPosition: {x: 360, y: 0}
-  m_SizeDelta: {x: 160, y: 165}
+  m_AnchoredPosition: {x: 500, y: 0}
+  m_SizeDelta: {x: 240, y: 248}
   m_Pivot: {x: 0, y: 0}
 --- !u!114 &2100000013
 MonoBehaviour:

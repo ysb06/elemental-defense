@@ -79,37 +79,10 @@ namespace ElementalDef.Presentation.UI
             nextStage = null;
             SetNextStageButtonInteractable(false);
 
-            ElementalDefApplicationRoot applicationRoot = ElementalDefApplicationRoot.Instance;
-            if (resultContext == null || applicationRoot?.RunStore == null)
-            {
-                Debug.LogError(
-                    $"[{name}] The current stage context and run-store service are required.",
-                    this);
-                return;
-            }
-
             try
             {
-                if (!applicationRoot.RunStore.TryGetRun(
-                        resultContext.RunId,
-                        out CompletedStageRunRecord completedRun))
+                if (!TryGetValidatedCompletedRun(out CompletedStageRunRecord completedRun))
                 {
-                    Debug.LogError(
-                        $"[{name}] No completed run was found for RunId " +
-                        $"'{resultContext.RunId}'.",
-                        this);
-                    return;
-                }
-
-                if (!string.Equals(
-                        completedRun.StageId,
-                        resultContext.StageId,
-                        StringComparison.Ordinal) ||
-                    completedRun.StageDisplayOrder != resultContext.DisplayOrder)
-                {
-                    Debug.LogError(
-                        $"[{name}] The completed run does not match the current stage context.",
-                        this);
                     return;
                 }
 
@@ -133,6 +106,43 @@ namespace ElementalDef.Presentation.UI
             }
         }
 
+        public void RetryCurrentStage()
+        {
+            if (isNavigationRequested)
+            {
+                return;
+            }
+
+            try
+            {
+                if (!TryGetValidatedCompletedRun(out CompletedStageRunRecord completedRun))
+                {
+                    return;
+                }
+
+                WaveBundle retryStage = stageCatalog.GetRequiredStage(resultContext.StageId);
+                if (retryStage.DisplayOrder != resultContext.DisplayOrder ||
+                    retryStage.DisplayOrder != completedRun.StageDisplayOrder)
+                {
+                    Debug.LogError(
+                        $"[{name}] Stage '{retryStage.StageId}' in the catalog does not " +
+                        "match the completed run's display order.",
+                        this);
+                    return;
+                }
+
+                LaunchStage(retryStage, "retry");
+            }
+            catch (Exception exception)
+            {
+                Debug.LogException(new InvalidOperationException(
+                    $"The completed ElementalDef stage " +
+                    $"'{resultContext?.StageId ?? "<unknown>"}' could not be resolved for retry.",
+                    exception),
+                    this);
+            }
+        }
+
         private void HandleNextStageClicked()
         {
             if (isNavigationRequested)
@@ -146,6 +156,16 @@ namespace ElementalDef.Presentation.UI
                 return;
             }
 
+            LaunchStage(nextStage, "launch the next");
+        }
+
+        private void LaunchStage(WaveBundle stageToLaunch, string actionDescription)
+        {
+            if (isNavigationRequested)
+            {
+                return;
+            }
+
             ElementalDefApplicationRoot applicationRoot = ElementalDefApplicationRoot.Instance;
             if (applicationRoot?.StageLaunch == null)
             {
@@ -156,7 +176,6 @@ namespace ElementalDef.Presentation.UI
                 return;
             }
 
-            WaveBundle stageToLaunch = nextStage;
             try
             {
                 isNavigationRequested = true;
@@ -168,12 +187,70 @@ namespace ElementalDef.Presentation.UI
             {
                 isNavigationRequested = false;
                 Debug.LogException(new InvalidOperationException(
-                    $"Failed to launch the next stage " +
+                    $"Failed to {actionDescription} stage " +
                     $"'{stageToLaunch?.StageId ?? "<null>"}'.",
                     exception),
                     this);
                 RefreshNextStageAvailability();
             }
+        }
+
+        private bool TryGetValidatedCompletedRun(
+            out CompletedStageRunRecord completedRun)
+        {
+            completedRun = null;
+
+            ElementalDefApplicationRoot applicationRoot = ElementalDefApplicationRoot.Instance;
+            resultContext ??= applicationRoot?.StageLaunch?.Current;
+            if (resultContext == null || applicationRoot?.RunStore == null)
+            {
+                Debug.LogError(
+                    $"[{name}] The current stage context and run-store service are required.",
+                    this);
+                return false;
+            }
+
+            try
+            {
+                if (!applicationRoot.RunStore.TryGetRun(
+                        resultContext.RunId,
+                        out completedRun))
+                {
+                    Debug.LogError(
+                        $"[{name}] No completed run was found for RunId " +
+                        $"'{resultContext.RunId}'.",
+                        this);
+                    return false;
+                }
+            }
+            catch (Exception exception)
+            {
+                Debug.LogException(new InvalidOperationException(
+                    "The completed ElementalDef stage run could not be loaded.",
+                    exception),
+                    this);
+                completedRun = null;
+                return false;
+            }
+
+            if (!string.Equals(
+                    completedRun.RunId,
+                    resultContext.RunId,
+                    StringComparison.Ordinal) ||
+                !string.Equals(
+                    completedRun.StageId,
+                    resultContext.StageId,
+                    StringComparison.Ordinal) ||
+                completedRun.StageDisplayOrder != resultContext.DisplayOrder)
+            {
+                Debug.LogError(
+                    $"[{name}] The completed run does not match the current stage context.",
+                    this);
+                completedRun = null;
+                return false;
+            }
+
+            return true;
         }
 
         private bool TryValidateConfiguration(out string errorMessage)

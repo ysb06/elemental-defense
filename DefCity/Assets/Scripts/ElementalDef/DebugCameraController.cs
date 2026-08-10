@@ -20,8 +20,7 @@ namespace ElementalDef
         [SerializeField] private float rotateSpeed = 90f;
         [SerializeField] private float dragPanSpeed = 0.03f;
 
-        [Header("Zoom")]
-        [SerializeField] private float zoomSpeed = 4f;
+        [Header("Follow Distance")]
         [SerializeField] private float minZoomDistance = 6f;
         [SerializeField] private float maxZoomDistance = 40f;
 
@@ -31,7 +30,6 @@ namespace ElementalDef
         [SerializeField] private float edgeScrollSpeedMultiplier = 1f;
 
         private InputAction cameraMoveAction;
-        private InputAction cameraZoomAction;
         private InputAction cameraDragAction;
         private InputAction cameraRotateAction;
         private InputAction cameraResetAction;
@@ -47,7 +45,6 @@ namespace ElementalDef
         private Vector3 initialPosition;
         private Quaternion initialRotation;
         private float initialZoomDistance;
-        private float pendingZoomInput;
 
         private void Awake()
         {
@@ -75,7 +72,6 @@ namespace ElementalDef
             }
 
             cameraMoveAction = actions.FindAction("CameraMove", true);
-            cameraZoomAction = actions.FindAction("CameraZoom", true);
             cameraDragAction = actions.FindAction("CameraDrag", true);
             cameraRotateAction = actions.FindAction("CameraRotate", true);
             cameraResetAction = actions.FindAction("CameraReset", true);
@@ -84,7 +80,6 @@ namespace ElementalDef
 
             cameraMoveAction.performed += OnCameraMoveChanged;
             cameraMoveAction.canceled += OnCameraMoveChanged;
-            cameraZoomAction.performed += OnCameraZoomPerformed;
             cameraRotateAction.performed += OnCameraRotateChanged;
             cameraRotateAction.canceled += OnCameraRotateChanged;
             cameraResetAction.performed += OnCameraResetPerformed;
@@ -97,11 +92,6 @@ namespace ElementalDef
             {
                 cameraMoveAction.performed -= OnCameraMoveChanged;
                 cameraMoveAction.canceled -= OnCameraMoveChanged;
-            }
-
-            if (cameraZoomAction != null)
-            {
-                cameraZoomAction.performed -= OnCameraZoomPerformed;
             }
 
             if (cameraRotateAction != null)
@@ -123,7 +113,6 @@ namespace ElementalDef
             moveInput = Vector2.zero;
             rotateInput = 0f;
             hasPointerPosition = false;
-            pendingZoomInput = 0f;
         }
 
         private void Update()
@@ -134,7 +123,6 @@ namespace ElementalDef
             MoveByEdgeScroll(deltaTime);
             Rotate(deltaTime);
             DragPan();
-            ApplyPendingZoom();
             ProjectTargetOntoMovementPlane();
         }
 
@@ -174,11 +162,6 @@ namespace ElementalDef
             rotateInput = context.ReadValue<float>();
         }
 
-        private void OnCameraZoomPerformed(InputAction.CallbackContext context)
-        {
-            pendingZoomInput += context.ReadValue<Vector2>().y;
-        }
-
         private void OnPointerPositionChanged(InputAction.CallbackContext context)
         {
             Vector2 currentPointerPosition = context.ReadValue<Vector2>();
@@ -195,7 +178,6 @@ namespace ElementalDef
         {
             transform.SetPositionAndRotation(initialPosition, initialRotation);
             zoomDistance = initialZoomDistance;
-            pendingZoomInput = 0f;
             cinemachineFollow.FollowOffset = zoomDirection * zoomDistance;
             ProjectTargetOntoMovementPlane();
         }
@@ -261,23 +243,6 @@ namespace ElementalDef
 
             Vector3 movement = GetPlanarMovement(-pointerDelta, false);
             transform.position += movement * (dragPanSpeed * GetZoomScale());
-        }
-
-        private void ApplyPendingZoom()
-        {
-            float scrollY = pendingZoomInput;
-            pendingZoomInput = 0f;
-
-            if (Mathf.Approximately(scrollY, 0f) || IsPointerOverUi())
-            {
-                return;
-            }
-
-            zoomDistance = Mathf.Clamp(
-                zoomDistance - scrollY * zoomSpeed * 0.01f,
-                minZoomDistance,
-                maxZoomDistance);
-            cinemachineFollow.FollowOffset = zoomDirection * zoomDistance;
         }
 
         private Vector3 GetPlanarMovement(Vector2 input, bool clampInputMagnitude)
