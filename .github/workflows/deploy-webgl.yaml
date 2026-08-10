@@ -20,6 +20,29 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      - name: Show disk space before cleanup
+        run: df -h /
+
+      - name: Free disk space
+        uses: jlumbroso/free-disk-space@v1.3.1
+        with:
+          android: true
+          dotnet: true
+          haskell: true
+          docker-images: true
+          large-packages: false
+          tool-cache: false
+          swap-storage: false
+
+      - name: Show disk space after cleanup
+        run: df -h /
+
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+          lfs: true
+
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
