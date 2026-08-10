@@ -270,21 +270,6 @@ RectTransform:
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 163, y: 107}
   m_Pivot: {x: 0, y: 1}
---- !u!114 &2147000500
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 132100888}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: c61452bd0bba4949925484fead2a7149, type: 3}
-  m_Name:
-  m_EditorClassIdentifier: Assembly-CSharp::ElementalDef.Presentation.UI.WaveIndicatorController
-  waveBundleController: {fileID: 1471740577}
-  currentWaveText: {fileID: 1754979266}
-  totalWaveText: {fileID: 389411993}
 --- !u!1 &173751407
 GameObject:
   m_ObjectHideFlags: 0
@@ -2341,8 +2326,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: de9df883e90cb4a87b5399b386fde104, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::DefCore.Gameplay.Combat.Health
-  maxHealth: 1000
-  health: 1000
+  maxHealth: 3000
+  health: 3000
   damageCollider: {fileID: 388476384}
   destroyOnDeath: 0
   deathDestroyDelay: 3
@@ -2475,7 +2460,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text:
+  m_text: 
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
@@ -6054,23 +6039,6 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &1113000000000000001
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1471740574}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: bb930225714d4cfcbfb398394c41f405, type: 3}
-  m_Name:
-  m_EditorClassIdentifier: Assembly-CSharp::ElementalDef.Presentation.Audio.BattleAudioPresenter
-  waveBundleController: {fileID: 1471740577}
-  gameFlowController: {fileID: 1471740578}
-  towerInteractionController: {fileID: 1703385600}
-  headquartersBuilding: {fileID: 388476382}
-  headquartersCollapseClip: {fileID: 8300000, guid: 2cf7d148956324619ac97889e09f52cc, type: 3}
 --- !u!4 &1471740575
 Transform:
   m_ObjectHideFlags: 0
@@ -6182,19 +6150,6 @@ MonoBehaviour:
   waveBundleController: {fileID: 1471740577}
   towerInteractionController: {fileID: 1703385600}
   directPlayFallbackStage: {fileID: 11400000, guid: 19011ee0473c440098a9e5db3451788b, type: 2}
---- !u!114 &1471740581
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1471740574}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 83b3ee84419b45bb853010dc08f2b317, type: 3}
-  m_Name:
-  m_EditorClassIdentifier: Assembly-CSharp::ElementalDef.Gameplay.Economy.StageTowerEnergyInitializer
-  towerEnergyManager: {fileID: 1703385599}
 --- !u!114 &1471740580
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -6209,6 +6164,19 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::ElementalDef.Gameplay.Combat.Skills.TowerSkillCoordinator
   waveBundleController: {fileID: 1471740577}
   towerRegistry: {fileID: 1703385602}
+--- !u!114 &1471740581
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1471740574}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 83b3ee84419b45bb853010dc08f2b317, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ElementalDef.Gameplay.Economy.StageTowerEnergyInitializer
+  towerEnergyManager: {fileID: 1703385599}
 --- !u!1 &1472309071
 GameObject:
   m_ObjectHideFlags: 0
@@ -7730,7 +7698,7 @@ MonoBehaviour:
   currentEnergy: 0
   enemySpawner: {fileID: 1471740576}
   energyPerSecondDuringWave: 0
-  energyOnWaveCompleted: 1
+  energyOnWaveCompleted: 3
   OnTowerEnergyConsumed:
     m_PersistentCalls:
       m_Calls: []
@@ -7801,7 +7769,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 89e16c4130b84e35a3aae160b956e829, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ElementalDef.Presentation.UI.TowerPlacementGhostPreview
   validPreviewMaterial: {fileID: 2100000, guid: d755378bf5a241b9a8dfcb30d92ba334, type: 2}
   invalidPreviewMaterial: {fileID: 2100000, guid: de34393f9f71439bb6ea5f459635b632, type: 2}
@@ -7979,7 +7947,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text:
+  m_text: 
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
@@ -10202,6 +10170,38 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::ElementalDef.Gameplay.Flow.StageTimeLimitController
   waveBundleController: {fileID: 1471740577}
   gameFlowController: {fileID: 1471740578}
+--- !u!114 &2147000500
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 132100888}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c61452bd0bba4949925484fead2a7149, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ElementalDef.Presentation.UI.WaveIndicatorController
+  waveBundleController: {fileID: 1471740577}
+  currentWaveText: {fileID: 1754979266}
+  totalWaveText: {fileID: 389411993}
+--- !u!114 &1113000000000000001
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1471740574}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bb930225714d4cfcbfb398394c41f405, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ElementalDef.Presentation.Audio.BattleAudioPresenter
+  waveBundleController: {fileID: 1471740577}
+  gameFlowController: {fileID: 1471740578}
+  towerInteractionController: {fileID: 1703385600}
+  headquartersBuilding: {fileID: 388476382}
+  headquartersCollapseClip: {fileID: 8300000, guid: 2cf7d148956324619ac97889e09f52cc, type: 3}
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0

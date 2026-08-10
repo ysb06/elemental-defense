@@ -15,12 +15,12 @@ MonoBehaviour:
   contentId: tower_water
   attack:
     Element: 1
-    Power: 120
+    Power: 132
     Range: 2.05
-    Cooldown: 1.5
+    Cooldown: 1.35
   defense:
     Element: 1
-    MaxHealth: 800
+    MaxHealth: 880
     Defense: 20
   scanner:
     AcquisitionPadding: 0.5

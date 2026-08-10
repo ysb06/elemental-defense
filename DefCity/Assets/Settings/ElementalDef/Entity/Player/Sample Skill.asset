@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::ElementalDef.Gameplay.Combat.Skills.SkillDefinition
   skillId: skill_earth_simple_area
   displayName: Earthquake
-  fullChargeDurationSeconds: 5
+  fullChargeDurationSeconds: 7.5
   icon: {fileID: 0}
   castVfxPrefab: {fileID: 0}
   animatorTrigger: 

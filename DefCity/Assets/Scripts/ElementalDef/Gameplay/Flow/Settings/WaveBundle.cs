@@ -12,7 +12,7 @@ namespace ElementalDef.Gameplay.Flow.Settings
         [SerializeField, Min(1)] private int displayOrder = 1;
         [SerializeField] private int mapSeed;
         [SerializeField, Min(0.01f)] private float timeLimitSeconds = 600f;
-        [SerializeField, Min(1f)] private float enemyDifficultyMultiplier = 1f;
+        [SerializeField, Min(0.01f)] private float enemyDifficultyMultiplier = 1f;
         [SerializeField, Min(1)] private int startingTowerEnergy = 1;
 
         [Header("Base Rewards")]
@@ -77,10 +77,10 @@ namespace ElementalDef.Gameplay.Flow.Settings
 
             if (float.IsNaN(enemyDifficultyMultiplier) ||
                 float.IsInfinity(enemyDifficultyMultiplier) ||
-                enemyDifficultyMultiplier < 1f)
+                enemyDifficultyMultiplier <= 0f)
             {
                 errors.Add(
-                    $"Enemy difficulty multiplier must be finite and at least 1, but is " +
+                    $"Enemy difficulty multiplier must be finite and greater than 0, but is " +
                     $"{enemyDifficultyMultiplier}.");
             }
 

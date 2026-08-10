@@ -2,6 +2,7 @@ using System;
 using System.IO;
 using System.Reflection;
 using ElementalDef.Data;
+using ElementalDef.Gameplay.Entities.Settings;
 using ElementalDef.Gameplay.Flow;
 using ElementalDef.Gameplay.Flow.Settings;
 using ElementalDef.Runtime;
@@ -832,6 +833,355 @@ namespace ElementalDef.Tests.Editor
                 BindingFlags.Instance | BindingFlags.NonPublic);
             Assert.That(configureMethod, Is.Not.Null);
             configureMethod.Invoke(target, new[] { service });
+        }
+    }
+
+    public sealed class StageDifficultyBelowOneTests
+    {
+        private const string StageThreeAssetPath =
+            "Assets/Settings/ElementalDef/Wave/ElementalDef Stage 03 Wave Bundle.asset";
+        private const float FloatTolerance = 0.000001f;
+
+        private WaveBundle stageTemplate;
+
+        [SetUp]
+        public void SetUp()
+        {
+            stageTemplate = AssetDatabase.LoadAssetAtPath<WaveBundle>(
+                StageThreeAssetPath);
+            Assert.That(
+                stageTemplate,
+                Is.Not.Null,
+                $"Missing test stage at {StageThreeAssetPath}.");
+        }
+
+        [TearDown]
+        public void TearDown()
+        {
+            stageTemplate = null;
+        }
+
+        [Test]
+        public void WaveBundle_ValidateOrThrow_AllowsPositiveDifficultyBelowOne()
+        {
+            WaveBundle stage = CreateStageWithDifficulty(0.5f);
+
+            try
+            {
+                Assert.DoesNotThrow(stage.ValidateOrThrow);
+            }
+            finally
+            {
+                UnityEngine.Object.DestroyImmediate(stage);
+            }
+        }
+
+        [TestCase(0f)]
+        [TestCase(-0.01f)]
+        [TestCase(float.NaN)]
+        [TestCase(float.PositiveInfinity)]
+        public void WaveBundle_ValidateOrThrow_RejectsNonPositiveOrNonFiniteDifficulty(
+            float stageDifficulty)
+        {
+            WaveBundle stage = CreateStageWithDifficulty(stageDifficulty);
+
+            try
+            {
+                InvalidOperationException exception =
+                    Assert.Throws<InvalidOperationException>(stage.ValidateOrThrow);
+
+                Assert.That(
+                    exception.Message,
+                    Does.Contain("Enemy difficulty multiplier"));
+            }
+            finally
+            {
+                UnityEngine.Object.DestroyImmediate(stage);
+            }
+        }
+
+        [Test]
+        public void StageRunContext_BelowOneDifficulty_ReducesEnemyAndRewardMultipliers()
+        {
+            WaveBundle stage = CreateStageWithDifficulty(0.5f);
+
+            try
+            {
+                StageRunContext context = StageRunContext.Create(
+                    stage,
+                    performanceDifficultyMultiplier: 1.5f);
+
+                Assert.That(
+                    context.StageEnemyDifficultyMultiplier,
+                    Is.EqualTo(0.5f).Within(FloatTolerance));
+                Assert.That(
+                    context.PerformanceDifficultyMultiplier,
+                    Is.EqualTo(1.5f).Within(FloatTolerance));
+                Assert.That(
+                    context.DifficultyMultiplier,
+                    Is.EqualTo(0.75f).Within(FloatTolerance));
+                Assert.That(
+                    context.CreditRewardMultiplier,
+                    Is.EqualTo(0.75f).Within(FloatTolerance));
+                Assert.That(
+                    context.ExperienceRewardMultiplier,
+                    Is.EqualTo(0.75f).Within(FloatTolerance));
+                Assert.That(
+                    StageRewardCalculator.Calculate(
+                        context.BaseCreditReward,
+                        context.CreditRewardMultiplier),
+                    Is.EqualTo(150L));
+                Assert.That(
+                    StageRewardCalculator.Calculate(
+                        context.BaseExperienceReward,
+                        context.ExperienceRewardMultiplier),
+                    Is.EqualTo(135L));
+            }
+            finally
+            {
+                UnityEngine.Object.DestroyImmediate(stage);
+            }
+        }
+
+        [Test]
+        public void StageRunContext_RejectsNonFiniteDerivedDifficulty()
+        {
+            WaveBundle stage = CreateStageWithDifficulty(float.MaxValue);
+
+            try
+            {
+                Assert.Throws<InvalidOperationException>(() =>
+                    StageRunContext.Create(
+                        stage,
+                        performanceDifficultyMultiplier: 2f));
+            }
+            finally
+            {
+                UnityEngine.Object.DestroyImmediate(stage);
+            }
+        }
+
+        [Test]
+        public void EnemyDifficultyScaling_BelowOne_AppliesConfiguredPartialScaling()
+        {
+            EnemyUnitSpec spec = CreateEnemySpec(
+                EnemyDifficultyStatApplication.StandardStageScaling);
+
+            try
+            {
+                AttackStats attack = spec.GetAttackStats(0.5f);
+                DefenseStats defense = spec.GetDefenseStats(0.5f);
+                ScannerStats scanner = spec.GetScannerStats(0.5f);
+                MovementStats movement = spec.GetMovementStats(0.5f);
+
+                Assert.That(attack.Power, Is.EqualTo(50f));
+                Assert.That(attack.Range, Is.EqualTo(12f));
+                Assert.That(
+                    attack.Cooldown,
+                    Is.EqualTo(4f / 0.75f).Within(FloatTolerance));
+                Assert.That(defense.MaxHealth, Is.EqualTo(200f));
+                Assert.That(defense.Defense, Is.EqualTo(15f));
+                Assert.That(scanner.AcquisitionPadding, Is.EqualTo(2f));
+                Assert.That(scanner.Interval, Is.EqualTo(0.5f));
+                Assert.That(
+                    movement.Speed,
+                    Is.EqualTo(8.5f).Within(FloatTolerance));
+                Assert.That(movement.Acceleration, Is.EqualTo(20f));
+                Assert.That(movement.AngularSpeed, Is.EqualTo(30f));
+                Assert.That(movement.StoppingDistance, Is.EqualTo(2f));
+            }
+            finally
+            {
+                UnityEngine.Object.DestroyImmediate(spec);
+            }
+        }
+
+        [Test]
+        public void EnemyDifficultyScaling_MinimumDifficulty_KeepsPositiveCombatStatsPositive()
+        {
+            EnemyUnitSpec spec = CreateEnemySpec(
+                EnemyDifficultyStatApplication.Full);
+            SetPrivateField(
+                typeof(UnitSpec),
+                spec,
+                "attack",
+                new AttackStats
+                {
+                    Power = 40f,
+                    Range = 12f,
+                    Cooldown = 4f,
+                });
+            SetPrivateField(
+                typeof(UnitSpec),
+                spec,
+                "defense",
+                new DefenseStats
+                {
+                    MaxHealth = 40f,
+                    Defense = 40f,
+                });
+
+            try
+            {
+                AttackStats attack = spec.GetAttackStats(0.01f);
+                DefenseStats defense = spec.GetDefenseStats(0.01f);
+
+                Assert.That(attack.Power, Is.EqualTo(1f));
+                Assert.That(
+                    attack.Cooldown,
+                    Is.EqualTo(400f).Within(FloatTolerance));
+                Assert.That(defense.MaxHealth, Is.EqualTo(1f));
+                Assert.That(defense.Defense, Is.EqualTo(1f));
+
+                SetPrivateField(
+                    typeof(UnitSpec),
+                    spec,
+                    "defense",
+                    new DefenseStats
+                    {
+                        MaxHealth = 40f,
+                        Defense = 0f,
+                    });
+
+                Assert.That(spec.GetDefenseStats(0.01f).Defense, Is.Zero);
+            }
+            finally
+            {
+                UnityEngine.Object.DestroyImmediate(spec);
+            }
+        }
+
+        [TestCase(0f)]
+        [TestCase(-0.01f)]
+        [TestCase(float.NaN)]
+        [TestCase(float.PositiveInfinity)]
+        public void EnemyDifficultyScaling_RejectsNonPositiveOrNonFiniteDifficulty(
+            float difficultyMultiplier)
+        {
+            EnemyUnitSpec spec = CreateEnemySpec(
+                EnemyDifficultyStatApplication.StandardStageScaling);
+
+            try
+            {
+                Assert.Throws<ArgumentOutOfRangeException>(() =>
+                    spec.GetAttackStats(difficultyMultiplier));
+            }
+            finally
+            {
+                UnityEngine.Object.DestroyImmediate(spec);
+            }
+        }
+
+        [TestCase(2f)]
+        [TestCase(3f)]
+        public void EnemyDifficultyScaling_RejectsDerivedNonPositiveStrengthMultiplier(
+            float attackCooldownApplication)
+        {
+            EnemyDifficultyStatApplication scaling = new(
+                attackPower: 1f,
+                attackRange: 0f,
+                attackCooldown: attackCooldownApplication,
+                maxHealth: 1f,
+                defense: 0.5f,
+                acquisitionPadding: 0f,
+                scannerInterval: 0f,
+                movementSpeed: 0.3f,
+                movementAcceleration: 0f,
+                movementAngularSpeed: 0f,
+                stoppingDistance: 0f);
+            EnemyUnitSpec spec = CreateEnemySpec(scaling);
+
+            try
+            {
+                Assert.Throws<InvalidOperationException>(() =>
+                    spec.GetAttackStats(0.5f));
+            }
+            finally
+            {
+                UnityEngine.Object.DestroyImmediate(spec);
+            }
+        }
+
+        private WaveBundle CreateStageWithDifficulty(float difficultyMultiplier)
+        {
+            WaveBundle stage = UnityEngine.Object.Instantiate(stageTemplate);
+            stage.name = $"Stage Difficulty Test {difficultyMultiplier}";
+            SetPrivateField(
+                typeof(WaveBundle),
+                stage,
+                "enemyDifficultyMultiplier",
+                difficultyMultiplier);
+            return stage;
+        }
+
+        private static EnemyUnitSpec CreateEnemySpec(
+            EnemyDifficultyStatApplication difficultyScaling)
+        {
+            EnemyUnitSpec spec = ScriptableObject.CreateInstance<EnemyUnitSpec>();
+            spec.name = "Enemy Difficulty Test Spec";
+
+            SetPrivateField(
+                typeof(UnitSpec),
+                spec,
+                "attack",
+                new AttackStats
+                {
+                    Power = 100f,
+                    Range = 12f,
+                    Cooldown = 4f,
+                });
+            SetPrivateField(
+                typeof(UnitSpec),
+                spec,
+                "defense",
+                new DefenseStats
+                {
+                    MaxHealth = 200f,
+                    Defense = 20f,
+                });
+            SetPrivateField(
+                typeof(UnitSpec),
+                spec,
+                "scanner",
+                new ScannerStats
+                {
+                    AcquisitionPadding = 2f,
+                    Interval = 0.5f,
+                });
+            SetPrivateField(
+                typeof(EnemyUnitSpec),
+                spec,
+                "movement",
+                new MovementStats
+                {
+                    Speed = 10f,
+                    Acceleration = 20f,
+                    AngularSpeed = 30f,
+                    StoppingDistance = 2f,
+                });
+            SetPrivateField(
+                typeof(EnemyUnitSpec),
+                spec,
+                "difficultyScaling",
+                difficultyScaling);
+
+            return spec;
+        }
+
+        private static void SetPrivateField(
+            Type declaringType,
+            object target,
+            string fieldName,
+            object value)
+        {
+            FieldInfo field = declaringType.GetField(
+                fieldName,
+                BindingFlags.Instance | BindingFlags.NonPublic);
+            Assert.That(
+                field,
+                Is.Not.Null,
+                $"Missing field {declaringType.FullName}.{fieldName}.");
+            field.SetValue(target, value);
         }
     }
 }

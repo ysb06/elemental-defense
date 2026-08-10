@@ -17,7 +17,7 @@ MonoBehaviour:
   mapSeed: 1004
   timeLimitSeconds: 600
   enemyDifficultyMultiplier: 1.15
-  startingTowerEnergy: 2
+  startingTowerEnergy: 3
   baseCreditReward: 250
   baseExperienceReward: 250
   usesPlaceholderTuning: 1

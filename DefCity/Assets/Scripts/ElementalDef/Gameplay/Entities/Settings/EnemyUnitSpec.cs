@@ -90,8 +90,16 @@ namespace ElementalDef.Gameplay.Entities.Settings
                 difficultyMultiplier,
                 attackPower,
                 nameof(attackPower));
-            scaled.Range *= GetStrengthMultiplier(difficultyMultiplier, attackRange, nameof(attackRange));
-            scaled.Cooldown /= GetStrengthMultiplier(difficultyMultiplier, attackCooldown, nameof(attackCooldown));
+            scaled.Range = GetMultipliedScaledStat(
+                baseStats.Range,
+                difficultyMultiplier,
+                attackRange,
+                nameof(attackRange));
+            scaled.Cooldown = GetDividedScaledStat(
+                baseStats.Cooldown,
+                difficultyMultiplier,
+                attackCooldown,
+                nameof(attackCooldown));
             return scaled;
         }
 
@@ -114,11 +122,13 @@ namespace ElementalDef.Gameplay.Entities.Settings
         internal ScannerStats Apply(ScannerStats baseStats, float difficultyMultiplier)
         {
             ScannerStats scaled = baseStats;
-            scaled.AcquisitionPadding *= GetStrengthMultiplier(
+            scaled.AcquisitionPadding = GetMultipliedScaledStat(
+                baseStats.AcquisitionPadding,
                 difficultyMultiplier,
                 acquisitionPadding,
                 nameof(acquisitionPadding));
-            scaled.Interval /= GetStrengthMultiplier(
+            scaled.Interval = GetDividedScaledStat(
+                baseStats.Interval,
                 difficultyMultiplier,
                 scannerInterval,
                 nameof(scannerInterval));
@@ -128,16 +138,23 @@ namespace ElementalDef.Gameplay.Entities.Settings
         internal MovementStats Apply(MovementStats baseStats, float difficultyMultiplier)
         {
             MovementStats scaled = baseStats;
-            scaled.Speed *= GetStrengthMultiplier(difficultyMultiplier, movementSpeed, nameof(movementSpeed));
-            scaled.Acceleration *= GetStrengthMultiplier(
+            scaled.Speed = GetMultipliedScaledStat(
+                baseStats.Speed,
+                difficultyMultiplier,
+                movementSpeed,
+                nameof(movementSpeed));
+            scaled.Acceleration = GetMultipliedScaledStat(
+                baseStats.Acceleration,
                 difficultyMultiplier,
                 movementAcceleration,
                 nameof(movementAcceleration));
-            scaled.AngularSpeed *= GetStrengthMultiplier(
+            scaled.AngularSpeed = GetMultipliedScaledStat(
+                baseStats.AngularSpeed,
                 difficultyMultiplier,
                 movementAngularSpeed,
                 nameof(movementAngularSpeed));
-            scaled.StoppingDistance /= GetStrengthMultiplier(
+            scaled.StoppingDistance = GetDividedScaledStat(
+                baseStats.StoppingDistance,
                 difficultyMultiplier,
                 stoppingDistance,
                 nameof(stoppingDistance));
@@ -151,9 +168,12 @@ namespace ElementalDef.Gameplay.Entities.Settings
         {
             if (float.IsNaN(difficultyMultiplier) ||
                 float.IsInfinity(difficultyMultiplier) ||
-                difficultyMultiplier < 1f)
+                difficultyMultiplier <= 0f)
             {
-                throw new ArgumentOutOfRangeException(nameof(difficultyMultiplier));
+                throw new ArgumentOutOfRangeException(
+                    nameof(difficultyMultiplier),
+                    difficultyMultiplier,
+                    "A difficulty multiplier must be finite and greater than 0.");
             }
 
             if (float.IsNaN(application) ||
@@ -165,13 +185,70 @@ namespace ElementalDef.Gameplay.Entities.Settings
             }
 
             float multiplier = 1f + ((difficultyMultiplier - 1f) * application);
-            if (float.IsInfinity(multiplier))
+            if (float.IsNaN(multiplier) || float.IsInfinity(multiplier))
             {
                 throw new OverflowException(
-                    $"Difficulty application '{applicationName}' produced an infinite multiplier.");
+                    $"Difficulty application '{applicationName}' produced a non-finite multiplier.");
+            }
+
+            if (multiplier <= 0f)
+            {
+                throw new InvalidOperationException(
+                    $"Difficulty application '{applicationName}' produced a non-positive " +
+                    $"strength multiplier {multiplier} from difficulty {difficultyMultiplier} " +
+                    $"and application {application}.");
             }
 
             return multiplier;
+        }
+
+        private static float GetMultipliedScaledStat(
+            float baseValue,
+            float difficultyMultiplier,
+            float application,
+            string applicationName)
+        {
+            float multiplier = GetStrengthMultiplier(
+                difficultyMultiplier,
+                application,
+                applicationName);
+            float scaledValue = baseValue * multiplier;
+            ValidateScaledStat(baseValue, scaledValue, applicationName);
+            return scaledValue;
+        }
+
+        private static float GetDividedScaledStat(
+            float baseValue,
+            float difficultyMultiplier,
+            float application,
+            string applicationName)
+        {
+            float multiplier = GetStrengthMultiplier(
+                difficultyMultiplier,
+                application,
+                applicationName);
+            float scaledValue = baseValue / multiplier;
+            ValidateScaledStat(baseValue, scaledValue, applicationName);
+            return scaledValue;
+        }
+
+        private static void ValidateScaledStat(
+            float baseValue,
+            float scaledValue,
+            string applicationName)
+        {
+            if (float.IsNaN(scaledValue) || float.IsInfinity(scaledValue))
+            {
+                throw new OverflowException(
+                    $"Difficulty application '{applicationName}' produced a non-finite scaled stat.");
+            }
+
+            if (baseValue > 0f && scaledValue <= 0f)
+            {
+                throw new InvalidOperationException(
+                    $"Difficulty application '{applicationName}' reduced a positive stat " +
+                    $"to the non-positive value {scaledValue}.");
+            }
         }
 
         private static float GetRoundedScaledStat(
@@ -180,11 +257,11 @@ namespace ElementalDef.Gameplay.Entities.Settings
             float application,
             string applicationName)
         {
-            GetStrengthMultiplier(difficultyMultiplier, application, applicationName);
-
-            double multiplier =
-                1d + (((double)difficultyMultiplier - 1d) * application);
-            double scaledValue = baseValue * multiplier;
+            float multiplier = GetStrengthMultiplier(
+                difficultyMultiplier,
+                application,
+                applicationName);
+            double scaledValue = baseValue * (double)multiplier;
             if (double.IsNaN(scaledValue) ||
                 double.IsInfinity(scaledValue) ||
                 scaledValue > float.MaxValue ||
@@ -194,7 +271,13 @@ namespace ElementalDef.Gameplay.Entities.Settings
                     $"Difficulty application '{applicationName}' produced an invalid scaled stat.");
             }
 
-            return Mathf.Round((float)scaledValue);
+            float roundedValue = Mathf.Round((float)scaledValue);
+            if (baseValue > 0f && roundedValue < 1f)
+            {
+                return 1f;
+            }
+
+            return roundedValue;
         }
     }
 

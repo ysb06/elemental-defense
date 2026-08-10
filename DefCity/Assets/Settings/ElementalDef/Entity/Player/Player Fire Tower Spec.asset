@@ -15,13 +15,13 @@ MonoBehaviour:
   contentId: tower_fire
   attack:
     Element: 2
-    Power: 120
-    Range: 2.05
-    Cooldown: 1.5
+    Power: 135
+    Range: 2.255
+    Cooldown: 1.35
   defense:
     Element: 2
-    MaxHealth: 800
-    Defense: 20
+    MaxHealth: 850
+    Defense: 22
   scanner:
     AcquisitionPadding: 0.5
     Interval: 0.1

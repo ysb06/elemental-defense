@@ -148,12 +148,12 @@ namespace ElementalDef.Gameplay.Flow
         {
             if (float.IsNaN(stageDifficultyMultiplier) ||
                 float.IsInfinity(stageDifficultyMultiplier) ||
-                stageDifficultyMultiplier < 1f)
+                stageDifficultyMultiplier <= 0f)
             {
                 throw new ArgumentOutOfRangeException(
                     nameof(stageDifficultyMultiplier),
                     stageDifficultyMultiplier,
-                    "A stage difficulty multiplier must be finite and at least 1.");
+                    "A stage difficulty multiplier must be finite and greater than 0.");
             }
 
             if (float.IsNaN(performanceDifficultyMultiplier) ||
@@ -170,7 +170,7 @@ namespace ElementalDef.Gameplay.Flow
                 stageDifficultyMultiplier * performanceDifficultyMultiplier;
             if (float.IsNaN(effectiveDifficultyMultiplier) ||
                 float.IsInfinity(effectiveDifficultyMultiplier) ||
-                effectiveDifficultyMultiplier < 1f)
+                effectiveDifficultyMultiplier <= 0f)
             {
                 throw new InvalidOperationException(
                     $"Stage '{stageId}' produced an invalid effective enemy difficulty " +
